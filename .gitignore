@@ -1,0 +1,55 @@
+# Laravel & Vue.js .gitignore by Cecep Abu Azhar - PT. Fath Synergy Group
+
+# Ignore .env files
+.env
+.env.*.local
+
+# Laravel specific
+/vendor
+/node_modules
+/public/storage
+/public/hot
+/storage/*.key
+/storage/framework/cache/data
+/storage/logs
+/bootstrap/cache
+
+# Ignoring IDE specific files
+.idea
+.vscode
+
+# Ignore Composer files
+composer.lock
+
+# Ignore node_modules
+node_modules/
+
+# Ignore npm/yarn debug log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignore Laravel Mix files
+/public/mix-manifest.json
+/public/hot
+/public/css/app.css
+/public/js/app.js
+/public/js/app.js.map
+/public/css/app.css.map
+
+# Ignore coverage reports
+/coverage
+
+# Ignore log files
+*.log
+
+# Ignore build artifacts and other build output
+/dist
+/build
+
+# Ignore cache files
+.cache

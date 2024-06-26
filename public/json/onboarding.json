@@ -1,0 +1,22 @@
+[
+    {
+        "section": "academic_menu",
+        "title": "Academic Menu",
+        "content": "Access all academic resources and tools in one place, including course materials, grades, and schedules."
+    },
+    {
+        "section": "notice_board_menu",
+        "title": "Notice Board Menu",
+        "content": "Stay up to date with the latest news, announcements, and events through the Notice Board menu."
+    },
+    {
+        "section": "leave_request_menu",
+        "title": "Leave Request Menu",
+        "content": "Easily request time off and track the status of your leave requests through the Leave Request menu."
+    },
+    {
+        "section": "all_transaction_menu",
+        "title": "All Transaction Menu",
+        "content": "Manage your finances effectively with the All Transaction menu. View and organize all of your transactions in one place."
+    }
+]

@@ -1,0 +1,3 @@
+<template>
+    {{ __('Others') }}
+</template>

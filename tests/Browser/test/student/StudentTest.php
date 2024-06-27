@@ -355,7 +355,7 @@ class StudentTest extends DuskTestCase
                 ->pause(501)
                 ->click('a[href="oid(0)"]')
                 ->waitForText('Login')
-                ->assertSee('Schooling');
+                ->assertSee('FathSchool');
         });
     }
 

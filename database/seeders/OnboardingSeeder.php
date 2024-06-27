@@ -18,7 +18,7 @@ class OnboardingSeeder extends Seeder
             [
                 'menu_slug' => 'welcome',
                 'title' => 'Welcome',
-                'description' => 'Welcome to our Schooling App! Explore all the features and resources available to students, teachers, accountants, and parents.',
+                'description' => 'Welcome to our FathSchool App! Explore all the features and resources available to students, teachers, accountants, and parents.',
             ],
             [
                 'menu_slug' => 'notice_board_top_section',

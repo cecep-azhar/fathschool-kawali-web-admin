@@ -89,7 +89,7 @@ class WebsiteSettingControllerTest extends TestCase
             'dark_logo' => UploadedFile::fake()->create('dark_logo.png', 200),
             'light_logo' => UploadedFile::fake()->create('light_logo.png', 200),
             'favicon' => UploadedFile::fake()->create('favicon.png', 200),
-            'app_email' => 'Schooling@mail.com',
+            'app_email' => 'FathSchool@mail.com',
             'app_phone' => '01**42290**',
             'principal_name' => 'Sun Shine School Principal',
             'app_address' => 'Dhaka, Bangladesh',

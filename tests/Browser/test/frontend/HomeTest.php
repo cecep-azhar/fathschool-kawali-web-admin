@@ -58,7 +58,7 @@ class HomeTest extends DuskTestCase
 
             $browser->visit('/')
                 ->pause(1000)
-                ->assertSee('Schooling');
+                ->assertSee('FathSchool');
 
             $this->scroll($browser);
             $browser->pause(1500);
@@ -183,8 +183,8 @@ class HomeTest extends DuskTestCase
 
             $browser->click('a[href="/"]')
                 ->pause(1500)
-                ->waitForText('Schooling')
-                ->assertSee('Schooling');
+                ->waitForText('FathSchool')
+                ->assertSee('FathSchool');
 
             // Login as admin for approve admission
             $admin = User::findOrFail(1);

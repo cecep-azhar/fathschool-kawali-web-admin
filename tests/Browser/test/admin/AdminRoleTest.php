@@ -1239,7 +1239,7 @@ class AdminRoleTest extends DuskTestCase
                 ->type('#mail_password', '12345678')
                 ->click('#mail_encryption_tls')
                 ->type('#mail_from_address', 'lomeyo@adeveloper.info')
-                ->type('#mail_from_name', 'schooling')
+                ->type('#mail_from_name', 'FathSchool')
                 ->press('Submit')
                 ->pause(5000);
 

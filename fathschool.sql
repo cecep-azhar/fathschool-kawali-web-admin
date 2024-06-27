@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `schooling`
+-- Database: `FathSchool`
 --
 
 -- --------------------------------------------------------
@@ -778,7 +778,7 @@ CREATE TABLE `onboardings` (
 --
 
 INSERT INTO `onboardings` (`id`, `menu_slug`, `title`, `description`, `created_at`, `updated_at`) VALUES
-(1, 'welcome', 'Welcome', 'Welcome to our Schooling App! Explore all the features and resources available to students, teachers, accountants, and parents.', '2024-03-29 03:16:41', '2024-03-29 03:16:41'),
+(1, 'welcome', 'Welcome', 'Welcome to our FathSchool App! Explore all the features and resources available to students, teachers, accountants, and parents.', '2024-03-29 03:16:41', '2024-03-29 03:16:41'),
 (2, 'notice_board_top_section', 'Notice Board', 'Stay up to date with the latest news, announcements, and events through the Notice Board menu.', '2024-03-29 03:16:41', '2024-03-29 03:16:41'),
 (3, 'leave_request_top_section', 'Leave Request', 'Easily request time off and track the status of your leave requests through the Leave Request menu.', '2024-03-29 03:16:41', '2024-03-29 03:16:41'),
 (4, 'notification', 'Notifications', 'You can easilly get your all notifications from here', '2024-03-29 03:16:41', '2024-03-29 03:16:41'),
@@ -1368,7 +1368,7 @@ CREATE TABLE `settings` (
 --
 
 INSERT INTO `settings` (`id`, `app_logo_type`, `text_logo_name`, `app_name`, `school_code`, `dark_logo`, `light_logo`, `favicon_icon`, `app_description`, `principal_name`, `app_address`, `app_email`, `app_phone`, `app_currency`, `key_to_grades`, `grade_summary`, `over_due_days`, `created_at`, `updated_at`) VALUES
-(1, 'image', 'Schooling', 'Schooling', NULL, 'images/dark_logo.png', 'images/light_logo.png', 'images/favicon.png', 'Schooling is a constituent institution of the University of Dhaka.  Main goal  is to establish an institution of high academic standard for higher studies and research in economics and related disciplines. Different Economic based BSc, MSc & Diploma degrees are available here.,', 'Schooling Principal', 'Dhaka, Bangladesh', 'Schooling@mail.com', '016442290**', 'USD', 'A+: 80% and Above | A: 70% - 79% | B: 60% - 69% | C: 50% - 59% | D: 40% - 49% | F: 39% and Below', '5(A+), 4(A), 3(B), 2(C), 1(F)', 0, '2024-03-29 03:16:39', '2024-03-29 03:16:39');
+(1, 'image', 'FathSchool', 'FathSchool', NULL, 'images/dark_logo.png', 'images/light_logo.png', 'images/favicon.png', 'FathSchool is a constituent institution of the University of Dhaka.  Main goal  is to establish an institution of high academic standard for higher studies and research in economics and related disciplines. Different Economic based BSc, MSc & Diploma degrees are available here.,', 'FathSchool Principal', 'Dhaka, Bangladesh', 'FathSchool@mail.com', '016442290**', 'USD', 'A+: 80% and Above | A: 70% - 79% | B: 60% - 69% | C: 50% - 59% | D: 40% - 49% | F: 39% and Below', '5(A+), 4(A), 3(B), 2(C), 1(F)', 0, '2024-03-29 03:16:39', '2024-03-29 03:16:39');
 
 -- --------------------------------------------------------
 

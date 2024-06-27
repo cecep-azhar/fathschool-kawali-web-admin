@@ -163,7 +163,7 @@ class LoginTest extends DuskTestCase
                 ->click('a[href="oid(0)"]')
                 ->pause(3000)
                 ->waitForText('Login')
-                ->assertSee('Schooling');
+                ->assertSee('FathSchool');
         });
 
         // Dashboard test ends for admin
@@ -205,7 +205,7 @@ class LoginTest extends DuskTestCase
                 ->click('a[href="oid(0)"]')
                 ->pause(3001)
                 ->waitForLink('Login')
-                ->assertSee('Schooling');
+                ->assertSee('FathSchool');
         });
 
         // Dashboard test ends for Teacher
@@ -247,7 +247,7 @@ class LoginTest extends DuskTestCase
                 ->click('a[href="oid(0)"]')
                 ->pause(5000)
                 ->waitForText('Login')
-                ->assertSee('Schooling');
+                ->assertSee('FathSchool');
         });
 
         // Dashboard test ends for Accountant
@@ -286,7 +286,7 @@ class LoginTest extends DuskTestCase
                 ->pause(501)
                 ->click('a[href="oid(0)"]')
                 ->waitForText('Login')
-                ->assertSee('Schooling');
+                ->assertSee('FathSchool');
         });
 
         // Dashboard test ends for Student
@@ -325,7 +325,7 @@ class LoginTest extends DuskTestCase
                 ->pause(501)
                 ->click('a[href="oid(0)"]')
                 ->waitForText('Login')
-                ->assertSee('Schooling');
+                ->assertSee('FathSchool');
         });
 
         // Dashboard test ends for Parent

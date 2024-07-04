@@ -18,6 +18,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+//login
 Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
 
 Route::get('/user', [App\Http\Controllers\Api\ApiUserController::class, 'show'])->middleware('auth:sanctum');
@@ -32,8 +33,7 @@ Route::post('/qrout', [App\Http\Controllers\Api\ClassAttendanceController::class
 
 Route::post('/forget-password', [App\Http\Controllers\Api\AuthController::class, 'forgetPassword']);
 
-//login
-Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
+
 
 //logout
 Route::post('/logout', [App\Http\Controllers\Api\AuthController::class, 'logout'])->middleware('auth:sanctum');

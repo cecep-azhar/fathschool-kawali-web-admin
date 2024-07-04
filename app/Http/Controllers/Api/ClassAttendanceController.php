@@ -25,7 +25,7 @@ class ClassAttendanceController extends Controller
         $attendance->save();
 
         return response([
-            'message' => 'Checkin success',
+            'message' => 'Qrin success',
             'attendance' => $attendance,
             'attendance_id' => $attendance->id
         ], 200);
@@ -57,7 +57,7 @@ class ClassAttendanceController extends Controller
         $attendance->save();
 
         return response([
-            'message' => 'Checkout success',
+            'message' => 'Qrout success',
             'attendance' => $attendance
         ], 200);
     }

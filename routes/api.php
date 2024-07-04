@@ -69,5 +69,5 @@ Route::post('/update-profile', [App\Http\Controllers\Api\AuthController::class, 
 //update face
 Route::post('/update-face', [App\Http\Controllers\Api\AuthController::class, 'updateFace'])->middleware('auth:sanctum');
 
-//notifikation
+//notification
 Route::post('/notification', [App\Http\Controllers\Api\NotificationController::class, 'notification'])->middleware('auth:sanctum');

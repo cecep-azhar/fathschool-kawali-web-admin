@@ -24,10 +24,14 @@ Route::get('/user', [App\Http\Controllers\Api\ApiUserController::class, 'show'])
 
 Route::get('/school', [App\Http\Controllers\Api\ApiSchoolController::class, 'show'])->middleware('auth:sanctum');
 
+Route::get('/school-phone', [App\Http\Controllers\Api\ApiSchoolController::class, 'showPhone'])->middleware('auth:sanctum');
+
 Route::apiResource('/api-permissions', App\Http\Controllers\Api\PermissionController::class)->middleware('auth:sanctum');
 
 Route::post('/qrin', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrin'])->middleware('auth:sanctum');
 
 Route::post('/qrout', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrout'])->middleware('auth:sanctum');
 
-Route::post('/forget-password', [App\Http\Controllers\Api\AuthController::class, 'forgetPassword']);
+Route::post('/forget-password', [App\Http\Controllers\Api\AuthController::class, 'forgetPassword'])->middleware('auth:sanctum');
+
+Route::post('/update-face', [App\Http\Controllers\Api\AuthController::class, 'updateFace'])->middleware('auth:sanctum');

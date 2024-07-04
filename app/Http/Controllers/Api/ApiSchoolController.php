@@ -13,4 +13,22 @@ class ApiSchoolController extends Controller
         $school = School::find(1);
         return response(['school' => $school], 200);
     }
+
+    public function showPhone()
+    {
+        // Ambil data school dengan id 1
+        $school = School::find(1);
+
+        // Jika data school tidak ditemukan
+        if (!$school) {
+            return response(['message' => 'School not found'], 404);
+        }
+
+        // Ambil data phone dari school
+        $phone = $school->phone;
+
+        // Kembalikan response dengan data phone
+        return response(['Whatsapp' => $phone], 200);
+    }
+
 }

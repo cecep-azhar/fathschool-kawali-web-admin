@@ -22,6 +22,7 @@ return new class extends Migration
             $table->foreignId('user_id');
             $table->string('class_lists');
             $table->string('security_code');
+            $table->timestamp('security_code_expiration')->nullable();
             $table->timestamps();
         });
     }

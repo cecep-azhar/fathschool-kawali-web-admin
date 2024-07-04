@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\Department;
 
 class AuthController extends Controller
 {
@@ -35,6 +36,10 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        $department = Department::where('id',$user->department_id)->first();
+
+        $user->department = $department->name ?? null;
 
         return response(['user' => $user, 'token' => $token], 200);
     }

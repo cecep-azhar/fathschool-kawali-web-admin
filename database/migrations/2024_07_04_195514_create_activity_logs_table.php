@@ -13,13 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('journal', function (Blueprint $table) {
+        Schema::create('activity_logs', function (Blueprint $table) {
             $table->id();
-            $table->date('date');
-            $table->time('time');
-            $table->text('description');
-            $table->string('img');
-            $table->foreignId('user_id');
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->string('action');
+            $table->text('details')->nullable();
             $table->timestamps();
         });
     }
@@ -31,6 +29,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('journal');
+        Schema::dropIfExists('activity_logs');
     }
 };

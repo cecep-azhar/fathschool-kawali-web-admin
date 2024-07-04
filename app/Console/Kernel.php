@@ -4,6 +4,7 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use App\Jobs\ClearExpiredSecurityCodes;
 
 class Kernel extends ConsoleKernel
 {
@@ -15,6 +16,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
+        $schedule->job(new ClearExpiredSecurityCodes())->everyMinute();
+
         $schedule->command('recurring:invoice')->daily();
     }
 
@@ -29,4 +32,10 @@ class Kernel extends ConsoleKernel
 
         require base_path('routes/console.php');
     }
+
+    protected $routeMiddleware = [
+        // ...
+        'log.activity' => \App\Http\Middleware\LogActivity::class,
+    ];
+    
 }

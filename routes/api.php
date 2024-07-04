@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ActivityLogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,6 +34,9 @@ Route::get('/user', [App\Http\Controllers\Api\ApiUserController::class, 'show'])
 //school
 Route::get('/school', [App\Http\Controllers\Api\ApiSchoolController::class, 'show'])->middleware('auth:sanctum');
 
+//school phone
+Route::get('/school-phone', [App\Http\Controllers\Api\ApiSchoolController::class, 'showPhone'])->middleware('auth:sanctum');
+
 //API permission
 Route::apiResource('/api-permissions', App\Http\Controllers\Api\PermissionController::class)->middleware('auth:sanctum');
 
@@ -62,3 +66,15 @@ Route::get('/journal/{id}', [App\Http\Controllers\Api\JournalController::class, 
 
 //update profile
 Route::post('/update-profile', [App\Http\Controllers\Api\AuthController::class, 'updateProfile'])->middleware('auth:sanctum');
+
+//update face
+Route::post('/update-face', [App\Http\Controllers\Api\AuthController::class, 'updateFace'])->middleware('auth:sanctum');
+
+//notification
+Route::post('/notification', [App\Http\Controllers\Api\NotificationController::class, 'notification'])->middleware('auth:sanctum');
+
+Route::middleware(['log.activity'])->group(function () {
+    Route::get('/example', [ExampleController::class, 'index']);
+});
+
+Route::get('/activity-logs', [ActivityLogController::class, 'activityLogs'])->middleware('auth:sanctum');

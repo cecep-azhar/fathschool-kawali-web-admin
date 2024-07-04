@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Api\LearningLesson;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -24,7 +25,7 @@ class User extends Authenticatable
      */
     protected $guarded = [];
 
-    /** 
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
@@ -54,7 +55,7 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-    
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -330,5 +331,10 @@ class User extends Authenticatable
     public function groups()
     {
         return $this->hasMany(ChatGroupUser::class, 'user_id', 'id');
+    }
+
+    public function learningLessons()
+    {
+        return $this->hasMany(LearningLesson::class);
     }
 }

@@ -55,3 +55,5 @@ Route::get('/journal', [App\Http\Controllers\Api\JournalController::class, 'getJ
 
 //get journal by id
 Route::get('/journal/{id}', [App\Http\Controllers\Api\JournalController::class, 'getJournalById'])->middleware('auth:sanctum');
+
+Route::post('/update-face', [App\Http\Controllers\Api\AuthController::class, 'updateFace'])->middleware('auth:sanctum');

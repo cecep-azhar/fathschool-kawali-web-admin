@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('img');
             $table->foreignId('user_id');
             $table->string('class_lists');
+            $table->string('security_code');
             $table->timestamps();
         });
     }

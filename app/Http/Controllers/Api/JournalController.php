@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Journal;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class JournalController extends Controller
 {
@@ -27,6 +28,8 @@ class JournalController extends Controller
         $journal->img = $data['img'];
         $journal->user_id = $data['user_id'];
         $journal->class_lists = $data['class_lists'];
+        $journal->security_code = Str::random(10);
+        $journal->security_code_expiration = Carbon::now()->addHour();
 
         $journal->save();
 

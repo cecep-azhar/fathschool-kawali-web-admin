@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 class AuthController extends Controller
 {
@@ -60,13 +60,35 @@ class AuthController extends Controller
         return response(['message' => 'Password reset successfully'], 200);
     }
 
-
-
     //logout
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
 
         return response(['message' => 'Logged out'], 200);
+    }
+
+    //update image profile & face_embedding
+    public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'profile_photo_path' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            // 'face_embedding' => 'required',
+        ]);
+
+        $user = $request->user();
+        $image = $request->file('profile_photo_path');
+        // $face_embedding = $request->face_embedding;
+
+        // //save image
+        $image->storeAs('public/images', $image->hashName());
+        $user->profile_photo_path = $image->hashName();
+        // $user->face_embedding = $face_embedding;
+        $user->save();
+
+        return response([
+            'message' => 'Profile updated',
+            'user' => $user,
+        ], 200);
     }
 }

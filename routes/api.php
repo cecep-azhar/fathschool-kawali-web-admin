@@ -21,22 +21,26 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //login
 Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
 
-Route::get('/user', [App\Http\Controllers\Api\ApiUserController::class, 'show'])->middleware('auth:sanctum');
-
-Route::get('/school', [App\Http\Controllers\Api\ApiSchoolController::class, 'show'])->middleware('auth:sanctum');
-
-Route::apiResource('/api-permissions', App\Http\Controllers\Api\PermissionController::class)->middleware('auth:sanctum');
-
-Route::post('/qrin', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrin'])->middleware('auth:sanctum');
-
-Route::post('/qrout', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrout'])->middleware('auth:sanctum');
-
-Route::post('/forget-password', [App\Http\Controllers\Api\AuthController::class, 'forgetPassword']);
-
-
-
 //logout
 Route::post('/logout', [App\Http\Controllers\Api\AuthController::class, 'logout'])->middleware('auth:sanctum');
+
+//Forgot password
+Route::post('/forget-password', [App\Http\Controllers\Api\AuthController::class, 'forgetPassword']);
+
+//user
+Route::get('/user', [App\Http\Controllers\Api\ApiUserController::class, 'show'])->middleware('auth:sanctum');
+
+//school
+Route::get('/school', [App\Http\Controllers\Api\ApiSchoolController::class, 'show'])->middleware('auth:sanctum');
+
+//API permission
+Route::apiResource('/api-permissions', App\Http\Controllers\Api\PermissionController::class)->middleware('auth:sanctum');
+
+//Qrin
+Route::post('/qrin', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrin'])->middleware('auth:sanctum');
+
+//Qrout
+Route::post('/qrout', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrout'])->middleware('auth:sanctum');
 
 //checkin
 Route::post('/checkin', [App\Http\Controllers\Api\AttendanceController::class, 'checkin'])->middleware('auth:sanctum');
@@ -55,3 +59,6 @@ Route::get('/journal', [App\Http\Controllers\Api\JournalController::class, 'getJ
 
 //get journal by id
 Route::get('/journal/{id}', [App\Http\Controllers\Api\JournalController::class, 'getJournalById'])->middleware('auth:sanctum');
+
+//update profile
+Route::post('/update-profile', [App\Http\Controllers\Api\AuthController::class, 'updateProfile'])->middleware('auth:sanctum');

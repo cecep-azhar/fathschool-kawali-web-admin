@@ -24,7 +24,7 @@ class User extends Authenticatable
      */
     protected $guarded = [];
 
-    /**
+    /** 
      * The attributes that are mass assignable.
      *
      * @var array<int, string>

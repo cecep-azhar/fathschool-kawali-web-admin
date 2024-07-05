@@ -8,6 +8,18 @@ use App\Models\Attendance;
 
 class AttendanceController extends Controller
 {
+    public function index(Request $request)
+    {
+        // Mendapatkan user yang sedang login
+        $user = $request->user();
+
+        // Mengambil data kehadiran berdasarkan user yang sedang login
+        $attendances = Attendance::where('user_id', $user->id)->get();
+
+        // Mengembalikan response berupa JSON
+        return response()->json($attendances);
+    }
+
     //checkin
     public function checkin(Request $request)
     {

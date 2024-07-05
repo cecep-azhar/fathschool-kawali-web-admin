@@ -14,7 +14,7 @@ class NotificationController extends Controller
             return [
                 'id' => $journal->id,
                 'class_lists' => $journal->class_lists,
-                'time' => $journal->time, 
+                'time' => $journal->time,
                 'date' => $journal->date,
             ];
         });

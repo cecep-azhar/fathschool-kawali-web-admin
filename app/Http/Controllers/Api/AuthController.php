@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Auth\ResetPasswordMobile;
+use App\Http\Requests\Auth\PasswordRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -131,5 +133,12 @@ class AuthController extends Controller
         return response([
             'message' => 'FCM token updated',
         ], 200);
+    }
+
+    public function password(PasswordRequest $request, ResetPasswordMobile $resetPassword)
+    {
+        $resetPassword->request($request);
+
+        return response(['message' => __('auth.password.sent')], 200);
     }
 }

@@ -18,7 +18,7 @@ class LearningLessonController extends Controller
         }
 
         // Ambil data learning_lessons berdasarkan user yang sedang login
-        $lessons = LearningLesson::with(['user', 'lesson', 'classList'])
+        $lessons = LearningLesson::with(['user', 'subject', 'classList'])
             ->where('user_id', $user->id)
             ->get();
 
@@ -27,8 +27,8 @@ class LearningLessonController extends Controller
             return [
                 'teacher_id' => $lesson->user->id,
                 'teacher_name' => $lesson->user->name,
-                'lesson_id' => $lesson->lesson->id,
-                'lesson_name' => $lesson->lesson->name,
+                'subject_id' => $lesson->subject->id,
+                'subject_name' => $lesson->subject->name,
                 'class_id' => $lesson->classList->id,
                 'class_name' => $lesson->classList->name,
                 'time_in' => $lesson->time_in,

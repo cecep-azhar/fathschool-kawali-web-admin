@@ -5,6 +5,7 @@ namespace App\Models\Api;
 use App\Models\User;
 use App\Models\Api\ClassList;
 use App\Models\Api\Lesson;
+use App\Models\Subject;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -25,9 +26,9 @@ class LearningLesson extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function lesson()
+    public function subject()
     {
-        return $this->belongsTo(Lesson::class, 'lessons_id');
+        return $this->belongsTo(Subject::class, 'subjects_id');
     }
 
     public function classList()

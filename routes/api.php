@@ -78,4 +78,7 @@ Route::middleware(['log.activity'])->group(function () {
     Route::get('/example', [ExampleController::class, 'index']);
 });
 
+//update fcm token
+Route::post('/update-fcm-token', [App\Http\Controllers\Api\AuthController::class, 'updateFcmToken'])->middleware('auth:sanctum');
+
 Route::get('/activity-logs', [ActivityLogController::class, 'activityLogs'])->middleware('auth:sanctum');

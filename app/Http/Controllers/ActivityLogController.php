@@ -7,9 +7,13 @@ use Illuminate\Http\Request;
 
 class ActivityLogController extends Controller
 {
-    public function activityLogs(Request $request)
+    public function index()
     {
-        $logs = ActivityLog::all();
-        return response()->json($logs);
+        // Log an activity
+        activity()
+            ->causedBy(auth()->user())
+            ->log('Visited the example page');
+
+        return response()->json(['message' => 'Activity logged']);
     }
 }

@@ -37,6 +37,16 @@ class AttendanceController extends Controller
         $attendance->latlon_in = $request->latitude . ',' . $request->longitude;
         $attendance->save();
 
+        $user = $request->user();
+
+        activity()
+        ->useLog('default')
+        ->causedBy(auth()->user())
+        ->event('checkin')
+        ->withProperties(['ip' => $request->ip(),
+                          'user' => $user->username ])
+        ->log('User Check In');
+
         return response([
             'message' => 'Checkin success',
             'attendance' => $attendance
@@ -82,6 +92,16 @@ class AttendanceController extends Controller
         $attendance->time_out = date('H:i:s');
         $attendance->latlon_out = $request->latitude . ',' . $request->longitude;
         $attendance->save();
+
+        $user = $request->user();
+
+        activity()
+        ->useLog('default')
+        ->causedBy(auth()->user())
+        ->event('checkout')
+        ->withProperties(['ip' => $request->ip(),
+                          'user' => $user->username ])
+        ->log('User Check Out');
 
         return response([
             'message' => 'Checkout success',

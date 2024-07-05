@@ -42,6 +42,16 @@ class PermissionController extends Controller
 
         $permission->save();
 
+        $user = $request->user();
+
+        activity()
+        ->useLog('default')
+        ->causedBy(auth()->user())
+        ->event('makePermisssion')
+        ->withProperties(['ip' => $request->ip(),
+                          'user' => $user->username ])
+        ->log('User Make a Permission');
+
         return response()->json(['message' => 'Permission created successfully'], 201);
     }
 }

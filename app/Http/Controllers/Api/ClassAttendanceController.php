@@ -24,6 +24,16 @@ class ClassAttendanceController extends Controller
         $attendance->time_in = date('H:i:s');
         $attendance->save();
 
+        $user = $request->user();
+
+        activity()
+        ->useLog('default')
+        ->causedBy(auth()->user())
+        ->event('Qrin')
+        ->withProperties(['ip' => $request->ip(),
+                          'user' => $user->username ])
+        ->log('User Qrin');
+
         return response([
             'message' => 'Qrin success',
             'attendance' => $attendance,
@@ -55,6 +65,16 @@ class ClassAttendanceController extends Controller
         // Save checkout
         $attendance->time_out = date('H:i:s');
         $attendance->save();
+
+        $user = $request->user();
+
+        activity()
+        ->useLog('default')
+        ->causedBy(auth()->user())
+        ->event('Qrout')
+        ->withProperties(['ip' => $request->ip(),
+                          'user' => $user->username ])
+        ->log('User Qrout');
 
         return response([
             'message' => 'Qrout success',

@@ -21,8 +21,4 @@ class NotificationController extends Controller
 
         return response()->json($journals);
     }
-
-class NotificationController extends Controller
-{
-    //
 }

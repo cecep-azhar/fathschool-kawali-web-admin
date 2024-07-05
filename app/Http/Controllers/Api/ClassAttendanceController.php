@@ -61,4 +61,20 @@ class ClassAttendanceController extends Controller
             'attendance' => $attendance
         ], 200);
     }
+
+    //check is checkedin
+    public function isQrin(Request $request)
+    {
+        //get today attendance
+        $attendance = ClassAttendance::where('user_id', $request->user()->id)
+            ->where('date', date('Y-m-d'))
+            ->first();
+
+        $isCheckout = $attendance ? $attendance->time_out : false;
+
+        return response([
+            'checkedin' => $attendance ? true : false,
+            'checkedout' => $isCheckout ? true : false,
+        ], 200);
+    }
 }

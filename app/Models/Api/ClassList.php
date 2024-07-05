@@ -15,4 +15,9 @@ class ClassList extends Model
     {
         return $this->hasMany(LearningLesson::class, 'class_lists_id');
     }
+
+    public function studentLists()
+    {
+        return $this->hasMany(StudentList::class);
+    }
 }

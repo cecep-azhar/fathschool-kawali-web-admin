@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Api\LearningLesson;
+use App\Models\Api\StudentList;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -335,5 +336,10 @@ class User extends Authenticatable
     public function learningLessons()
     {
         return $this->hasMany(LearningLesson::class);
+    }
+
+    public function studentList()
+    {
+        return $this->hasOne(StudentList::class, 'student_id');
     }
 }

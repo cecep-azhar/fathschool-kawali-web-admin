@@ -3,6 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\Api\ClassListController;
+use App\Http\Controllers\Api\StudentAttendanceController;
+use App\Http\Controllers\Api\StudentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +46,9 @@ Route::apiResource('/api-permissions', App\Http\Controllers\Api\PermissionContro
 //Qrin
 Route::post('/qrin', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrin'])->middleware('auth:sanctum');
 
+//is qrin
+Route::get('/is-qrin', [App\Http\Controllers\Api\ClassAttendanceController::class, 'isQrin'])->middleware('auth:sanctum');
+
 //Qrout
 Route::post('/qrout', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrout'])->middleware('auth:sanctum');
 
@@ -82,3 +88,13 @@ Route::middleware(['log.activity'])->group(function () {
 Route::post('/update-fcm-token', [App\Http\Controllers\Api\AuthController::class, 'updateFcmToken'])->middleware('auth:sanctum');
 
 Route::get('/activity-logs', [ActivityLogController::class, 'activityLogs'])->middleware('auth:sanctum');
+
+Route::get('/api-attendances', [App\Http\Controllers\Api\AttendanceController::class, 'index'])->middleware('auth:sanctum');
+
+Route::middleware('auth:sanctum')->get('/student-attendances', [StudentAttendanceController::class, 'index']);
+
+Route::middleware('auth:sanctum')->get('/class-lists', [ClassListController::class, 'index']);
+
+Route::middleware('auth:sanctum')->get('/class-lists/{class_list_id}', [ClassListController::class, 'show']);
+
+Route::middleware('auth:sanctum')->get('/students/{student_id}', [StudentController::class, 'show']);

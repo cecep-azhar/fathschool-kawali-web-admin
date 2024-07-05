@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Department;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
@@ -41,6 +42,14 @@ class AuthController extends Controller
 
         $user->department = $department->name ?? null;
 
+        activity()
+        ->useLog('default')
+        ->causedBy($user->id )
+        ->event('login')
+        ->withProperties(['ip' => $request->ip(),
+                          'user' => $user->username  ])
+        ->log('User Login');
+
         return response(['user' => $user, 'token' => $token], 200);
     }
 
@@ -61,8 +70,18 @@ class AuthController extends Controller
         $user->face_embedding = $face_embedding;
         $user->save();
 
+        $user = $request->user();
+
+        activity()
+        ->useLog('default')
+        ->causedBy(auth()->user())
+        ->event('updateFace')
+        ->withProperties(['ip' => $request->ip(),
+                          'user' => $user->username ])
+        ->log('User Update Face Data');
+
         return response([
-            'message' => 'Profile updated',
+            'message' => 'Face updated',
             'user' => $user,
         ], 200);
     }
@@ -83,12 +102,32 @@ class AuthController extends Controller
         $user->password = Hash::make($request->password);
         $user->save();
 
+        $user = $request->user();
+
+        activity()
+        ->useLog('default')
+        ->causedBy(auth()->user())
+        ->event('updatePassword')
+        ->withProperties(['ip' => $request->ip(),
+                          'user' => $user->username ])
+        ->log('User Update New Password');
+
         return response(['message' => 'Password reset successfully'], 200);
     }
 
     //logout
     public function logout(Request $request)
     {
+        $user = $request->user();
+
+        activity()
+        ->useLog('default')
+        ->causedBy(auth()->user())
+        ->event('logout')
+        ->withProperties(['ip' => $request->ip(),
+                          'user' => $user->username ])
+        ->log('User Logout');
+
         $request->user()->currentAccessToken()->delete();
 
         return response(['message' => 'Logged out'], 200);
@@ -112,6 +151,16 @@ class AuthController extends Controller
         // $user->face_embedding = $face_embedding;
         $user->save();
 
+        $user = $request->user();
+
+        activity()
+        ->useLog('default')
+        ->causedBy(auth()->user())
+        ->event('updateProfile')
+        ->withProperties(['ip' => $request->ip(),
+                          'user' => $user->username ])
+        ->log('User Update Profile');
+
         return response([
             'message' => 'Profile updated',
             'user' => $user,
@@ -127,6 +176,16 @@ class AuthController extends Controller
         $user = $request->user();
         $user->fcm_token = $request->fcm_token;
         $user->save();
+
+        $user = $request->user();
+
+        activity()
+        ->useLog('default')
+        ->causedBy(auth()->user())
+        ->event('updateFcmToken')
+        ->withProperties(['ip' => $request->ip(),
+                          'user' => $user->username ])
+        ->log('User Update FCM Token');
 
         return response([
             'message' => 'FCM token updated',

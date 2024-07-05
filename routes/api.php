@@ -6,6 +6,7 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Api\ClassListController;
 use App\Http\Controllers\Api\StudentAttendanceController;
 use App\Http\Controllers\Api\StudentController;
+use Spatie\Activitylog\Models\Activity;
 
 /*
 |--------------------------------------------------------------------------
@@ -74,27 +75,39 @@ Route::get('/journal/{id}', [App\Http\Controllers\Api\JournalController::class, 
 Route::post('/update-profile', [App\Http\Controllers\Api\AuthController::class, 'updateProfile'])->middleware('auth:sanctum');
 
 Route::get('/learning-lessons', [App\Http\Controllers\Api\LearningLessonController::class, 'getLessonsByTeacher'])->middleware('auth:sanctum');
+
 //update face
 Route::post('/update-face', [App\Http\Controllers\Api\AuthController::class, 'updateFace'])->middleware('auth:sanctum');
 
 //notification
 Route::post('/notification', [App\Http\Controllers\Api\NotificationController::class, 'notification'])->middleware('auth:sanctum');
 
-Route::middleware(['log.activity'])->group(function () {
-    Route::get('/example', [ExampleController::class, 'index']);
-});
+// Route::middleware(['log.activity'])->group(function () {
+//     Route::get('/example', [ExampleController::class, 'index']);
+// });
 
 //update fcm token
 Route::post('/update-fcm-token', [App\Http\Controllers\Api\AuthController::class, 'updateFcmToken'])->middleware('auth:sanctum');
 
-Route::get('/activity-logs', [ActivityLogController::class, 'activityLogs'])->middleware('auth:sanctum');
+//activity example
+Route::get('/activity-example', [ActivityLogController::class, 'index'])->middleware('auth:sanctum');
 
+//api attendances
 Route::get('/api-attendances', [App\Http\Controllers\Api\AttendanceController::class, 'index'])->middleware('auth:sanctum');
 
+//student attendances
 Route::middleware('auth:sanctum')->get('/student-attendances', [StudentAttendanceController::class, 'index']);
 
+//class lists
 Route::middleware('auth:sanctum')->get('/class-lists', [ClassListController::class, 'index']);
 
+//class lists by id
 Route::middleware('auth:sanctum')->get('/class-lists/{class_list_id}', [ClassListController::class, 'show']);
 
+//
 Route::middleware('auth:sanctum')->get('/students/{student_id}', [StudentController::class, 'show']);
+
+Route::get('/activity-logs', function () {
+    $logs = Activity::select('id', 'causer_id', 'description', 'created_at')->get();
+    return response()->json($logs);
+});

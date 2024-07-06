@@ -15,9 +15,10 @@ class ClassListController extends Controller
      */
     public function index()
     {
-        $classLists = ClassList::withCount('studentLists')
-            ->get(['id', 'name']);
+        // Ambil data class lists dengan count dari student lists dan kolom order
+        $classLists = ClassList::withCount('studentLists')->orderBy('order')->get(['id', 'name', 'order']);
 
+        // Map hasil untuk menyesuaikan format
         $result = $classLists->map(function($classList) {
             return [
                 'id' => $classList->id,
@@ -26,8 +27,12 @@ class ClassListController extends Controller
             ];
         });
 
+        // Kembalikan sebagai respons JSON
         return response()->json($result);
     }
+
+
+
 
     /**
      * Display the specified class with its students.

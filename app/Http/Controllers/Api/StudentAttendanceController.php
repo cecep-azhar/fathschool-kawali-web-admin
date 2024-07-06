@@ -17,16 +17,39 @@ class StudentAttendanceController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user();
+        // $user = $request->user();
 
-        if ($user->role != 'Teacher') {
+        // if ($user->role != 'Teacher') {
+        //     return response()->json(['error' => 'Unauthorized'], 403);
+        // }
+
+        // $attendances = StudentAttendance::where('teacher_id', $user->id)
+        //                 ->with(['student', 'subject'])
+        //                 ->get();
+
+        // return response()->json($attendances);
+
+        $date = $request->input('date');
+
+        $currentUser = $request->user();
+
+        $query = StudentAttendance::where('teacher_id', $currentUser->id)
+                ->with(['student', 'subject'])
+                ->get();
+
+        if ($date) {
+            $query->where('date', $date);
+        }
+
+        if ($currentUser->role != 'Teacher') {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $attendances = StudentAttendance::where('teacher_id', $user->id)
-                        ->with(['student', 'subject'])
-                        ->get();
+        $attendance = $query->get();
 
-        return response()->json($attendances);
+        return response([
+            'message' => 'Success',
+            'data' => $attendance
+        ], 200);
     }
 }

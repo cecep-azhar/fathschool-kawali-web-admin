@@ -7,6 +7,7 @@ use App\Models\Journal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class JournalController extends Controller
 {

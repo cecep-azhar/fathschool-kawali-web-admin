@@ -28,7 +28,7 @@ class ResetPasswordMobile
         ]);
 
         $curl = curl_init();
-        $link = 'https://wa.fath.my.id/send-message?api_key=VNDDEZ5KBWDQGl5XBTXv9pW2Y6GpNn&sender=6289635850446&number=' . $user->phone . '&message=Password Baru Anda:' . $code;
+        $link = 'https://wa.fath.my.id/send-message?api_key=VNDDEZ5KBWDQGl5XBTXv9pW2Y6GpNn&sender=6289635850446&number=' . $user->phone . '&message=PasswordAnda:' . $code;
         curl_setopt_array($curl, array(
             CURLOPT_URL => $link,
             CURLOPT_RETURNTRANSFER => true,

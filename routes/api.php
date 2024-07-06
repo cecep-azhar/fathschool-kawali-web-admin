@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\Api\ApiUserIdController;
 use App\Http\Controllers\Api\ClassListController;
 use App\Http\Controllers\Api\StudentAttendanceController;
 use App\Http\Controllers\Api\StudentController;
@@ -113,3 +114,5 @@ Route::get('/activity-logs', function () {
     $logs = Activity::select('id', 'causer_id', 'description', 'created_at')->get();
     return response()->json($logs);
 });
+
+Route::get('/userid', [ApiUserIdController::class, 'show'])->middleware('auth:sanctum');

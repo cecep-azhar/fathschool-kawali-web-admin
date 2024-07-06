@@ -25,14 +25,15 @@ class StudentAttendanceController extends Controller
         }
 
         // Ambil data kehadiran siswa berdasarkan guru (teacher_id)
-        $attendances = StudentAttendance::where('teacher_id', $currentUser->id)
-            ->with(['student:id,name', 'subject:id,name'])
-            ->get();
+        $query = StudentAttendance::where('teacher_id', $currentUser->id)
+            ->with(['student:id,name', 'subject:id,name']);
 
         // Jika tanggal (date) spesifik diberikan, filter berdasarkan tanggal
         if ($date) {
-            $attendances->where('date', $date);
+            $query->where('date', $date);
         }
+
+        $attendances = $query->get();
 
         // Cek jika tidak ada data kehadiran
         if ($attendances->isEmpty()) {
@@ -68,12 +69,13 @@ class StudentAttendanceController extends Controller
             $classListId = StudentList::where('student_id', $attendance->student_id)->value('class_list_id');
 
             // Ambil nama kelas dari class_lists
-            $className = ClassList::where('id', $classListId)->get();
+            $className = ClassList::where('id', $classListId)->value('name');
 
             return [
                 'attendance' => $attendance,
                 'class' => $className,
                 'date' => $attendance->date,
+                'status' => $attendance->status,
             ];
         });
 

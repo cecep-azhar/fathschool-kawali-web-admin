@@ -7,6 +7,7 @@ use App\Models\Journal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class JournalController extends Controller
 {
@@ -18,7 +19,7 @@ class JournalController extends Controller
             'time' => 'required|date_format:H:i:s',
             'description' => 'required|string',
             'img' => 'required|string',
-            'user_id' => 'required|exists:users,id',
+            // 'user_id' => 'required|exists:users,id',
             'class_lists' => 'required|string',
         ]);
 
@@ -27,7 +28,7 @@ class JournalController extends Controller
         $journal->time = $data['time'];
         $journal->description = $data['description'];
         $journal->img = $data['img'];
-        $journal->user_id = $data['user_id'];
+        $journal->user_id = Auth::id();
         $journal->class_lists = $data['class_lists'];
         $journal->security_code = Str::random(10);
         $journal->security_code_expiration = Carbon::now()->addHour();

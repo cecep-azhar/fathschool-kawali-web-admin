@@ -69,7 +69,7 @@ class StudentAttendanceController extends Controller
             $classListId = StudentList::where('student_id', $attendance->student_id)->value('class_list_id');
 
             // Ambil nama kelas dari class_lists
-            $className = ClassList::where('id', $classListId)->value('name');
+            $className = ClassList::where('id', $classListId)->get();
 
             return [
                 'attendance' => $attendance,

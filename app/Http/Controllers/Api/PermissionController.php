@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Api\PermissionAttendance;
+use App\Models\Leave;
 
 class PermissionController extends Controller
 {
 
     public function index(Request $request)
     {
-        $School = PermissionAttendance::where('user_id', $request->user()->id)->orderBy('id', 'desc')->get();
+        $School = Leave::where('user_id', $request->user()->id)->orderBy('id', 'desc')->get();
 
         if ($School) {
             return response()->json($School, 200);

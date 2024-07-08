@@ -12,7 +12,7 @@ class PermissionController extends Controller
 
     public function index(Request $request)
     {
-        $School = Leave::where('user_id', $request->user()->id)->orderBy('id', 'desc')->get();
+        $School = PermissionAttendance::where('user_id', $request->user()->id)->orderBy('id', 'desc')->get();
 
         if ($School) {
             return response()->json($School, 200);

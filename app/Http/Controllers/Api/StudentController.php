@@ -21,6 +21,7 @@ class StudentController extends Controller
                        ->with(['studentList', 'parents'])
                        ->firstOrFail();
 
+
         $studentDetails = [
             'name' => $student->name,
             'address' => $student->address,

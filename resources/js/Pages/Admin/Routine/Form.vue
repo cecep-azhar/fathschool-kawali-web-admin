@@ -36,7 +36,7 @@
                                     :class="$page.props.errors.class ? 'border-custom ' : ''" v-model="form.class"
                                     :close-on-select="true" :can-clear="false" :searchable="true" :create-option="false"
                                     placeholder="Select a course"
-                                    :options="courses_all.map(item => ({ value: item.id, label: item.name }))"
+                                    :options="courses_all.map(item => ({ value: item.course_id, label: item.name }))"
                                     autocomplete="off" />
                                 <input-error :error="$page.props.errors.class" />
                             </div>

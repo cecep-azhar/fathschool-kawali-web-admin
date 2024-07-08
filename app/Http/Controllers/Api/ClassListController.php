@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Api\ClassList;
+use App\Models\Course;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class ClassListController extends Controller
@@ -15,15 +17,20 @@ class ClassListController extends Controller
      */
     public function index()
     {
-        // Ambil data class lists dengan count dari student lists dan kolom order
-        $classLists = ClassList::withCount('studentLists')->orderBy('order')->get(['id', 'name', 'order']);
+        // Ambil semua course
+        $courses = Course::all();
 
-        // Map hasil untuk menyesuaikan format
-        $result = $classLists->map(function($classList) {
+        // Map hasil untuk menyesuaikan format dan menghitung jumlah pengguna
+        $result = $courses->map(function($course) {
+            // Hitung jumlah pengguna yang terdaftar di course tertentu
+            $userCount = User::active()->student()->whereHas('courses', function($query) use ($course) {
+                $query->where('course_id', $course->id);
+            })->count();
+
             return [
-                'id' => $classList->id,
-                'name' => $classList->name,
-                'student_count' => $classList->student_lists_count,
+                'id' => $course->id,
+                'name' => $course->name,
+                'total_users' => $userCount,
             ];
         });
 
@@ -34,30 +41,44 @@ class ClassListController extends Controller
 
 
 
-    /**
-     * Display the specified class with its students.
-     *
-     * @param  int  $class_list_id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($class_list_id)
-    {
-        $classList = ClassList::with('studentLists.student')
-            ->findOrFail($class_list_id);
 
-        $students = $classList->studentLists->map(function($studentList) {
+    public function show($courseId)
+    {
+        // Ambil course berdasarkan courseId
+        $course = Course::find($courseId);
+
+        // Jika course tidak ditemukan, kembalikan respons error
+        if (!$course) {
+            return response()->json(['error' => 'Course not found'], 404);
+        }
+
+        // Ambil pengguna yang terdaftar di course tertentu
+        $users = User::active()->student()->whereHas('courses', function($query) use ($courseId) {
+            $query->where('course_id', $courseId);
+        })->get();
+
+        // Map hasil untuk menyesuaikan format
+        $usersResult = $users->map(function($user) {
             return [
-                'id' => $studentList->student->id,
-                'name' => $studentList->student->name,
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
             ];
         });
 
+        // Buat hasil akhir yang menyertakan data course dan pengguna
         $result = [
-            'class_id' => $classList->id,
-            'class_name' => $classList->name,
-            'students' => $students,
+            'course' => [
+                'id' => $course->id,
+                'name' => $course->name
+            ],
+            'users' => $usersResult,
         ];
 
+        // Kembalikan sebagai respons JSON
         return response()->json($result);
     }
+
+
+
 }

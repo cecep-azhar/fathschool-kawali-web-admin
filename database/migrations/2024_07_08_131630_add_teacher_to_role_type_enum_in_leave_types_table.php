@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
@@ -12,8 +14,7 @@ return new class extends Migration
      */
     public function up()
     {
-        // Ganti ENUM menggunakan raw SQL
-        DB::statement("ALTER TABLE leave_types MODIFY role_type ENUM('Student', 'Teacher', 'Parent', 'Admin') NOT NULL");
+        DB::statement("ALTER TABLE `leave_types` MODIFY `role_type` ENUM('student', 'staff', 'teacher')");
     }
 
     /**
@@ -23,7 +24,6 @@ return new class extends Migration
      */
     public function down()
     {
-        // Kembalikan ke ENUM asli menggunakan raw SQL
-        DB::statement("ALTER TABLE leave_types MODIFY role_type ENUM('student', 'staff') NOT NULL");
+        DB::statement("ALTER TABLE `leave_types` MODIFY `role_type` ENUM('student', 'staff')");
     }
 };

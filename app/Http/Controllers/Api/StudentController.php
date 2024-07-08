@@ -21,6 +21,9 @@ class StudentController extends Controller
                        ->with(['studentList', 'parents'])
                        ->firstOrFail();
 
+        if (!$student) {
+            return response()->json('User Not Found', 404);
+        }
 
         $studentDetails = [
             'name' => $student->name,
@@ -36,6 +39,10 @@ class StudentController extends Controller
             }),
         ];
 
-        return response()->json($studentDetails);
+        if ($studentDetails) {
+            return response()->json($studentDetails, 200);
+        } else {
+            return response()->json(['message' => 'Student Not Found'], 403);
+        }
     }
 }

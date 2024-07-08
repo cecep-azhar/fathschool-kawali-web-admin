@@ -18,6 +18,13 @@
                             class="py-2 ml-2 w-full text-sm font-medium text-gray-900 dark:text-gray-300" value="Staff"
                             :required="false" />
                     </div>
+                    <div class="w-full rounded-lg flex items-center pl-4 border border-gray-200 dark:border-gray-700">
+                        <input value="teacher" id="teacher" type="radio" v-model="form.role_type" name="role_type"
+                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                        <global-label for="teacher"
+                            class="py-2 ml-2 w-full text-sm font-medium text-gray-900 dark:text-gray-300" value="Teacher"
+                            :required="false" />
+                    </div>
                 </div>
                 <input-error :error="$page.props.errors.role_type" />
             </div>

@@ -4,6 +4,7 @@ namespace App\Models\Api;
 
 use App\Models\User;
 use App\Models\Api\ClassList;
+use App\Models\Course;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -19,7 +20,7 @@ class StudentList extends Model
 
     public function classList()
     {
-        return $this->belongsTo(ClassList::class);
+        return $this->belongsTo(Course::class);
     }
 
     public function student()

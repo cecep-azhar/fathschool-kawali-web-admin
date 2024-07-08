@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Api\StudentList;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -32,6 +33,11 @@ class Course extends Model
     public function users()
     {
         return $this->hasMany(User::class, 'course_id')->with('user');
+    }
+
+    public function usersCourse()
+    {
+        return $this->belongsToMany(User::class, 'student_lists', 'course_id', 'student_id');
     }
 
     // One to many relation with assignment model

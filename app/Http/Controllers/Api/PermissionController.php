@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Api\PermissionAttendance;
+use App\Models\Attendance;
 use App\Models\Leave;
 
 class PermissionController extends Controller
@@ -12,7 +13,7 @@ class PermissionController extends Controller
 
     public function index(Request $request)
     {
-        $School = PermissionAttendance::where('user_id', $request->user()->id)->orderBy('id', 'desc')->get();
+        $School = Leave::where('user_id', $request->user()->id)->orderBy('id', 'desc')->get();
 
         if ($School) {
             return response()->json($School, 200);
@@ -24,35 +25,60 @@ class PermissionController extends Controller
     //create
     public function store(Request $request)
     {
+        // Validasi request
         $request->validate([
-            'date' => 'required',
-            'reason' => 'required',
+            'leave_type_id' => [
+                'required',
+                'integer',
+                function ($attribute, $value, $fail) {
+                    // Validasi leave_type_id berdasarkan role_type teacher
+                    $leaveType = \App\Models\LeaveType::where('id', $value)->where('role_type', 'teacher')->first();
+                    if (!$leaveType) {
+                        $fail('The selected leave type is invalid for teachers.');
+                    }
+                },
+            ],
+            'title' => 'required|string|max:255',
+            'start' => 'required|date',
+            'end' => 'required|date',
+            'status' => 'required|in:pending,accepted,rejected',
+            'description' => 'required|string',
+            'rejected_cause' => 'nullable|string',
+            'image' => 'nullable|image|max:2048', // validasi untuk gambar, max 2MB
         ]);
 
-        $permission = new PermissionAttendance();
-        $permission->user_id = $request->user()->id;
-        $permission->date_permission = $request->date;
-        $permission->reason = $request->reason;
-        $permission->is_approved = 0;
+        // Buat instance Leave baru
+        $leave = new Leave();
+        $leave->user_id = $request->user()->id;
+        $leave->leave_type_id = $request->leave_type_id;
+        $leave->title = $request->title;
+        $leave->start = $request->start;
+        $leave->end = $request->end;
+        $leave->status = $request->status;
+        $leave->description = $request->description;
+        $leave->rejected_cause = $request->rejected_cause;
 
+        // Penanganan file gambar
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $image->storeAs('public/permissions', $image->hashName());
-            $permission->image = $image->hashName();
+            $image->storeAs('public/leaves', $image->hashName());
+            $leave->image = $image->hashName();
         }
 
-        $permission->save();
+        // Simpan data ke database
+        $leave->save();
 
+        // Buat aktivitas log
         $user = $request->user();
-
         activity()
-        ->useLog('default')
-        ->causedBy(auth()->user())
-        ->event('makePermisssion')
-        ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username ])
-        ->log('User Make a Permission');
+            ->useLog('default')
+            ->causedBy(auth()->user())
+            ->event('makePermission')
+            ->withProperties(['ip' => $request->ip(), 'user' => $user->username])
+            ->log('User made a leave request');
 
-        return response()->json(['message' => 'Permission created successfully'], 201);
+        // Kembalikan respons
+        return response()->json(['message' => 'Leave request created successfully'], 201);
     }
+
 }

@@ -41,7 +41,8 @@ class User extends Authenticatable
         'department',
         'face_embedding',
         'image_url',
-        'fcm_token'
+        'fcm_token',
+        'id_reference'
     ];
 
     /**
@@ -336,6 +337,16 @@ class User extends Authenticatable
     public function learningLessons()
     {
         return $this->hasMany(LearningLesson::class);
+    }
+
+    public function classRoutine()
+    {
+        return $this->hasMany(ClassRoutine::class);
+    }
+
+    public function coursesUser()
+    {
+        return $this->belongsToMany(Course::class, 'student_lists', 'student_id', 'course_id');
     }
 
     public function studentList()

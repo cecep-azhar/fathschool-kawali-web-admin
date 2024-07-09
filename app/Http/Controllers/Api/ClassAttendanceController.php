@@ -46,7 +46,7 @@ class ClassAttendanceController extends Controller
     {
         // Validate class_id
         $request->validate([
-            'course_id' => 'required|exists:class_lists,id',
+            'course_id' => 'required',
         ]);
 
         // Get last attendance for the class and user

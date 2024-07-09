@@ -8,7 +8,9 @@ use App\Http\Controllers\Api\ApiUserIdController;
 use App\Http\Controllers\Api\ClassListController;
 use App\Http\Controllers\Api\StudentAttendanceController;
 use App\Http\Controllers\Api\StudentController;
+use App\Http\Controllers\Api\TotalController;
 use Spatie\Activitylog\Models\Activity;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -121,3 +123,5 @@ Route::get('/userid', [ApiUserIdController::class, 'show'])->middleware('auth:sa
 Route::get('/courses', [CourseController::class, 'all']);
 Route::get('/course/{id}/print', [CourseController::class, 'printQRCode']);
 
+//display dasboard
+Route::get('/get-display-dashboard', [App\Http\Controllers\Api\DisplayDashboardController::class, 'index']);

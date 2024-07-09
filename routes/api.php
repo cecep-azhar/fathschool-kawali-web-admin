@@ -7,7 +7,9 @@ use App\Http\Controllers\Api\ApiUserIdController;
 use App\Http\Controllers\Api\ClassListController;
 use App\Http\Controllers\Api\StudentAttendanceController;
 use App\Http\Controllers\Api\StudentController;
+use App\Http\Controllers\Api\TotalController;
 use Spatie\Activitylog\Models\Activity;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -116,3 +118,6 @@ Route::get('/activity-logs', function () {
 });
 
 Route::get('/userid', [ApiUserIdController::class, 'show'])->middleware('auth:sanctum');
+
+//display dasboard
+Route::get('/get-display-dashboard', [App\Http\Controllers\Api\DisplayDashboardController::class, 'index']);

@@ -13,13 +13,13 @@ class ClassAttendanceController extends Controller
     {
         // Validate class_id
         $request->validate([
-            'class_lists_id' => 'required|exists:class_lists,id',
+            'course_id' => 'required',
         ]);
 
         // Save new attendance
         $attendance = new ClassAttendance;
         $attendance->user_id = $request->user()->id;
-        $attendance->class_lists_id = $request->class_lists_id;
+        $attendance->course_id = $request->course_id;
         $attendance->date = date('Y-m-d');
         $attendance->time_in = date('H:i:s');
         $attendance->save();
@@ -46,12 +46,12 @@ class ClassAttendanceController extends Controller
     {
         // Validate class_id
         $request->validate([
-            'class_lists_id' => 'required|exists:class_lists,id',
+            'course_id' => 'required|exists:class_lists,id',
         ]);
 
         // Get last attendance for the class and user
         $attendance = ClassAttendance::where('user_id', $request->user()->id)
-            ->where('class_lists_id', $request->class_lists_id)
+            ->where('course_id', $request->course_id)
             ->whereNotNull('time_in')
             ->whereNull('time_out')
             ->latest()

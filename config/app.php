@@ -202,6 +202,8 @@ return [
         App\Providers\JetstreamServiceProvider::class,
         App\Providers\CurrencyServiceProvider::class,
 
+        SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class,
+
     ],
 
     /*
@@ -219,6 +221,7 @@ return [
         // 'ExampleClass' => App\Example\ExampleClass::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         'Rave' => KingFlamez\Rave\Facades\Rave::class,
+        'QrCode' => SimpleSoftwareIO\QrCode\Facades\QrCode::class,
     ])->toArray(),
 
 ];

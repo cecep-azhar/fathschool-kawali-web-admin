@@ -311,6 +311,11 @@ class User extends Authenticatable
         return $this->hasMany(UserCourse::class, 'user_id');
     }
 
+    public function course()
+    {
+        return $this->belongsToMany(Course::class, 'user_courses', 'user_id', 'course_id');
+    }
+
     /**
      * One to many relation with user profile model
      * to get all child under a parent user

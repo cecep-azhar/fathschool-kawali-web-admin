@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Academic\CourseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ActivityLogController;
@@ -116,3 +117,7 @@ Route::get('/activity-logs', function () {
 });
 
 Route::get('/userid', [ApiUserIdController::class, 'show'])->middleware('auth:sanctum');
+
+Route::get('/courses', [CourseController::class, 'all']);
+Route::get('/course/{id}/print', [CourseController::class, 'printQRCode']);
+

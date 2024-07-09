@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Subject;
 use App\Services\Admin\Subject\SubjectChatGroupService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Http\Request;
+
 
 class CourseController extends Controller
 {
@@ -70,6 +73,35 @@ class CourseController extends Controller
         $this->flashSuccess('Course created successfully.');
 
         return back();
+    }
+
+    public function all()
+    {
+        $courses = Course::all();
+
+        foreach ($courses as $course) {
+            $course->qr_code = $this->generateQRCode($course->id);
+        }
+
+        return response()->json(['courses' => $courses]);
+    }
+
+    public function generateQRCode($id)
+    {
+        $course = Course::findOrFail($id);
+        $qrCode = QrCode::size(200)->generate('Course ID: ' . $course->id);
+
+        return $qrCode;
+    }
+
+    public function printQRCode($id)
+    {
+        $course = Course::findOrFail($id);
+        $qrCode = QrCode::size(200)->generate('Course ID: ' . $course->id);
+
+        $pdf = Pdf::loadView('pdf.qr_code', compact('qrCode'));
+
+        return $pdf->download('course_qr.pdf');
     }
 
     /**

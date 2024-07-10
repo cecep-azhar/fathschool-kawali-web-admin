@@ -78,6 +78,7 @@ Route::get('/journal/{id}', [App\Http\Controllers\Api\JournalController::class, 
 //update profile
 Route::post('/update-profile', [App\Http\Controllers\Api\AuthController::class, 'updateProfile'])->middleware('auth:sanctum');
 
+//learning lessons
 Route::get('/learning-lessons', [App\Http\Controllers\Api\LearningLessonController::class, 'getLessonsByTeacher'])->middleware('auth:sanctum');
 
 //update face
@@ -111,11 +112,13 @@ Route::middleware('auth:sanctum')->get('/class-lists/{class_list_id}', [ClassLis
 //
 Route::middleware('auth:sanctum')->get('/students/{student_id}', [StudentController::class, 'show']);
 
+//forgot password
 Route::post('forgot-password', [App\Http\Controllers\Api\AuthController::class, 'password']);
 
+//log activity
 Route::get('/activity-logs', function () {
     $logs = Activity::select('id', 'causer_id', 'description', 'created_at')->get();
-    return response()->json($logs);
+    return response($logs);
 });
 
 Route::get('/userid', [ApiUserIdController::class, 'show'])->middleware('auth:sanctum');

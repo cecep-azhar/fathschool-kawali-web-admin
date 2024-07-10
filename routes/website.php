@@ -118,6 +118,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::post('student/file/bulk/register', 'fromFileBulk')->name('student.file.bulk');
             Route::get('student/file/download', 'fileDownload')->name('student.file.download');
         });
+        Route::controller(CourseController::class)->group(function () {
+            Route::get('/qr/class', 'getAllClassesWithQrCodes')->name('class.qr.all');
+        });
         Route::resource('admission/form', AdmissionFormController::class);
         Route::post('admission/form/status/{field}', [AdmissionFormController::class, 'statusChange'])->name('form.status.change');
         // Sms Routes

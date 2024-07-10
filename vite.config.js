@@ -6,7 +6,7 @@ export default defineConfig({
     plugins: [
         laravel({
             input: 'resources/js/app.js',
-            refresh: true, // Pastikan refresh diaktifkan
+            refresh: true,
         }),
         vue({
             template: {
@@ -17,9 +17,4 @@ export default defineConfig({
             },
         }),
     ],
-    server: {
-        hmr: {
-            host: 'localhost', // Ganti sesuai kebutuhan
-        },
-    },
 });

@@ -75,34 +75,26 @@ class CourseController extends Controller
         return back();
     }
 
-    public function all()
-    {
-        $courses = Course::all();
+    public function getAllClassesWithQrCodes()
+{
+    $classes = Course::all();
 
-        foreach ($courses as $course) {
-            $course->qr_code = $this->generateQRCode($course->id);
-        }
+    $coursesWithQrCodes = $classes->map(function ($class) {
+        // Generate QR Code
+        $qrCode = QrCode::size(300)->generate($class->id);
 
-        return response()->json(['courses' => $courses]);
-    }
+        // Encode QR Code to base64
+        $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($qrCode);
 
-    public function generateQRCode($id)
-    {
-        $course = Course::findOrFail($id);
-        $qrCode = QrCode::size(200)->generate('Course ID: ' . $course->id);
+        // Add QR Code to class object
+        $class->qr_code = $qrCodeBase64;
 
-        return $qrCode;
-    }
+        return $class;
+    });
 
-    public function printQRCode($id)
-    {
-        $course = Course::findOrFail($id);
-        $qrCode = QrCode::size(200)->generate('Course ID: ' . $course->id);
+    return inertia('CoursesQrCodes', ['courses' => $coursesWithQrCodes]);
+}
 
-        $pdf = Pdf::loadView('pdf.qr_code', compact('qrCode'));
-
-        return $pdf->download('course_qr.pdf');
-    }
 
     /**
      * Update the specified resource in storage.

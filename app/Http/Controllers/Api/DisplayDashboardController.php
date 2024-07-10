@@ -26,18 +26,19 @@ class DisplayDashboardController extends Controller
         ->whereHas('user', function($query) {
             $query->where('role', 'teacher');
         })->count();
-
-        $percentageStudentAttendance = $totalStudent > 0 ? number_format(($totalStudentAttendance / $totalStudent) * 100) . '%' : '0%';
-        $percentageTeacherAttendance = $totalTeacher > 0 ? number_format(($totalTeacherAttendance / $totalTeacher) * 100) . '%' : '0%';
-
         
-        $totalTeacherAbsent = $totalTeacher - $totalTeacherAttendance;
         $totalStudentAbsent = $totalStudent - $totalStudentAttendance;
-
+        $totalTeacherAbsent = $totalTeacher - $totalTeacherAttendance;
+        
+        $studentAttendancePercentage = $totalStudent > 0 ? number_format(($totalStudentAttendance / $totalStudent) * 100) . '%' : '0%';
+        $teacherAttendancePercentage = $totalTeacher > 0 ? number_format(($totalTeacherAttendance / $totalTeacher) * 100) . '%' : '0%';
+        
         // Kelas
         $totalClass = Course::count();
         $totalClassAbsent = ClassAttendance::count();
 
+        $classAttendancePercentage = $totalClass > 0 ? number_format(($totalClassAbsent / $totalClass) * 100) . '%' : '0%';
+        
         $totalEmptyClass = $totalClass - $totalClassAbsent;
 
         $response = [
@@ -49,8 +50,9 @@ class DisplayDashboardController extends Controller
             'total_teacher_absent' => $totalTeacherAbsent,
             'total_student_absent' => $totalStudentAbsent,
             // Persentase
-            'percentage_student_attendance' => $percentageStudentAttendance,
-            'percentage_teacher_attendance' => $percentageTeacherAttendance,
+            'student_attendance_percentage' => $studentAttendancePercentage,
+            'teacher_attendance_percentage' => $teacherAttendancePercentage,
+            'class_attendance_percentage' => $classAttendancePercentage,
             // Kelas
             'total_class' => $totalClass,
             'total_class_absent' => $totalEmptyClass,

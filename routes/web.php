@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Academic\CourseController;
 use App\Http\Controllers\AuthDashboardController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\FrontendController;
@@ -132,6 +133,7 @@ Route::middleware([
 });
 
 Route::post('changeLang/{dir}', [LanguageController::class, 'changeLang'])->name('changeLang');
+Route::get('/courses/qr-codes', [CourseController::class, 'getAllClassesWithQrCodes'])->name('courses.qr-codes');
 
 include base_path('routes/auth.php');
 include base_path('routes/payment.php');

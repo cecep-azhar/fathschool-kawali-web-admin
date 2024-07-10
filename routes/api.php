@@ -120,8 +120,7 @@ Route::get('/activity-logs', function () {
 
 Route::get('/userid', [ApiUserIdController::class, 'show'])->middleware('auth:sanctum');
 
-Route::get('/courses', [CourseController::class, 'all']);
-Route::get('/course/{id}/print', [CourseController::class, 'printQRCode']);
+Route::get('/classes/qr-codes', [CourseController::class, 'getAllClassesWithQrCodes']);
 
 //display dasboard
 Route::get('/get-display-dashboard', [App\Http\Controllers\Api\DisplayDashboardController::class, 'index']);

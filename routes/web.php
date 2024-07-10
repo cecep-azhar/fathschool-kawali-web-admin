@@ -9,6 +9,7 @@ use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Setting\WebsiteSettingController;
+use App\Http\Controllers\Teacher\AttendanceController;
 use App\Models\Currency;
 use App\Models\Language;
 use App\Models\User;
@@ -134,6 +135,9 @@ Route::middleware([
 
 Route::post('changeLang/{dir}', [LanguageController::class, 'changeLang'])->name('changeLang');
 Route::get('/courses/qr-codes', [CourseController::class, 'getAllClassesWithQrCodes'])->name('courses.qr-codes');
+Route::get('teacher/attendance', [AttendanceController::class, 'index'])->name('teacher.attendance');
+Route::get('courses/{id}/print-qr-code', [CourseController::class, 'printQrCode'])->name('courses.printQrCode');
+
 
 include base_path('routes/auth.php');
 include base_path('routes/payment.php');

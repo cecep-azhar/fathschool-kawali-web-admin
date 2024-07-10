@@ -136,6 +136,12 @@
             {{ __("Notice Board") }}
         </NavLink>
     </li>
+    <li v-if="can('courses.qr-codes')" class="corseqr_board_section">
+        <NavLink :href="route('courses.qr-codes')" :active="route().current('courses.*')">
+            <QrCodeIcon class="w-5 h-5" />
+            {{ __("Class QR Codes") }}
+        </NavLink>
+    </li>
     <li class="text-xs uppercase mb-2 text-gray-500 pt-6 pl-2">
         {{ __('Students') }}
     </li>
@@ -232,7 +238,7 @@ import { Link } from '@inertiajs/inertia-vue3';
 
 import {
     AcademicCapIcon, PlusCircleIcon, CurrencyDollarIcon, ArrowUpIcon, CalendarIcon, ChevronDownIcon, EnvelopeIcon, RectangleStackIcon,
-    ChevronUpIcon, Cog8ToothIcon, DocumentPlusIcon, FlagIcon, QueueListIcon, UserIcon, VideoCameraIcon, SpeakerWaveIcon, HomeIcon, WalletIcon, UsersIcon, NewspaperIcon
+    ChevronUpIcon, Cog8ToothIcon, DocumentPlusIcon, FlagIcon, QueueListIcon, UserIcon, VideoCameraIcon, SpeakerWaveIcon, HomeIcon, WalletIcon, UsersIcon, NewspaperIcon, QrCodeIcon
 
 } from "@heroicons/vue/24/outline";
 import Shepherd from "shepherd.js";
@@ -261,6 +267,7 @@ export default {
         FlagIcon,
         HomeIcon,
         WalletIcon,
+        QrCodeIcon,
     },
     data() {
         return {
@@ -345,6 +352,20 @@ export default {
                     text: this.getOnboardingContent('notice_board_top_section', 'description'),
                     attachTo: {
                         element: ".notice_board_top_section",
+                        on: "bottom"
+                    },
+                    buttons: [
+                        {
+                            action: this.tourGoNext,
+                            text: "Next"
+                        }
+                    ]
+                },
+                {
+                    title: this.getOnboardingContent('corseqr_board_top_section', 'title'),
+                    text: this.getOnboardingContent('corseqr_board_top_section', 'description'),
+                    attachTo: {
+                        element: ".corseqr_board_top_section",
                         on: "bottom"
                     },
                     buttons: [
@@ -521,6 +542,20 @@ export default {
                     text: this.getOnboardingContent('notice_board_section', 'description'),
                     attachTo: {
                         element: ".notice_board_section",
+                        on: "right"
+                    },
+                    buttons: [
+                        {
+                            action: this.tourGoNext,
+                            text: "Next"
+                        }
+                    ]
+                },
+                {
+                    title: this.getOnboardingContent('courseqr_board_section', 'title'),
+                    text: this.getOnboardingContent('courseqr_board_section', 'description'),
+                    attachTo: {
+                        element: ".courseqr_board_section",
                         on: "right"
                     },
                     buttons: [

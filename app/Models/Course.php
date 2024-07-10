@@ -6,6 +6,7 @@ use App\Models\Api\StudentList;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Ramsey\Uuid\Uuid;
 
 class Course extends Model
 {
@@ -81,4 +82,5 @@ class Course extends Model
     {
         return $this->belongsToMany(Exam::class, 'course_result');
     }
+
 }

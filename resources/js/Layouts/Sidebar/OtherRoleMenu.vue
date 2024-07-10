@@ -120,10 +120,16 @@
             {{ __("Event List") }}
         </NavLink>
     </li>
-    <li v-if="can('notice-board.index')" class="notice_board_section">
+    <li v-if="can('notice-board.index')" class="corseqr_board_section">
         <NavLink :href="route('notice-board.index')" :active="route().current('notice-board.*')">
             <SpeakerWaveIcon class="w-6 h-6" />
             {{ __("Notice Board") }}
+        </NavLink>
+    </li>
+    <li v-if="can('courses.qr-codes')" class="notice_board_section">
+        <NavLink :href="route('courses.qr-codes')" :active="route().current('courses.*')">
+            <SpeakerWaveIcon class="w-5 h-5" />
+            {{ __("Course Qr Board") }}
         </NavLink>
     </li>
     <li v-if="can('student.index')">

@@ -9,6 +9,11 @@ use App\Services\Admin\Subject\SubjectChatGroupService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Http\Request;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\PngWriter;
+use Illuminate\Support\Facades\Storage;
+use Ramsey\Uuid\Uuid;
+use Illuminate\Support\Str;
 
 
 class CourseController extends Controller
@@ -38,18 +43,39 @@ class CourseController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function store(Request $request, SubjectChatGroupService $subjectChatGroupService)
     {
         abort_if(! userCan('academic.management'), 403);
 
         $request->validate([
             'name' => 'required|unique:courses,name',
+            'qr_code_id' => 'required|unique:courses,qr_code_id|max:10',
         ]);
 
         $course = Course::create([
             'name' => $request->name,
+            'qr_code_id' => $request->qr_code_id, // Save unique ID to database
             'has_multiple_subject' => $request->has_multiple_subject ?? 0,
         ]);
+
+        // Generate QR Code for the new course ID
+        $qrCode = Builder::create()
+            ->writer(new PngWriter())
+            ->data($request->qr_code_id) // Use the QR code ID from the request
+            ->size(150)
+            ->build();
+
+        $qrCodePath = 'public/qr_codes/' . $request->qr_code_id . '.png';
+        Storage::put($qrCodePath, $qrCode->getString());
+
+        // Save the path to the QR Code in the database
+        $course->qr_code_path = $qrCodePath;
+        $course->save();
 
         if ($request->has_multiple_subject) {
             $subjects = $request->subjects;
@@ -75,25 +101,48 @@ class CourseController extends Controller
         return back();
     }
 
+
+
     public function getAllClassesWithQrCodes()
-{
-    $classes = Course::all();
+    {
+        abort_if(! userCan('academic.management'), 403);
+        // Ambil semua courses beserta path QR Code
+        $classes = Course::all(['id', 'qr_code_id', 'name', 'qr_code_path']);
 
-    $coursesWithQrCodes = $classes->map(function ($class) {
+        // Map melalui setiap kelas untuk menambahkan path QR Code
+        $coursesWithQrCodes = $classes->map(function ($class) {
+            // Ambil path QR Code dari database
+            $qrCodePath = Storage::url($class->qr_code_path);
+
+            // Tambahkan path QR Code ke objek class
+            $class->qr_code_url = $qrCodePath;
+
+            return $class;
+        });
+
+        return inertia('CoursesQrCodes', ['courses' => $coursesWithQrCodes]);
+    }
+
+    public function printQrCode($id)
+    {
+        $course = Course::findOrFail($id);
+
         // Generate QR Code
-        $qrCode = QrCode::size(300)->generate($class->id);
+        $qrCode = Builder::create()
+            ->writer(new PngWriter())
+            ->data($course->id)
+            ->size(300)
+            ->build();
 
-        // Encode QR Code to base64
-        $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($qrCode);
+        // Create PDF
+        $pdf = Pdf::loadView('qr_code', [
+            'course' => $course,
+            'qrCode' => $qrCode->getString()
+        ]);
 
-        // Add QR Code to class object
-        $class->qr_code = $qrCodeBase64;
-
-        return $class;
-    });
-
-    return inertia('CoursesQrCodes', ['courses' => $coursesWithQrCodes]);
-}
+        // Download the PDF
+        return $pdf->download('course_qr_code.pdf');
+    }
 
 
     /**

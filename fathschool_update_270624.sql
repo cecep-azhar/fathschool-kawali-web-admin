@@ -1375,7 +1375,8 @@ INSERT INTO `permissions` (`id`, `name`, `guard_name`, `group_name`, `created_at
 (112, 'teacher.dashboard', 'web', 'others', '2024-03-29 10:16:37', '2024-03-29 10:16:37'),
 (113, 'accountant.dashboard', 'web', 'others', '2024-03-29 10:16:37', '2024-03-29 10:16:37'),
 (114, 'parent.dashboard', 'web', 'others', '2024-03-29 10:16:37', '2024-03-29 10:16:37'),
-(115, 'student.dashboard', 'web', 'others', '2024-03-29 10:16:37', '2024-03-29 10:16:37');
+(115, 'student.dashboard', 'web', 'others', '2024-03-29 10:16:37', '2024-03-29 10:16:37')
+(116, 'courses.qr-codes', 'web', 'Class QR Codes', '2024-03-29 10:16:37', '2024-03-29 10:16:37');
 
 
 
@@ -1455,6 +1456,7 @@ INSERT INTO `role_has_permissions` (`permission_id`, `role_id`) VALUES
 (105, 1),
 (106, 1),
 (111, 1),
+(116, 1),
 (7, 2),
 (8, 2),
 (9, 2),

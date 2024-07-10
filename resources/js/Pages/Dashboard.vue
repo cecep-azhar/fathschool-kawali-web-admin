@@ -73,6 +73,11 @@
             <BellAlertIcon class="w-6 h-6" />
             {{ __("Notice Board") }}
         </NavLink>
+        <li v-if="can('courses.qr-codes')" class="corseqr_board_section">
+        <NavLink :href="route('courses.qr-codes')" :active="route().current('courses.qr-codes')">
+            <BellAlertIcon class="w-6 h-6" />
+            {{ __("Course Qr Board") }}
+        </NavLink>
     </li>
 </template>
 
@@ -327,6 +332,20 @@ export default {
                     text: this.getOnboardingContent('notice_board_section', 'description'),
                     attachTo: {
                         element: ".notice_board_section",
+                        on: "right"
+                    },
+                    buttons: [
+                        {
+                            action: this.tourGoNext,
+                            text: "Complete"
+                        }
+                    ]
+                },
+                {
+                    title: this.getOnboardingContent('courseqr_board_section', 'title'),
+                    text: this.getOnboardingContent('courseqr_board_section', 'description'),
+                    attachTo: {
+                        element: ".courseqr_board_section",
                         on: "right"
                     },
                     buttons: [

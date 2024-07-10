@@ -1,14 +1,14 @@
 <template>
-  <AppLayout :title="__('Class QR Codes')">
+  <AppLayout :title="__('Teacher Attendance')">
     <template #header>
-      {{ __('Class QR Codes') }}
+      {{ __('Teacher Attendance') }}
     </template>
     <Breadcrumb>
-      <BreadcrumbLink :title="__('All Courses')" :href="route('courses.qr-codes')" />
+      <BreadcrumbLink :title="__('All Attendance')" :href="route('teacher.attendance')" />
     </Breadcrumb>
     <div>
       <page-header class="flex-col sm:flex-row">
-        {{ __('All Courses') }}
+        {{ __('All Attendance') }}
         <template #content>
           <div class="flex flex-col sm:flex-row gap-4">
             <!-- Tambahkan tombol-tombol sesuai kebutuhan -->
@@ -20,28 +20,34 @@
       </div>
       <global-table>
         <template #head>
-          <th class="py-4 px-5">{{ __('Unique Id') }}</th>
           <th class="py-4 px-5">{{ __('Name') }}</th>
-          <th class="py-4 px-5">{{ __('QR Code') }}</th>
-          <th class="py-4 px-5">{{ __('Action') }}</th>
+          <th class="py-4 px-5">{{ __('Date') }}</th>
+          <th class="py-4 px-5">{{ __('Time In') }}</th>
+          <th class="py-4 px-5">{{ __('Time Out') }}</th>
+          <th class="py-4 px-5">{{ __('Latlon In') }}</th>
+          <th class="py-4 px-5">{{ __('Latlon Out') }}</th>
         </template>
         <template #body>
-          <template v-if="courses.length > 0">
-            <template v-for="course in courses" :key="course.id">
+          <template v-if="attendanceteacher.length > 0">
+            <template v-for="attendance in attendanceteacher" :key="attendance.id">
               <tr class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <td class="py-4 px-5 text-gray-900 dark:text-white">
-                  {{ course.qr_code_id }}
+                  {{ attendance.user.name  }}
                 </td>
                 <td class="py-4 px-5 text-gray-900 dark:text-white">
-                  {{ course.name }}
+                  {{ attendance.date }}
                 </td>
-                <td class="py-4 px-5">
-                  <img :src="course.qr_code_url" alt="QR Code">
+                <td class="py-4 px-5 text-gray-900 dark:text-white">
+                  {{ attendance.time_in }}
                 </td>
-                <td class="py-4 px-5">
-                  <button @click="printQrCode(course.id)" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-500 active:bg-blue-700 focus:outline-none focus:border-blue-700 focus:ring focus:ring-blue-200 disabled:opacity-25 transition">
-                    Print QR Code
-                  </button>
+                <td class="py-4 px-5 text-gray-900 dark:text-white">
+                  {{ attendance.time_out }}
+                </td>
+                <td class="py-4 px-5 text-gray-900 dark:text-white">
+                  {{ attendance.latlon_in }}
+                </td>
+                <td class="py-4 px-5 text-gray-900 dark:text-white">
+                  {{ attendance.latlon_out }}
                 </td>
               </tr>
             </template>
@@ -77,22 +83,16 @@ export default {
     NothingFound,
   },
   props: {
-    courses: {
+    attendanceteacher: {
       type: Array,
       required: true,
     },
   },
-  methods: {
-    printQrCode(courseId) {
-      const printUrl = `/courses/${courseId}/print-qr-code`;
-      window.open(printUrl, '_blank');
-    },
-  },
   setup(props) {
-    const courses = ref(props.courses);
+    const attendanceteacher = ref(props.attendanceteacher);
 
     return {
-      courses,
+      attendanceteacher,
     };
   },
 };

@@ -42,7 +42,8 @@ class JournalController extends Controller
         ->causedBy(auth()->user())
         ->event('postJournal')
         ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username ])
+                          'user' => $user->username,
+                          'time' => date('H:i:s')])
         ->log('User Post Journal');
 
         return response()->json($journal, 201);

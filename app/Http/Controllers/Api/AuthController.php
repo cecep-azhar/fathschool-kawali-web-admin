@@ -49,7 +49,8 @@ class AuthController extends Controller
         ->causedBy($user->id )
         ->event('login')
         ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username  ])
+                          'user' => $user->username,
+                          'time' => date('H:i:s')])
         ->log('User Login');
 
         return response(['user' => $user, 'token' => $token], 200);
@@ -79,7 +80,8 @@ class AuthController extends Controller
         ->causedBy(auth()->user())
         ->event('updateFace')
         ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username ])
+                          'user' => $user->username,
+                          'time' => date('H:i:s')])
         ->log('User Update Face Data');
 
         return response([
@@ -111,7 +113,8 @@ class AuthController extends Controller
         ->causedBy(auth()->user())
         ->event('updatePassword')
         ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username ])
+                          'user' => $user->username,
+                          'time' => date('H:i:s')])
         ->log('User Update New Password');
 
         return response(['message' => 'Password reset successfully'], 200);
@@ -127,7 +130,8 @@ class AuthController extends Controller
         ->causedBy(auth()->user())
         ->event('logout')
         ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username ])
+                          'user' => $user->username,
+                          'time' => date('H:i:s')])
         ->log('User Logout');
 
         $request->user()->currentAccessToken()->delete();
@@ -160,7 +164,8 @@ class AuthController extends Controller
         ->causedBy(auth()->user())
         ->event('updateProfile')
         ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username ])
+                          'user' => $user->username,
+                          'time' => date('H:i:s')])
         ->log('User Update Profile');
 
         return response([
@@ -186,7 +191,8 @@ class AuthController extends Controller
         ->causedBy(auth()->user())
         ->event('updateFcmToken')
         ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username ])
+                          'user' => $user->username,
+                          'time' => date('H:i:s')])
         ->log('User Update FCM Token');
 
         return response([

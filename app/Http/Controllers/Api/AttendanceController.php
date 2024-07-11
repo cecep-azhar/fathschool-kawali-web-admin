@@ -53,7 +53,9 @@ class AttendanceController extends Controller
         ->causedBy(auth()->user())
         ->event('checkin')
         ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username ])
+                          'user' => $user->username,
+                          'time' => date('H:i:s')])
+                          
         ->log('User Check In');
 
         return response([
@@ -109,7 +111,8 @@ class AttendanceController extends Controller
         ->causedBy(auth()->user())
         ->event('checkout')
         ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username ])
+                          'user' => $user->username,
+                          'time' => date('H:i:s')])
         ->log('User Check Out');
 
         return response([

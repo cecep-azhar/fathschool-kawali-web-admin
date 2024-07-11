@@ -31,7 +31,8 @@ class ClassAttendanceController extends Controller
         ->causedBy(auth()->user())
         ->event('Qrin')
         ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username ])
+                          'user' => $user->username,
+                          'time' => date('H:i:s')])
         ->log('User Qrin');
 
         return response([
@@ -73,7 +74,8 @@ class ClassAttendanceController extends Controller
         ->causedBy(auth()->user())
         ->event('Qrout')
         ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username ])
+                          'user' => $user->username,
+                          'time' => date('H:i:s')])
         ->log('User Qrout');
 
         return response([

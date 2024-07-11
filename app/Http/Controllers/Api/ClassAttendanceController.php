@@ -5,21 +5,30 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Api\ClassAttendance;
+use App\Models\Course;
 
 class ClassAttendanceController extends Controller
 {
     // Check-in
     public function qrin(Request $request)
     {
-        // Validate class_id
+        // Validate qr_code_id
         $request->validate([
-            'course_id' => 'required',
+            'qr_code_id' => 'required',
         ]);
+
+        // Get the course by qr_code_id
+        $course = Course::where('qr_code_id', $request->qr_code_id)->first();
+
+        // Check if course not found
+        if (!$course) {
+            return response(['message' => 'Course not found'], 404);
+        }
 
         // Save new attendance
         $attendance = new ClassAttendance;
         $attendance->user_id = $request->user()->id;
-        $attendance->course_id = $request->course_id;
+        $attendance->course_id = $course->id;
         $attendance->date = date('Y-m-d');
         $attendance->time_in = date('H:i:s');
         $attendance->save();
@@ -27,12 +36,11 @@ class ClassAttendanceController extends Controller
         $user = $request->user();
 
         activity()
-        ->useLog('default')
-        ->causedBy(auth()->user())
-        ->event('Qrin')
-        ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username ])
-        ->log('User Qrin');
+            ->useLog('default')
+            ->causedBy(auth()->user())
+            ->event('Qrin')
+            ->withProperties(['ip' => $request->ip(), 'user' => $user->username])
+            ->log('User Qrin');
 
         return response([
             'message' => 'Qrin success',
@@ -44,14 +52,22 @@ class ClassAttendanceController extends Controller
     // Check-out
     public function qrout(Request $request)
     {
-        // Validate class_id
+        // Validate qr_code_id
         $request->validate([
-            'course_id' => 'required',
+            'qr_code_id' => 'required',
         ]);
+
+        // Get the course by qr_code_id
+        $course = Course::where('qr_code_id', $request->qr_code_id)->first();
+
+        // Check if course not found
+        if (!$course) {
+            return response(['message' => 'Course not found'], 404);
+        }
 
         // Get last attendance for the class and user
         $attendance = ClassAttendance::where('user_id', $request->user()->id)
-            ->where('course_id', $request->course_id)
+            ->where('course_id', $course->id)
             ->whereNotNull('time_in')
             ->whereNull('time_out')
             ->latest()
@@ -69,12 +85,11 @@ class ClassAttendanceController extends Controller
         $user = $request->user();
 
         activity()
-        ->useLog('default')
-        ->causedBy(auth()->user())
-        ->event('Qrout')
-        ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username ])
-        ->log('User Qrout');
+            ->useLog('default')
+            ->causedBy(auth()->user())
+            ->event('Qrout')
+            ->withProperties(['ip' => $request->ip(), 'user' => $user->username])
+            ->log('User Qrout');
 
         return response([
             'message' => 'Qrout success',

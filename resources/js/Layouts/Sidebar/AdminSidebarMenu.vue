@@ -142,6 +142,12 @@
             {{ __("Class QR Codes") }}
         </NavLink>
     </li>
+    <li v-if="can('teacher.attendance')" class="teacherattendance_board_section">
+        <NavLink :href="route('teacher.attendance')" :active="route().current('attendanceteacher.*')">
+            <ClipboardDocumentListIcon class="w-5 h-5" />
+            {{ __("Teacher Attendance") }}
+        </NavLink>
+    </li>
     <li class="text-xs uppercase mb-2 text-gray-500 pt-6 pl-2">
         {{ __('Students') }}
     </li>
@@ -238,7 +244,7 @@ import { Link } from '@inertiajs/inertia-vue3';
 
 import {
     AcademicCapIcon, PlusCircleIcon, CurrencyDollarIcon, ArrowUpIcon, CalendarIcon, ChevronDownIcon, EnvelopeIcon, RectangleStackIcon,
-    ChevronUpIcon, Cog8ToothIcon, DocumentPlusIcon, FlagIcon, QueueListIcon, UserIcon, VideoCameraIcon, SpeakerWaveIcon, HomeIcon, WalletIcon, UsersIcon, NewspaperIcon, QrCodeIcon
+    ChevronUpIcon, Cog8ToothIcon, DocumentPlusIcon, FlagIcon, QueueListIcon, UserIcon, VideoCameraIcon, SpeakerWaveIcon, HomeIcon, WalletIcon, UsersIcon, NewspaperIcon, QrCodeIcon, ClipboardDocumentListIcon
 
 } from "@heroicons/vue/24/outline";
 import Shepherd from "shepherd.js";
@@ -268,6 +274,7 @@ export default {
         HomeIcon,
         WalletIcon,
         QrCodeIcon,
+        ClipboardDocumentListIcon,
     },
     data() {
         return {
@@ -366,6 +373,20 @@ export default {
                     text: this.getOnboardingContent('corseqr_board_top_section', 'description'),
                     attachTo: {
                         element: ".corseqr_board_top_section",
+                        on: "bottom"
+                    },
+                    buttons: [
+                        {
+                            action: this.tourGoNext,
+                            text: "Next"
+                        }
+                    ]
+                },
+                {
+                    title: this.getOnboardingContent('teacherattendance_board_top_section', 'title'),
+                    text: this.getOnboardingContent('teacherattendance_board_top_section', 'description'),
+                    attachTo: {
+                        element: ".teacherattendance_board_top_section",
                         on: "bottom"
                     },
                     buttons: [
@@ -556,6 +577,20 @@ export default {
                     text: this.getOnboardingContent('courseqr_board_section', 'description'),
                     attachTo: {
                         element: ".courseqr_board_section",
+                        on: "right"
+                    },
+                    buttons: [
+                        {
+                            action: this.tourGoNext,
+                            text: "Next"
+                        }
+                    ]
+                },
+                {
+                    title: this.getOnboardingContent('teacherattendance_board_section', 'title'),
+                    text: this.getOnboardingContent('teacherattendance_board_section', 'description'),
+                    attachTo: {
+                        element: ".teacherattendance_board_section",
                         on: "right"
                     },
                     buttons: [

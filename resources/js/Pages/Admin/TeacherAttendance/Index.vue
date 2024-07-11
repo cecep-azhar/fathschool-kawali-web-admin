@@ -9,11 +9,13 @@
     <div>
       <page-header class="flex-col sm:flex-row">
         {{ __('All Attendance') }}
-        <template #content>
-          <div class="flex flex-col sm:flex-row gap-4">
-            <!-- Tambahkan tombol-tombol sesuai kebutuhan -->
-          </div>
-        </template>
+            <template #content>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <global-button :loading="false" @click="exportTeacher()" type="button" theme="sky">
+                        {{ __('Export') }}
+                    </global-button>
+                </div>
+            </template>
       </page-header>
       <div class="mb-4">
         <!-- Form pencarian bisa ditambahkan di sini jika diperlukan -->
@@ -95,6 +97,38 @@ export default {
       attendanceteacher,
     };
   },
+  methods: {
+        exportTeacher() {
+            this.export_visible = true;
+        },
+        exportSubmit() {
+            this.loading = true;
+            axios({
+                url: this.route('teacherattendance.export'),
+                method: "POST",
+                data: this.export_data,
+                responseType: "blob",
+            }).then((response) => {
+
+                let extension = this.export_data.type;
+
+                var fileURL = window.URL.createObjectURL(new Blob([response.data]));
+                var fileLink = document.createElement("a");
+
+                fileLink.href = fileURL;
+                fileLink.setAttribute("download", "teacherattendance-report." + 'xlsx');
+                document.body.appendChild(fileLink);
+
+                fileLink.click();
+
+                this.loading = false;
+                this.visible = false;
+            }).catch((e) => {
+                this.loading = false;
+                this.visible = false;
+            });
+        }
+    },
 };
 </script>
 

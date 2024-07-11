@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Teacher;
 
+use App\Exports\ExportTeacherAttendance;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Course;
+use App\Models\Setting;
 use App\Models\Subject;
 use App\Services\Admin\Subject\SubjectChatGroupService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -15,7 +17,7 @@ use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Support\Facades\Storage;
 use Ramsey\Uuid\Uuid;
 use Illuminate\Support\Str;
-
+use Maatwebsite\Excel\Facades\Excel;
 
 class AttendanceController extends Controller
 {
@@ -37,5 +39,25 @@ class AttendanceController extends Controller
         });
 
         return inertia('Admin/TeacherAttendance/Index', ['attendanceteacher' => $attendanceteacher]);
+    }
+
+    public function attendancesExport(Request $request)
+    {
+        $student = auth()->id();
+        $subject = $request->subject['id'];
+        $type = $request->type;
+
+        if ($type == 'xlsx') { // xlsx
+
+            return Excel::download(new ExportTeacherAttendance($student, $subject), 'attendances.xlsx');
+        } else { // pdf
+
+            $attendances = Attendance::with('student', 'teacher', 'subject')->where('student_id', $student)->where('subject_id', $subject)->get();
+            $settings = Setting::first();
+
+            $pdf = PDF::loadView('export.student_attendance', compact('attendances', 'settings'));
+
+            return $pdf->download('attendances.pdf');
+        }
     }
 }

@@ -116,7 +116,7 @@ class ReportController extends Controller
             $data['attendances'] = $attendance_query->get();
         }
 
-        return inertia('Admin/Report/Attend', $data);
+        return inertia('Admin/Report/Attendance', $data);
     }
 
     public function studentsEnroll()

@@ -8,7 +8,7 @@ use App\Models\Api\ClassAttendance;
 
 class ClassAttendanceController extends Controller
 {
-    // Check-in
+    // Qrin
     public function qrin(Request $request)
     {
         // Validate class_id
@@ -41,7 +41,7 @@ class ClassAttendanceController extends Controller
         ], 200);
     }
 
-    // Check-out
+    // Qrout
     public function qrout(Request $request)
     {
         // Validate class_id
@@ -82,7 +82,7 @@ class ClassAttendanceController extends Controller
         ], 200);
     }
 
-    //check is checkedin
+    //check is isQrin
     public function isQrin(Request $request)
     {
         //get today attendance

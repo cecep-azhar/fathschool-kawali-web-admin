@@ -97,6 +97,13 @@
                             <input-error :error="$page.props.errors.name" />
                         </div>
                         <div class="mb-2">
+                            <global-label for="qr_code_id" value="Unique Id" :required="false" />
+                            <global-input type="text" id="qr_code_id" v-model="form.qr_code_id"
+                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                :placeholder="__('QR Code ID')" :error="$page.props.errors.qr_code_id" />
+                            <input-error :error="$page.props.errors.qr_code_id" />
+                        </div>
+                        <div class="mb-2">
                             <div class="relative flex items-start">
                                 <div class="flex h-5 items-center">
                                     <input id="multiple_subjects" type="checkbox"
@@ -331,12 +338,14 @@ export default {
             options: [],
             form: {
                 name: "",
+                qr_code_id: "",
                 has_multiple_subject: false,
                 subjects: [],
             },
             courseInfo: {
                 id: "",
                 name: "",
+                qr_code_id: "",
                 subjects: [],
                 has_multiple_subject: true,
             },
@@ -412,6 +421,7 @@ export default {
             this.courseInfo.id = course.id;
             this.courseInfo.has_multiple_subject = true;
             this.courseInfo.name = course.name;
+            this.courseInfo.qr_code_id = course.qr_code_id;
 
             this.courseInfo.subjects = [];
             for (let index = 0; index < course.subjects.length; index++) {

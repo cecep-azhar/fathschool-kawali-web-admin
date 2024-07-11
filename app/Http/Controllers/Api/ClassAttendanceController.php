@@ -9,7 +9,7 @@ use App\Models\Course;
 
 class ClassAttendanceController extends Controller
 {
-    // Check-in
+    // Qrin
     public function qrin(Request $request)
     {
         // Validate qr_code_id
@@ -49,7 +49,7 @@ class ClassAttendanceController extends Controller
         ], 200);
     }
 
-    // Check-out
+    // Qrout
     public function qrout(Request $request)
     {
         // Validate qr_code_id
@@ -97,7 +97,7 @@ class ClassAttendanceController extends Controller
         ], 200);
     }
 
-    //check is checkedin
+    //check is isQrin
     public function isQrin(Request $request)
     {
         //get today attendance

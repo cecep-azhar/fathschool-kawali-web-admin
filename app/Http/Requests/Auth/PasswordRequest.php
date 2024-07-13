@@ -25,7 +25,7 @@ class PasswordRequest extends FormRequest
     public function rules()
     {
         return [
-            'email' => 'required|email',
+            'phone' => 'required',
             'code' => 'sometimes|nullable',
             // 'new_password' => ['sometimes', 'nullable', 'same:new_password_confirmation', new StrongPassword],
             'new_password' => ['sometimes', 'nullable', 'same:new_password_confirmation'],
@@ -40,7 +40,7 @@ class PasswordRequest extends FormRequest
     public function attributes()
     {
         return [
-            'email' => __('auth.password.props.email'),
+            'phone' => __('auth.password.props.phone'),
             'code' => __('auth.password.props.code'),
             'new_password' => __('auth.password.props.new_password'),
             'new_password_confirmation' => __('auth.password.props.new_password_confirmation'),

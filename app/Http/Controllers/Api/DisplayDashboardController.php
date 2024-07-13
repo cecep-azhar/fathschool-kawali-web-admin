@@ -45,6 +45,7 @@ class DisplayDashboardController extends Controller
 
         $courseName = Course::OrderBy('id')->pluck('name');
         
+        
         // Kelas dengan kehadiran kosong terbanyak minggu ini
         $startOfWeek = now()->startOfWeek()->format('Y-m-d');
         $endOfWeek = now()->endOfWeek()->format('Y-m-d');

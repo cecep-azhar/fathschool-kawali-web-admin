@@ -41,7 +41,7 @@ class ClassAttendanceController extends Controller
         ->event('Qrin')
         ->withProperties(['ip' => $request->ip(),
                           'user' => $user->username,
-                          'time' => date('H:i:s')])
+                          'time' => date('H:i')])
         ->log('User Qrin');
 
         return response([
@@ -92,7 +92,7 @@ class ClassAttendanceController extends Controller
         ->event('Qrout')
         ->withProperties(['ip' => $request->ip(),
                           'user' => $user->username,
-                          'time' => date('H:i:s')])
+                          'time' => date('H:i')])
         ->log('User Qrout');
 
         return response([

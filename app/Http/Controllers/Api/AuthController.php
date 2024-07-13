@@ -50,7 +50,7 @@ class AuthController extends Controller
         ->event('login')
         ->withProperties(['ip' => $request->ip(),
                           'user' => $user->username,
-                          'time' => date('H:i:s')])
+                          'time' => date('H:i')])
         ->log('User Login');
 
         return response(['user' => $user, 'token' => $token], 200);
@@ -81,7 +81,7 @@ class AuthController extends Controller
         ->event('updateFace')
         ->withProperties(['ip' => $request->ip(),
                           'user' => $user->username,
-                          'time' => date('H:i:s')])
+                          'time' => date('H:i')])
         ->log('User Update Face Data');
 
         return response([
@@ -114,7 +114,7 @@ class AuthController extends Controller
         ->event('updatePassword')
         ->withProperties(['ip' => $request->ip(),
                           'user' => $user->username,
-                          'time' => date('H:i:s')])
+                          'time' => date('H:i')])
         ->log('User Update New Password');
 
         return response(['message' => 'Password reset successfully'], 200);
@@ -131,7 +131,7 @@ class AuthController extends Controller
         ->event('logout')
         ->withProperties(['ip' => $request->ip(),
                           'user' => $user->username,
-                          'time' => date('H:i:s')])
+                          'time' => date('H:i')])
         ->log('User Logout');
 
         $request->user()->currentAccessToken()->delete();
@@ -165,7 +165,7 @@ class AuthController extends Controller
         ->event('updateProfile')
         ->withProperties(['ip' => $request->ip(),
                           'user' => $user->username,
-                          'time' => date('H:i:s')])
+                          'time' => date('H:i')])
         ->log('User Update Profile');
 
         return response([
@@ -192,7 +192,7 @@ class AuthController extends Controller
         ->event('updateFcmToken')
         ->withProperties(['ip' => $request->ip(),
                           'user' => $user->username,
-                          'time' => date('H:i:s')])
+                          'time' => date('H:i')])
         ->log('User Update FCM Token');
 
         return response([

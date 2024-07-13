@@ -19,9 +19,8 @@ class JournalController extends Controller
             'time' => 'required|date_format:H:i:s',
             'description' => 'required|string',
             'img' => 'required|string',
-            // 'user_id' => 'required|exists:users,id',
-            'class_lists' => 'required|string',
-        ]);
+            'course_id' => 'required|string',
+        ]);        
 
         $journal = new Journal();
         $journal->date = $data['date'];
@@ -29,7 +28,7 @@ class JournalController extends Controller
         $journal->description = $data['description'];
         $journal->img = $data['img'];
         $journal->user_id = Auth::id();
-        $journal->class_lists = $data['class_lists'];
+        $journal->course_id = $data['course_id'];
         $journal->security_code = Str::random(10);
         $journal->security_code_expiration = Carbon::now()->addHour();
 
@@ -43,7 +42,7 @@ class JournalController extends Controller
         ->event('postJournal')
         ->withProperties(['ip' => $request->ip(),
                           'user' => $user->username,
-                          'time' => date('H:i:s')])
+                          'time' => date('H:i')])
         ->log('User Post Journal');
 
         return response()->json($journal, 201);
@@ -55,7 +54,7 @@ class JournalController extends Controller
         $journals = Journal::all()->map(function ($journal) {
             return [
                 'id' => $journal->id,
-                'class_lists' => $journal->class_lists,
+                'course_id' => $journal->course_id,
                 'time' => $journal->time, 
                 'date' => $journal->date,
             ];

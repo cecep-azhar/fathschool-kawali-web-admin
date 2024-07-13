@@ -110,7 +110,7 @@ Route::middleware('auth:sanctum')->get('/class-lists', [ClassListController::cla
 Route::middleware('auth:sanctum')->get('/class-lists/{class_list_id}', [ClassListController::class, 'show']);
 
 //
-Route::middleware('auth:sanctum')->get('/students/{student_id}', [StudentController::class, 'show']);
+Route::get('students/{student_id}/course/{course_id}', [StudentController::class, 'show']);
 
 //forgot password
 Route::post('forgot-password', [App\Http\Controllers\Api\AuthController::class, 'password']);

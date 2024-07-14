@@ -68,10 +68,15 @@ class ClassRoutine extends Model
         return $this->belongsTo(Subject::class, 'subject_id', 'id');
     }
 
-    public function subjects()
-    {
-        return $this->belongsTo(Subject::class);
-    }
+    public function courses()
+{
+    return $this->belongsTo(Course::class);
+}
+
+public function subjects()
+{
+    return $this->belongsTo(Subject::class);
+}
 
     public function getDifferenceAttribute()
     {

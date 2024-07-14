@@ -36,6 +36,11 @@ class Course extends Model
         return $this->hasMany(User::class, 'course_id')->with('user');
     }
 
+    public function classRoutines()
+    {
+        return $this->hasMany(ClassRoutine::class);
+    }
+
     public function usersCourse()
     {
         return $this->belongsToMany(User::class, 'student_lists', 'course_id', 'student_id');

@@ -8,7 +8,9 @@ use App\Models\User;
 use App\Models\Attendance;
 use App\Models\Course;
 use App\Models\Api\ClassAttendance;
+use App\Models\Quote;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DisplayDashboardController extends Controller
 {
@@ -43,8 +45,7 @@ class DisplayDashboardController extends Controller
         
         $totalEmptyClass = $totalClass - $totalClassAbsent;
 
-        $courseName = Course::OrderBy('id')->pluck('name');
-        
+        $courseName = Course::orderBy('id')->pluck('name');
         
         // Kelas dengan kehadiran kosong terbanyak minggu ini
         $startOfWeek = now()->startOfWeek()->format('Y-m-d');
@@ -59,10 +60,13 @@ class DisplayDashboardController extends Controller
             
         $classNameWithMostEmptySessions = $classWithMostEmptySessions 
             ? Course::find($classWithMostEmptySessions->course_id)->name 
-            : 'Tidak ad a kelas dengan sesi kosong minggu ini';
+            : 'Tidak ada kelas dengan sesi kosong minggu ini';
 
-            // dd($courseName);
-        
+        // Quotes
+        $totalQuotes = Quote::count();
+        $quoteIndex = Carbon::now()->dayOfYear % $totalQuotes;
+        $quote = Quote::skip($quoteIndex)->first();
+
         $response = [
             // Kehadiran 
             'total_student' => $totalStudent,
@@ -78,11 +82,11 @@ class DisplayDashboardController extends Controller
             // Kelas
             'total_class' => $totalClass,
             'total_class_absent' => $totalEmptyClass,
-
             'course_name' => $courseName,
-
             // Kelas dengan kehadiran kosong terbanyak minggu ini
             'class_with_most_empty_sessions' => $classNameWithMostEmptySessions,
+            // Quote
+            'quote_of_the_day' => $quote->quote,
         ];
 
         return response()->json($response);

@@ -34,9 +34,9 @@ class AuthController extends Controller
         }
 
         // Check if user role is teacher
-        if ($user->role !== 'Teacher') {
-        return response(['message' => 'user is not a teacher'], 403);
-        }
+        // if ($user->role !== 'Teacher') {
+        // return response(['message' => 'user is not a teacher'], 403);
+        // }
 
         $token = $user->createToken('auth_token')->plainTextToken;
 

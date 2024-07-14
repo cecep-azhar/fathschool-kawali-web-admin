@@ -74,7 +74,10 @@ class PermissionController extends Controller
             ->useLog('default')
             ->causedBy(auth()->user())
             ->event('makePermission')
-            ->withProperties(['ip' => $request->ip(), 'user' => $user->username])
+            ->withProperties([  'ip' => $request->ip(),
+                                'user' => $user->username,
+                                'time' => date('H:i')])
+            
             ->log('User made a leave request');
 
         // Kembalikan respons

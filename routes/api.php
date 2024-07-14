@@ -110,14 +110,14 @@ Route::middleware('auth:sanctum')->get('/class-lists', [ClassListController::cla
 Route::middleware('auth:sanctum')->get('/class-lists/{class_list_id}', [ClassListController::class, 'show']);
 
 //
-Route::middleware('auth:sanctum')->get('/students/{student_id}', [StudentController::class, 'show']);
+Route::get('students/{student_id}/course/{course_id}', [StudentController::class, 'show']);
 
 //forgot password
 Route::post('forgot-password', [App\Http\Controllers\Api\AuthController::class, 'password']);
 
 //log activity
-Route::get('/activity-logs', function () {
-    $logs = Activity::select('id', 'causer_id', 'description', 'created_at')->get();
+Route::get('/activity-logs/{causer_id}', function ($causer_id) {
+    $logs = Activity::where('causer_id', $causer_id)->select('id', 'causer_id', 'properties', 'description', 'created_at')->orderBy('created_at', 'DESC')->get();
     return response($logs);
 });
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Actions\File\FileDelete;
 use App\Exports\StudentExport;
+use App\Exports\TeacherClassExport;
 use App\Exports\TeacherExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UserRequest;
@@ -291,24 +292,38 @@ class UserController extends Controller
      * @return Response
      */
     public function teacherExport(Request $request)
-{
-    $name = $request->name;
-    $month = $request->month;
+    {
+        $name = $request->name;
+        $month = $request->month;
 
-    if ($name && $month) {
-        // Filter berdasarkan nama dan bulan
-        return Excel::download(new TeacherExport($name, $month), 'teachers.xlsx');
-    } elseif ($name) {
-        // Filter berdasarkan nama
-        return Excel::download(new TeacherExport($name), 'teachers.xlsx');
-    } elseif ($month) {
-        // Filter berdasarkan bulan
-        return Excel::download(new TeacherExport(null, $month), 'teachers.xlsx');
-    } else {
-        // Tanpa filter (semua data)
-        return Excel::download(new TeacherExport(), 'teachers.xlsx');
+        if ($name && $month) {
+            // Filter berdasarkan nama dan bulan
+            return Excel::download(new TeacherExport($name, $month), 'teachers.xlsx');
+        } elseif ($name) {
+            // Filter berdasarkan nama
+            return Excel::download(new TeacherExport($name), 'teachers.xlsx');
+        } elseif ($month) {
+            // Filter berdasarkan bulan
+            return Excel::download(new TeacherExport(null, $month), 'teachers.xlsx');
+        } else {
+            // Tanpa filter (semua data)
+            return Excel::download(new TeacherExport(), 'teachers.xlsx');
+        }
     }
-}
+
+    public function teacherClassExport(Request $request)
+    {
+        $name = $request->name;
+        $month = $request->month;
+
+        // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
+        $export = new TeacherClassExport($name, $month);
+
+        // Download file Excel sesuai dengan filter
+        return Excel::download($export, 'teachers.xlsx');
+    }
+
+
 
     /**
      * Parent get By Axios For Admission Page

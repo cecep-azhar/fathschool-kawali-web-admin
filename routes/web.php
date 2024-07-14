@@ -78,6 +78,9 @@ Route::controller(FrontendController::class)->group(function () {
     Route::get('success-transaction', 'successTransaction')->name('paypal.successTransaction');
     Route::post('/admission', 'admissionStore')->name('admission.store');
     Route::get('/announcement', 'announcement');
+    Route::get('/aboutschool', 'aboutschool');
+    Route::get('/feature', 'feature');
+    Route::get('/contact', 'contact');
     Route::get('/announcement/{notice:slug}', 'announcementDetails')->name('announcement.details');
 });
 

@@ -120,6 +120,13 @@
         <main>
             <slot />
         </main>
+        <!-- <div class="haha">
+         <center><h1 style="font-weight: 900;">Kenapa SMKN 1 KAWALI Menjadi Unggulan?</h1></center> 
+        </div>
+        <div class="img">
+            <h1 style="font-size: 25px;" class="hi">Membentuk Siswa</h1>
+            <img src="/images/leader.png" width="250">
+        </div> -->
 
         <footer class="bg-gray-900">
             <div class="mx-auto max-w-md overflow-hidden py-12 px-4 sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
@@ -185,8 +192,11 @@ export default {
             yearNow: new Date().getFullYear(),
 
             navigation: [
-                { name: 'Admission', href: '/admission' },
-                { name: 'Announcement', href: '/announcement' },
+                // { name: 'Admission', href: '/admission' },
+                // { name: 'Announcement', href: '/announcement' },
+                { name: 'Tentang', href: '/aboutschool' },
+                { name: 'Fitur', href: '/feature' },
+                { name: 'Kontak', href: '/contact' },
             ],
 
             showAnnouncement: true,
@@ -207,3 +217,20 @@ export default {
     },
 }
 </script>
+<style>
+.haha{
+  font-size: 40px;
+  
+ 
+}
+
+.img{
+    margin-left: 160px;
+    margin-top: 70px;
+}
+.hi {
+    font-weight: bold;
+    margin-left: 30px;
+}
+
+</style>

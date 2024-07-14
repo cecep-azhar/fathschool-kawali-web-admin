@@ -118,6 +118,7 @@ class ReportController extends Controller
 
         return inertia('Admin/Report/Attend', $data);
     }
+    
 
     public function studentsEnroll()
     {

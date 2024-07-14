@@ -135,4 +135,5 @@ Route::get('/quote-of-the-day', [QuotesController::class, 'getQuoteOfTheDay']);
 Route::post('/add-quote', [QuotesController::class, 'addQuote']);
 
 //rating
-Route::post('/ratings', [RatingController::class, 'store']);
+Route::middleware('auth:sanctum')->post('/rate-teacher', [RatingController::class, 'store']);
+

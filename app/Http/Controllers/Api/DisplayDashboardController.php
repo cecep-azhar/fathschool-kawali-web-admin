@@ -9,6 +9,7 @@ use App\Models\Attendance;
 use App\Models\Course;
 use App\Models\Api\ClassAttendance;
 use App\Models\Quote;
+use App\Models\Rating;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -67,6 +68,18 @@ class DisplayDashboardController extends Controller
         $quoteIndex = Carbon::now()->dayOfYear % $totalQuotes;
         $quote = Quote::skip($quoteIndex)->first();
 
+        // Guru dengan rating tertinggi
+        $teacherWithHighestRating = User::where('role', 'teacher')
+            ->withCount('ratingsReceived')
+            ->orderByDesc('ratings_received_count')
+            ->first(['id', 'name']);
+
+        // Guru dengan rating terendah
+        $teacherWithLowestRating = User::where('role', 'teacher')
+            ->withCount('ratingsReceived')
+            ->orderBy('ratings_received_count')
+            ->first(['id', 'name']);
+
         $response = [
             // Kehadiran 
             'total_student' => $totalStudent,
@@ -86,7 +99,11 @@ class DisplayDashboardController extends Controller
             // Kelas dengan kehadiran kosong terbanyak minggu ini
             'class_with_most_empty_sessions' => $classNameWithMostEmptySessions,
             // Quote
-            'quote_of_the_day' => $quote->quote,
+            'quote_of_the_day' => $quote ? $quote->quote : '',
+            // Guru dengan rating tertinggi
+            'teacher_with_highest_rating' => $teacherWithHighestRating ? $teacherWithHighestRating->name : 'Belum ada data guru dengan rating tertinggi',
+            // Guru dengan rating terendah
+            'teacher_with_lowest_rating' => $teacherWithLowestRating ? $teacherWithLowestRating->name : 'Belum ada data guru dengan rating terendah',
         ];
 
         return response()->json($response);

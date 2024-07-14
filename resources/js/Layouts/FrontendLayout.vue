@@ -31,7 +31,6 @@
             <div class="absolute inset-0">
                 <img class="h-full w-full object-cover" src="/images/hero-banner.webp" :alt="setting.text_logo_name" />
                 <div class="absolute inset-0 bg-blue-gray-500 mix-blend-multiply" aria-hidden="true" />
-                <!-- <div class="absolute inset-0" aria-hidden="true" /> -->
             </div>
             <Popover as="div" class="relative z-10">
                 <nav class="relative mx-auto flex max-w-7xl items-center justify-between px-4 pt-6 pb-2 sm:px-6 lg:px-8"
@@ -58,7 +57,6 @@
                         </div>
                     </div>
                     <div class="hidden lg:flex lg:items-center lg:space-x-6">
-
                         <Link preserve-scroll v-if="$page.props.user" :href="route('dashboard')"
                             class="rounded-md border border-transparent bg-blue-500 py-2 px-6 text-base font-medium text-white shadow-md hover:bg-blue-600">
                         {{ __('Dashboard') }}
@@ -98,11 +96,13 @@
                             <div class="pt-5 pb-6">
                                 <div class="space-y-1 px-2">
                                     <a v-for="item in navigation" :key="item.name" :href="item.href"
-                                        class="block rounded-md px-3 py-2 text-base font-medium text-blue-gray-900 hover:bg-blue-gray-50">{{
-                                            item.name }}</a>
+                                        class="block rounded-md px-3 py-2 text-base font-medium text-blue-gray-900 hover:bg-blue-gray-50">
+                                        {{ item.name }}
+                                    </a>
                                 </div>
                                 <div class="mt-6 px-5">
-                                    <Link :href="route('login')" class="block w-full rounded-md border border-transparent bg-blue-500 py-2 px-4 text-center font-medium text-white shadow hover:bg-blue-600">
+                                    <Link :href="route('login')"
+                                        class="block w-full rounded-md border border-transparent bg-blue-500 py-2 px-4 text-center font-medium text-white shadow hover:bg-blue-600">
                                         {{ __('Login') }}
                                     </Link>
                                 </div>
@@ -115,18 +115,22 @@
             <div class="relative mx-auto mt-24 max-w-md px-4 pb-32 sm:max-w-3xl sm:px-6 md:mt-32 lg:max-w-7xl lg:px-8">
                 <slot name="header" />
             </div>
+            <p>ashgshsfcdfdsssssssssssssssssssssssss</p>
         </header>
 
         <main>
+            <!-- <div class="flex flex-col lg:flex-row lg:items-center lg:justify-center">
+                <div class="flex-1 p-4">
+                    <iframe :width="videoWidth" :height="videoHeight" :src="videoSrc" frameborder="0" allowfullscreen></iframe>
+                </div>
+                <div class="flex-1 p-4">
+                    <h1>Video Profile SMKN 1 KAWALI</h1>
+                    <p>Lihat Lingkungan dan Fasilitas-fasilitas SMKN 1 KAWALI Dalam Bentuk Video.</p>
+                    
+                </div>
+            </div> -->
             <slot />
         </main>
-        <!-- <div class="haha">
-         <center><h1 style="font-weight: 900;">Kenapa SMKN 1 KAWALI Menjadi Unggulan?</h1></center> 
-        </div>
-        <div class="img">
-            <h1 style="font-size: 25px;" class="hi">Membentuk Siswa</h1>
-            <img src="/images/leader.png" width="250">
-        </div> -->
 
         <footer class="bg-gray-900">
             <div class="mx-auto max-w-md overflow-hidden py-12 px-4 sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
@@ -134,14 +138,6 @@
                     <template v-for="(link, index) in social_links" :key="index">
                         <a :href="link.url" class="flex items-center text-white" target="_blank">
                             <img :src="link.icon_url" alt="icon" class="h-7 w-7 object-cover">
-                            <!-- <span v-if="link.icon" v-html="link.icon" class="w-7 h-7"></span>
-                            <svg v-else xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-7 h-7 bi bi-link-45deg"
-                            viewBox="0 0 16 16">
-                                <path
-                                    d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z" />
-                                <path
-                                    d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243L6.586 4.672z" />
-                            </svg> -->
                         </a>
                     </template>
                 </div>
@@ -152,7 +148,6 @@
                 </p>
             </div>
         </footer>
-        <!-- <AuthorWidgetVue /> -->
     </div>
 
     <success-toast />
@@ -190,16 +185,16 @@ export default {
             setting: this.$page.props.setting,
             announcements: [],
             yearNow: new Date().getFullYear(),
-
             navigation: [
-                // { name: 'Admission', href: '/admission' },
-                // { name: 'Announcement', href: '/announcement' },
                 { name: 'Tentang', href: '/aboutschool' },
                 { name: 'Fitur', href: '/feature' },
                 { name: 'Kontak', href: '/contact' },
+                { name: 'Dokumentasi Program', href: '/documentation' },
             ],
-
             showAnnouncement: true,
+            videoSrc: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+            videoWidth: "560",
+            videoHeight: "315"
         }
     },
     methods: {
@@ -207,6 +202,9 @@ export default {
             this.showAnnouncement = false;
             localStorage.setItem("showAnnouncement", 'false');
         },
+        startVideo() {
+            // Implement logic to start video if needed, for now, it's an embedded video
+        }
     },
     async mounted() {
         let response = await axios.get(route('pinnedAnnouncement'))
@@ -217,11 +215,10 @@ export default {
     },
 }
 </script>
+
 <style>
 .haha{
   font-size: 40px;
-  
- 
 }
 
 .img{
@@ -232,5 +229,4 @@ export default {
     font-weight: bold;
     margin-left: 30px;
 }
-
 </style>

@@ -81,6 +81,7 @@ Route::controller(FrontendController::class)->group(function () {
     Route::get('/aboutschool', 'aboutschool');
     Route::get('/feature', 'feature');
     Route::get('/contact', 'contact');
+    Route::get('/documentation', 'documentation');
     Route::get('/announcement/{notice:slug}', 'announcementDetails')->name('announcement.details');
 });
 

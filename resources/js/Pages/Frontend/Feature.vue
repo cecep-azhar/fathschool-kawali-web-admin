@@ -22,19 +22,23 @@
         <div class="feature-card">
           <h3>pengenalan Wajah</h3>
           <p>
-            Pengguna dapat melakukan logout untuk keluar dari akun yang pengguna gunakan sebelumnya
+            Fitur pengenalan wajah untuk aplikasi sekolah memiliki berbagai kegunaan yang sangat bermanfaat, 
+            salah satunya adalah untuk keperluan absensi siswa. Dengan menggunakan teknologi ini, proses pencatatan 
+            kehadiran menjadi lebih cepat, akurat, dan efisien.
           </p>
         </div>
         <div class="feature-card">
           <h3>Riwayat Kehadiran</h3>
           <p>
-            Pengguna dapat melakukan logout untuk keluar dari akun yang pengguna gunakan sebelumnya
+            Fitur ini memungkinkan penyimpanan dan penelusuran data kehadiran secara lengkap dan terperinci,
+             mencakup tanggal, waktu masuk, dan waktu keluar setiap siswa.
           </p>
         </div>
         <div class="feature-card">
           <h3>Jurnal</h3>
           <p>
-            Pengguna dapat melakukan logout untuk keluar dari akun yang pengguna gunakan sebelumnya
+            Fitur ini memungkinkan guru untuk mencatat dan mengupdate perkembangan akademik siswa secara teratur, 
+            mencakup catatan mengenai tugas, hasil ujian, proyek, dan aktivitas lainnya.
           </p>
         </div>
         <div class="feature-card">

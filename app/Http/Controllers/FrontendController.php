@@ -118,6 +118,16 @@ class FrontendController extends Controller
             'notices' => $notices,
         ]);
     }
+    public function documentation()
+    {
+        $notices = Notice::with('user:id,name,username')->public()->latest()->limit(18)->get();
+
+        return inertia('Frontend/Dokumentasi', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'notices' => $notices,
+        ]);
+    }
 
     /**
      * Display the frontend announcement page

@@ -78,6 +78,9 @@ Route::controller(FrontendController::class)->group(function () {
     Route::get('success-transaction', 'successTransaction')->name('paypal.successTransaction');
     Route::post('/admission', 'admissionStore')->name('admission.store');
     Route::get('/announcement', 'announcement');
+    Route::get('/aboutschool', 'aboutschool');
+    Route::get('/feature', 'feature');
+    Route::get('/contact', 'contact');
     Route::get('/announcement/{notice:slug}', 'announcementDetails')->name('announcement.details');
 });
 
@@ -136,6 +139,7 @@ Route::middleware([
 Route::post('changeLang/{dir}', [LanguageController::class, 'changeLang'])->name('changeLang');
 Route::get('/courses/qr-codes', [CourseController::class, 'getAllClassesWithQrCodes'])->name('courses.qr-codes');
 Route::get('teacher/attendance', [AttendanceController::class, 'index'])->name('teacher.attendance');
+Route::get('teacher-class/attendance', [AttendanceController::class, 'getTeacherClassAttendance'])->name('teacher.class');
 Route::get('courses/{id}/print-qr-code', [CourseController::class, 'printQrCode'])->name('courses.printQrCode');
 
 

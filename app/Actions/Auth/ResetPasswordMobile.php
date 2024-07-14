@@ -19,7 +19,7 @@ class ResetPasswordMobile
         $code = rand(100000, 999999);
 
         \DB::table('password_resets')->insert([
-            'email' => $request->email,
+            'phone' => $request->phone,
             'code' => $code,
             'created_at' => now(),
         ]);
@@ -61,7 +61,7 @@ class ResetPasswordMobile
 
     private function getUser(Request $request): User
     {
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('phone', $request->phone)->first();
 
         if (!$user) {
             throw ValidationException::withMessages(['phone' => __('auth.password.user')]);

@@ -172,7 +172,7 @@
                 <global-button @click="exportSubmit()" :loading="loading" type="button"
                     class=" text-white bg-blue-500 dark:bg-blue-500 hover:bg-blue-500
                      active:bg-blue-600 dark:active:bg-blue-600 focus:border-blue-600 dark:focus:border-blue-600 focus:ring focus:ring-blue-300 mr-2 mb-2 dark:focus:ring-blue-300">
-                    {{ __('Export') }}
+            {{ __('Export') }}
                 </global-button>
                 <global-button :loading="false" @click="export_visible = false" type="button"
                     class="text-white bg-red-500 dark:bg-red-500  hover:bg-red-500 active:bg-red-600 dark:active:bg-red-600 focus:border-red-600 dark:focus:border-red-600 focus:ring focus:ring-red-300 mr-2 mb-2 dark:focus:ring-red-300">

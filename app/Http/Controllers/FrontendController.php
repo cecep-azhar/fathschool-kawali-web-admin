@@ -88,6 +88,36 @@ class FrontendController extends Controller
             'notices' => $notices,
         ]);
     }
+    public function aboutschool()
+    {
+        $notices = Notice::with('user:id,name,username')->public()->latest()->limit(18)->get();
+
+        return inertia('Frontend/AboutSchool', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'notices' => $notices,
+        ]);
+    }
+    public function feature()
+    {
+        $notices = Notice::with('user:id,name,username')->public()->latest()->limit(18)->get();
+
+        return inertia('Frontend/Feature', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'notices' => $notices,
+        ]);
+    }
+    public function contact()
+    {
+        $notices = Notice::with('user:id,name,username')->public()->latest()->limit(18)->get();
+
+        return inertia('Frontend/Kontak', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'notices' => $notices,
+        ]);
+    }
 
     /**
      * Display the frontend announcement page

@@ -10,15 +10,12 @@ use Carbon\Carbon;
 class QuotesController extends Controller
 {
     // Method to get the quote of the day
-    public function getQuoteOfTheDay()
+    public function getRandomQuote()
     {
-        $totalQuotes = Quote::count();
-        $quoteIndex = Carbon::now()->dayOfYear % $totalQuotes;
-
-        $quote = Quote::skip($quoteIndex)->first();
+        $quote = Quote::inRandomOrder();
 
         return response()->json([
-            'quote' => $quote->quote
+            'quote' => $quote
         ]);
     }
 

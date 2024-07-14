@@ -64,21 +64,33 @@ class DisplayDashboardController extends Controller
             : 'Tidak ada kelas dengan sesi kosong minggu ini';
 
         // Quotes
-        $totalQuotes = Quote::count();
-        $quoteIndex = Carbon::now()->dayOfYear % $totalQuotes;
-        $quote = Quote::skip($quoteIndex)->first();
+        // $totalQuotes = Quote::count();
+        // $quoteIndex = Carbon::now()->dayOfYear % $totalQuotes;
+        // $quote = Quote::skip($quoteIndex)->first();
 
-        // Guru dengan rating tertinggi
-        $teacherWithHighestRating = User::where('role', 'teacher')
-            ->withCount('ratingsReceived')
-            ->orderByDesc('ratings_received_count')
-            ->first(['id', 'name']);
+         // Guru dengan rating tertinggi bulan ini
+         $startOfMonth = now()->startOfMonth()->format('Y-m-d');
+         $endOfMonth = now()->endOfMonth()->format('Y-m-d');
+ 
+         $teacherWithHighestRatingMonthly = User::where('role', 'teacher')
+             ->join('ratings', 'users.id', '=', 'ratings.teacher_id')
+             ->select('users.id', 'users.name', DB::raw('AVG(ratings.rating) as avg_rating, SUM(ratings.rating) as total_rating'))
+             ->whereBetween('ratings.created_at', [$startOfMonth, $endOfMonth])
+             ->groupBy('users.id', 'users.name')
+             ->orderByDesc('avg_rating')
+             ->first();
+ 
+         // Guru dengan rating terendah bulan ini
+         $teacherWithLowestRatingMonthly = User::where('role', 'teacher')
+             ->join('ratings', 'users.id', '=', 'ratings.teacher_id')
+             ->select('users.id', 'users.name', DB::raw('AVG(ratings.rating) as avg_rating, SUM(ratings.rating) as total_rating'))
+             ->whereBetween('ratings.created_at', [$startOfMonth, $endOfMonth])
+             ->groupBy('users.id', 'users.name')
+             ->orderBy('avg_rating')
+             ->first();
 
-        // Guru dengan rating terendah
-        $teacherWithLowestRating = User::where('role', 'teacher')
-            ->withCount('ratingsReceived')
-            ->orderBy('ratings_received_count')
-            ->first(['id', 'name']);
+        $quote = Quote::pluck('quote');
+
 
         $response = [
             // Kehadiran 
@@ -99,11 +111,17 @@ class DisplayDashboardController extends Controller
             // Kelas dengan kehadiran kosong terbanyak minggu ini
             'class_with_most_empty_sessions' => $classNameWithMostEmptySessions,
             // Quote
-            'quote_of_the_day' => $quote ? $quote->quote : '',
-            // Guru dengan rating tertinggi
-            'teacher_with_highest_rating' => $teacherWithHighestRating ? $teacherWithHighestRating->name : 'Belum ada data guru dengan rating tertinggi',
-            // Guru dengan rating terendah
-            'teacher_with_lowest_rating' => $teacherWithLowestRating ? $teacherWithLowestRating->name : 'Belum ada data guru dengan rating terendah',
+            'quote_of_the_day' => $quote,
+
+            // Guru dengan rating tertinggi bulan ini
+            'teacher_with_highest_rating_monthly'
+            => $teacherWithHighestRatingMonthly ? $teacherWithHighestRatingMonthly->name : 'Belum ada data guru dengan rating tertinggi bulan ini',
+            'total_highest_rating' => $teacherWithHighestRatingMonthly ? $teacherWithHighestRatingMonthly->total_rating : null,
+
+            // Guru dengan rating terendah bulan ini
+            'teacher_with_lowest_rating_monthly'
+             => $teacherWithLowestRatingMonthly ? $teacherWithLowestRatingMonthly->name : 'Belum ada data guru dengan rating terendah bulan ini',
+             'total_lowest_rating' => $teacherWithLowestRatingMonthly ? $teacherWithLowestRatingMonthly->total_rating : null,       
         ];
 
         return response()->json($response);

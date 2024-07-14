@@ -45,29 +45,31 @@ class AttendanceController extends Controller
 
     public function getTeacherClassAttendance()
     {
-        // Ambil data absensi kelas dari class_attendance
+        // Ambil data absensi kelas dari class_attendances
         $teacherAttendances = ClassAttendance::with('user')
             ->select('class_attendances.*')
             ->join('class_routines', function ($join) {
-                $join->on('class_attendances.date', '>=', 'class_routines.start_date')
-                     ->whereRaw("class_attendances.time_in BETWEEN class_routines.start_time AND class_routines.end_time");
+                $join->on('class_attendances.user_id', '=', 'class_routines.teacher_id')
+                     ->on('class_attendances.course_id', '=', 'class_routines.course_id')
+                     ->on('class_attendances.date', '=', 'class_routines.start_date');
             })
             ->get();
-    
+        
         // Ambil informasi tambahan seperti nama kelas dan mata pelajaran dari class_routines
         foreach ($teacherAttendances as $attendance) {
-            $classRoutine = ClassRoutine::where('start_date', '<=', $attendance->date)
-                ->where('end_date', '>=', $attendance->date)
-                ->whereTime('start_time', '<=', $attendance->time_in)
-                ->whereTime('end_time', '>=', $attendance->time_in)
+            $classRoutine = ClassRoutine::where('teacher_id', $attendance->user_id)
+                ->where('course_id', $attendance->course_id)
+                ->where('start_date', $attendance->date)
                 ->first();
     
             if ($classRoutine) {
-                // Ambil nama kelas dari relasi course pada class_routines
-                $attendance->class_name = $classRoutine->course->name; // Pastikan 'name' sesuai dengan atribut nama kelas
+                // Ambil informasi kelas dari model Course yang terhubung dengan ClassRoutine
+                $course = Course::find($classRoutine->course_id);
+                $attendance->class_name = $course ? $course->name : 'Nama Kelas Tidak Ditemukan';
     
-                // Ambil nama mata pelajaran dari relasi subject pada class_routines
-                $attendance->subject_name = $classRoutine->subject->name; // Pastikan 'name' sesuai dengan atribut nama mata pelajaran
+                // Ambil informasi mata pelajaran dari model Subject yang terhubung dengan ClassRoutine
+                $subject = Subject::find($classRoutine->subject_id);
+                $attendance->subject_name = $subject ? $subject->name : 'Nama Mata Pelajaran Tidak Ditemukan';
             }
         }
     

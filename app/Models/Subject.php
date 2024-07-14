@@ -68,6 +68,11 @@ class Subject extends Model
         return $this->hasMany(TeacherSubject::class, 'subject_id');
     }
 
+    public function classRoutines()
+    {
+        return $this->hasMany(ClassRoutine::class);
+    }
+
     /**
      * One to many relation with online class model
      * to get all the classes under a subject

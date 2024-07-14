@@ -17,6 +17,8 @@ class Subject extends Model
 
     protected $dates = ['session'];
 
+    protected $fillable = ['name', 'course_id'];
+
     //mutator
     public function setNameAttribute($value)
     {
@@ -51,6 +53,10 @@ class Subject extends Model
     }
 
     // One to one relation with Course model
+    public function scopeByCourseId($query, $courseId)
+    {
+        return $query->where('course_id', $courseId);
+    }
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class, 'course_id');

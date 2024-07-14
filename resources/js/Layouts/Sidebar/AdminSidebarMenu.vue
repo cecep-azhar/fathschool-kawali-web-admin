@@ -142,12 +142,6 @@
             {{ __("Class QR Codes") }}
         </NavLink>
     </li>
-    <li v-if="can('teacher.attendance')" class="teacherattendance_board_section">
-        <NavLink :href="route('teacher.attendance')" :active="route().current('attendanceteacher.*')">
-            <ClipboardDocumentListIcon class="w-5 h-5" />
-            {{ __("Teacher Attendance") }}
-        </NavLink>
-    </li>
     <li class="text-xs uppercase mb-2 text-gray-500 pt-6 pl-2">
         {{ __('Students') }}
     </li>

@@ -1,14 +1,14 @@
 <template>
-  <AppLayout :title="__('Teacher Attendance')">
+  <AppLayout :title="__('Teacher Subject Attendance')">
     <template #header>
-      {{ __('Teacher Attendance') }}
+      {{ __('Teacher Subject Attendance') }}
     </template>
     <Breadcrumb>
-      <BreadcrumbLink :title="__('All Attendance')" :href="route('teacher.attendance')" />
+      <BreadcrumbLink :title="__('Teacher Subject Attendance')" :href="route('teacher.attendance')" />
     </Breadcrumb>
     <div>
       <page-header class="flex-col sm:flex-row">
-        {{ __('All Attendance') }}
+        {{ __('Teacher Subject Attendance') }}
         <template #content>
           <div class="flex flex-col sm:flex-row gap-4">
             <global-button :loading="false" @click="exportSubmit()" type="button" theme="sky">
@@ -179,11 +179,14 @@ export default {
       }
 
       axios({
-        url: this.route('teacherattendance.export'),
+        url: this.route('teacherclass.export'),
         method: "POST",
         data: {
           ...this.export_data,
           ...exportData
+        },
+        headers: {
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
         responseType: "blob",
       }).then((response) => {
@@ -192,7 +195,7 @@ export default {
         var fileLink = document.createElement("a");
 
         fileLink.href = fileURL;
-        fileLink.setAttribute("download", "teacherattendance-report." + 'xlsx');
+        fileLink.setAttribute("download", "teacherclass-report." + 'xlsx');
         document.body.appendChild(fileLink);
 
         fileLink.click();

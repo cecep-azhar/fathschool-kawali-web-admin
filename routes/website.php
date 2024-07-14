@@ -54,6 +54,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::post('parent/index', 'parentGet')->name('parent.index');
             Route::post('student/export', 'studentExport')->name('student.export');
             Route::post('teacher/export', 'teacherExport')->name('teacherattendance.export');
+            Route::post('teacher-class/export', 'teacherClassExport')->name('teacherclass.export');
             Route::post('user-doc/destroy/{doc}', 'docDestroy')->name('doc.destroy');
         });
 
@@ -196,6 +197,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::get('/subject/attendance', 'subjectAttendance')->name('report.subject.attendance');
             Route::get('/expense', 'expense')->name('report.expense');
             Route::get('/all/student/fees', 'allStudentFees')->name('report.all.student.fees');
+            Route::get('/get-courses', [ReportController::class, 'getCourses'])->name('get.courses');
+            Route::get('/get-subjects', [ReportController::class, 'getSubjects'])->name('get.subjects');
 
             // Report Export as pdf or excel
             Route::post('/transaction/export', 'transactionExport')->name('report.transaction.export');

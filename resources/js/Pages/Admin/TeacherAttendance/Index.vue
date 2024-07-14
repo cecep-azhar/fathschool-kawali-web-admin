@@ -4,11 +4,11 @@
       {{ __('Teacher Attendance') }}
     </template>
     <Breadcrumb>
-      <BreadcrumbLink :title="__('All Attendance')" :href="route('teacher.class')" />
+      <BreadcrumbLink :title="__('Teacher Attendance')" :href="route('teacher.class')" />
     </Breadcrumb>
     <div>
       <page-header class="flex-col sm:flex-row">
-        {{ __('All Attendance') }}
+        {{ __('Teacher Attendance') }}
         <template #content>
           <div class="flex flex-col sm:flex-row gap-4">
             <global-button :loading="false" @click="exportSubmit()" type="button" theme="sky">
@@ -184,6 +184,9 @@ export default {
         data: {
           ...this.export_data,
           ...exportData
+        },
+        headers: {
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
         responseType: "blob",
       }).then((response) => {

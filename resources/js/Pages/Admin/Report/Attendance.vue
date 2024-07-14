@@ -4,7 +4,6 @@
             <BreadcrumbLink :href="route('reports.index')" title="Report" />
             <BreadcrumbLink :title="__('Attendance List')" />
         </Breadcrumb>
-
         <div class="py-12">
             <div
                 class="mb-3 rounded-lg py-4 font-semibold text-left rtl:text-right text-gray-900 bg-white dark:text-white dark:bg-gray-800">
@@ -16,7 +15,6 @@
                     </div>
                 </page-header>
                 <form class="grid grid-cols-1 md:grid-cols-8 gap-2 items-center px-6" @submit.prevent="filterData()">
-
                     <div class="col-span-2">
                         <global-label for="student" value="Student" />
                         <Multiselect id="student" class="dark:text-gray-900" v-model="filter.student_id"
@@ -106,39 +104,7 @@
             <template #title>
                 {{ __('Export Data') }}
             </template>
-
-            <template #content>
-                <!-- Content -->
-                <div class="flex gap-6">
-                    <div
-                        class="w-full rounded-lg cursor-pointer flex items-center pl-4 border border-gray-200 dark:border-gray-700">
-                        <input value="xlsx" id="excel" v-model="export_data.type" type="radio" name="export_type"
-                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
-                        <global-label for="excel"
-                            class="py-3 ml-2 cursor-pointer w-full text-sm font-medium text-gray-900 dark:text-gray-300"
-                            value="Excel" :required="false" />
-                    </div>
-                    <label for="pdf"
-                        class="w-full cursor-pointer rounded-lg flex items-center pl-4 border border-gray-200 dark:border-gray-700">
-                        <input value="pdf" id="pdf" v-model="export_data.type" type="radio" name="export_type"
-                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
-                        <global-label for="pdf"
-                            class="py-3 ml-2 w-full text-sm font-medium cursor-pointer text-gray-900 dark:text-gray-300"
-                            value="PDF" :required="false" />
-                    </label>
-                </div>
-            </template>
-
-            <template #footer>
-                <global-button @click="exportSubmit()" :loading="loading" type="button" class="mr-2">
-                    {{ __('Export') }}
-                </global-button>
-                <global-button :loading="false" @click="visible = false" type="button" theme="outline-danger">
-                    {{ __('Cancel') }}
-                </global-button>
-            </template>
         </export-modal>
-        <!-- Data Export Modal End -->
     </AppLayout>
 </template>
 
@@ -227,74 +193,56 @@ export default {
         },
     },
     methods: {
-        filterData() {
-            this.filter.get(this.route('report.attendance'))
-        },
-        showExportModal() {
-            this.visible = true;
-        },
-        exportSubmit() {
-            this.loading = true;
-            this.export_data.student = this.filter.student_id;
-            this.export_data.year = this.filter.year;
-            this.export_data.month = this.filter.month;
-
-            axios({
-                url: this.route('report.attendance.export'),
-                method: "POST",
-                data: this.export_data,
-                responseType: "blob",
-            }).then((response) => {
-
-                let extension = this.export_data.type;
-
-                var fileURL = window.URL.createObjectURL(new Blob([response.data]));
-                var fileLink = document.createElement("a");
-
-                fileLink.href = fileURL;
-                fileLink.setAttribute("download", "attendance-report." + extension);
-                document.body.appendChild(fileLink);
-
-                fileLink.click();
-
-                this.loading = false;
-                this.visible = false;
-            }).catch((e) => {
-                this.loading = false;
-                this.visible = false;
-            });
-        },
-        attendanceStatus(day, attendance) {
-            const dayStr = day < 10 ? `0${day}` : day;
-            const fullDay = `${this.selected_year}-${this.selected_month}-${dayStr}`;
-            let status = null;
-            this.attendances.forEach(attendance => {
-                if (attendance.date == fullDay) {
-                    status = attendance.status;
+    async fetchCourses() {
+        try {
+            const response = await axios.get(this.route('get.courses'), {
+                params: {
+                    student_id: this.filter.student_id
                 }
             });
-
-            return status;
-
-        },
-        getMonthName(month) {
-            return dayjs(`${this.selected_year}-${month}`).format("MMMM");
-        },
-    },
-    computed: {
-        daysInMonth() {
-            if (this.selected_year == "" || this.selected_month == "") {
-                return false;
-            }
-
-            return dayjs(
-                `${this.selected_year}-${this.selected_month}`
-            ).daysInMonth();
+            this.courses = response.data;
+        } catch (error) {
+            console.error('Error fetching courses:', error);
         }
     },
-    mounted() {
-
+    async fetchSubjects() {
+        try {
+            const response = await axios.get(this.route('get.subjects'), {
+                params: {
+                    course_id: this.filter.course_id
+                }
+            });
+            this.subjects = response.data;
+        } catch (error) {
+            console.error('Error fetching subjects:', error);
+        }
+    },
+    async filterData() {
+        await this.fetchCourses();
+        await this.fetchSubjects();
+        this.filter.get(this.route('report.attendance'));
     }
+},
+watch: {
+    'filter.student_id': function (newVal) {
+        if (newVal) {
+            this.fetchCourses();
+        }
+    },
+    'filter.course_id': function (newVal) {
+        if (newVal) {
+            this.fetchSubjects();
+        }
+    }
+},
+mounted() {
+    if (this.filter.student_id) {
+        this.fetchCourses();
+    }
+    if (this.filter.course_id) {
+        this.fetchSubjects();
+    }
+}
 };
 </script>
 <style src="@vueform/multiselect/themes/default.css">

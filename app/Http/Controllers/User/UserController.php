@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Actions\File\FileDelete;
 use App\Exports\StudentExport;
+use App\Exports\TeacherExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UserRequest;
 use App\Models\Course;
@@ -283,6 +284,31 @@ class UserController extends Controller
     {
         return Excel::download(new StudentExport($request->course), 'students.xlsx');
     }
+
+    /**
+     * Teacher Export Page
+     *
+     * @return Response
+     */
+    public function teacherExport(Request $request)
+{
+    $name = $request->name;
+    $month = $request->month;
+
+    if ($name && $month) {
+        // Filter berdasarkan nama dan bulan
+        return Excel::download(new TeacherExport($name, $month), 'teachers.xlsx');
+    } elseif ($name) {
+        // Filter berdasarkan nama
+        return Excel::download(new TeacherExport($name), 'teachers.xlsx');
+    } elseif ($month) {
+        // Filter berdasarkan bulan
+        return Excel::download(new TeacherExport(null, $month), 'teachers.xlsx');
+    } else {
+        // Tanpa filter (semua data)
+        return Excel::download(new TeacherExport(), 'teachers.xlsx');
+    }
+}
 
     /**
      * Parent get By Axios For Admission Page

@@ -4,7 +4,7 @@
       {{ __('Teacher Attendance') }}
     </template>
     <Breadcrumb>
-      <BreadcrumbLink :title="__('All Attendance')" :href="route('teacher.class')" />
+      <BreadcrumbLink :title="__('All Attendance')" :href="route('teacher.attendance')" />
     </Breadcrumb>
     <div>
       <page-header class="flex-col sm:flex-row">
@@ -34,11 +34,11 @@
       <global-table>
         <template #head>
           <th class="py-4 px-5">{{ __('Name') }}</th>
+          <th class="py-4 px-5">{{ __('Class') }}</th>
+          <th class="py-4 px-5">{{ __('Subject') }}</th>
           <th class="py-4 px-5">{{ __('Date') }}</th>
           <th class="py-4 px-5">{{ __('Time In') }}</th>
           <th class="py-4 px-5">{{ __('Time Out') }}</th>
-          <th class="py-4 px-5">{{ __('Latlon In') }}</th>
-          <th class="py-4 px-5">{{ __('Latlon Out') }}</th>
         </template>
         <template #body>
           <template v-if="filteredAttendance.length > 0">
@@ -48,6 +48,12 @@
                   {{ attendance.user.name }}
                 </td>
                 <td class="py-4 px-5 text-gray-900 dark:text-white">
+                  {{ attendance.class_name }}
+                </td>
+                <td class="py-4 px-5 text-gray-900 dark:text-white">
+                  {{ attendance.subject_name }}
+                </td>
+                <td class="py-4 px-5 text-gray-900 dark:text-white">
                   {{ attendance.date }}
                 </td>
                 <td class="py-4 px-5 text-gray-900 dark:text-white">
@@ -55,12 +61,6 @@
                 </td>
                 <td class="py-4 px-5 text-gray-900 dark:text-white">
                   {{ attendance.time_out }}
-                </td>
-                <td class="py-4 px-5 text-gray-900 dark:text-white">
-                  {{ attendance.latlon_in }}
-                </td>
-                <td class="py-4 px-5 text-gray-900 dark:text-white">
-                  {{ attendance.latlon_out }}
                 </td>
               </tr>
             </template>
@@ -100,7 +100,7 @@ export default {
     ExportModal
   },
   props: {
-    attendanceteacher: {
+    teacherAttendances: {
       type: Array,
       required: true,
     },
@@ -125,16 +125,16 @@ export default {
     };
   },
   setup(props) {
-    const attendanceteacher = ref(props.attendanceteacher);
+    const teacherAttendances = ref(props.teacherAttendances);
 
     return {
-      attendanceteacher,
+      teacherAttendances,
     };
   },
   computed: {
     // Menghitung data yang sudah difilter berdasarkan nama dan bulan
     filteredAttendance() {
-      return this.attendanceteacher.filter(attendance => {
+      return this.teacherAttendances.filter(attendance => {
         let nameMatch = true;
         let monthMatch = true;
 
@@ -160,7 +160,7 @@ export default {
       // Jika Anda ingin menampilkan loading indicator, Anda bisa mengatur this.loading = true; di sini
 
       // Lakukan filter berdasarkan nama dan bulan
-      this.attendanceteacher = this.filteredAttendance;
+      this.teacherAttendances = this.filteredAttendance;
     },
 
     // Metode untuk mengekspor data

@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Teacher;
 
 use App\Exports\ExportTeacherAttendance;
 use App\Http\Controllers\Controller;
+use App\Models\Api\ClassAttendance;
 use App\Models\Attendance;
+use App\Models\ClassRoutine;
 use App\Models\Course;
 use App\Models\Setting;
 use App\Models\Subject;
@@ -40,6 +42,39 @@ class AttendanceController extends Controller
 
         return inertia('Admin/TeacherAttendance/Index', ['attendanceteacher' => $attendanceteacher]);
     }
+
+    public function getTeacherClassAttendance()
+    {
+        // Ambil data absensi kelas dari class_attendance
+        $teacherAttendances = ClassAttendance::with('user')
+            ->select('class_attendances.*')
+            ->join('class_routines', function ($join) {
+                $join->on('class_attendances.date', '>=', 'class_routines.start_date')
+                     ->whereRaw("class_attendances.time_in BETWEEN class_routines.start_time AND class_routines.end_time");
+            })
+            ->get();
+    
+        // Ambil informasi tambahan seperti nama kelas dan mata pelajaran dari class_routines
+        foreach ($teacherAttendances as $attendance) {
+            $classRoutine = ClassRoutine::where('start_date', '<=', $attendance->date)
+                ->where('end_date', '>=', $attendance->date)
+                ->whereTime('start_time', '<=', $attendance->time_in)
+                ->whereTime('end_time', '>=', $attendance->time_in)
+                ->first();
+    
+            if ($classRoutine) {
+                // Ambil nama kelas dari relasi course pada class_routines
+                $attendance->class_name = $classRoutine->course->name; // Pastikan 'name' sesuai dengan atribut nama kelas
+    
+                // Ambil nama mata pelajaran dari relasi subject pada class_routines
+                $attendance->subject_name = $classRoutine->subject->name; // Pastikan 'name' sesuai dengan atribut nama mata pelajaran
+            }
+        }
+    
+        return inertia('Admin/Report/TeacherClassAttendance', ['teacherAttendances' => $teacherAttendances]);
+    }
+    
+
 
     public function attendancesExport(Request $request)
     {

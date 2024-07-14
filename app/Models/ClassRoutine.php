@@ -68,6 +68,11 @@ class ClassRoutine extends Model
         return $this->belongsTo(Subject::class, 'subject_id', 'id');
     }
 
+    public function subjects()
+    {
+        return $this->belongsTo(Subject::class);
+    }
+
     public function getDifferenceAttribute()
     {
         return Carbon::parse($this->end_time)->diffInMinutes($this->start_time);

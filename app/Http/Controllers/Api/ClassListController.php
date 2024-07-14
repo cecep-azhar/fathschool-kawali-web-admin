@@ -46,26 +46,34 @@ class ClassListController extends Controller
     {
         // Ambil course berdasarkan courseId
         $course = Course::find($courseId);
-
+    
         // Jika course tidak ditemukan, kembalikan respons error
         if (!$course) {
             return response()->json(['error' => 'Course not found'], 404);
         }
-
-        // Ambil pengguna yang terdaftar di course tertentu
+    
+        // Ambil pengguna yang terdaftar di course tertentu dan urutkan berdasarkan nama
         $users = User::active()->student()->whereHas('courses', function($query) use ($courseId) {
             $query->where('course_id', $courseId);
-        })->get();
-
+        })->orderBy('name')->get();
+    
+        // Inisialisasi nomor absen
+        $absenNumber = 1;
+    
         // Map hasil untuk menyesuaikan format
-        $usersResult = $users->map(function($user) {
+        $usersResult = $users->map(function($user) use (&$absenNumber) {
+            // Increment nomor absen
+            $absen = $absenNumber;
+            $absenNumber++;
+    
             return [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'absen_number' => $absen,
             ];
         });
-
+    
         // Buat hasil akhir yang menyertakan data course dan pengguna
         $result = [
             'course' => [
@@ -74,10 +82,11 @@ class ClassListController extends Controller
             ],
             'users' => $usersResult,
         ];
-
+    
         // Kembalikan sebagai respons JSON
         return response()->json($result);
     }
+    
 
 
 

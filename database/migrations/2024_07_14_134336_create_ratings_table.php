@@ -15,17 +15,14 @@ return new class extends Migration
     {
         Schema::create('ratings', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('teacher_id');
-            $table->integer('rating')->unsigned();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('teacher_id')->constrained('users')->onDelete('cascade');
+            $table->integer('rating');
             $table->text('comment')->nullable();
             $table->timestamps();
-        
-            $table->foreign('user_id')->references('id')->on('users');
-            $table->foreign('teacher_id')->references('id')->on('users');
         });
-        
     }
+    
 
     /**
      * Reverse the migrations.

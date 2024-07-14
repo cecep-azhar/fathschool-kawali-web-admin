@@ -358,4 +358,15 @@ class User extends Authenticatable
     {
         return $this->hasOne(StudentList::class, 'student_id');
     }
+
+    public function ratingsGiven()
+    {
+        return $this->hasMany(Rating::class);
+    }
+
+    // Relasi untuk ratings diterima (sebagai guru)
+    public function ratingsReceived()
+    {
+        return $this->hasMany(Rating::class, 'teacher_id');
+    }
 }

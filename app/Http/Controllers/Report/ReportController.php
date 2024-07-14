@@ -86,38 +86,70 @@ class ReportController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function attendance(Request $request)
-    {
-        abort_if(!userCan('report.attendance'), 403);
-        $data['courses'] = Course::get();
-        $data['subjects'] = [];
-        $data['students'] = [];
-        if ($request->has('course_id')) {
-            $data['subjects'] = Subject::where('course_id', $request->course_id)->get();
-            $userCourse = UserCourse::where('course_id', $request->course_id)->pluck('user_id')->toArray();
-            $data['students'] = User::whereIn('id', $userCourse)->get();
-        }
 
-        $data['filter_data'] = $request;
+//      public function getCourses(Request $request)
+// {
+//     $student_id = $request->student_id;
+//     $courses = Course::whereHas('userCourses', function($query) use ($student_id) {
+//         $query->where('user_id', $student_id);
+//     })->get();
 
-        // attendance
-        $data['attendances'] = [];
+//     return response()->json($courses);
+// }
 
-        $attendance_query = StudentAttendance::query();
+// public function getSubjects(Request $request)
+// {
+//     $courseId = $request->course_id;
+//     $subjects = Subject::where('course_id', $courseId)->get();
 
-        if ($request->has('student_id') && $request->student_id != null) {
-            $attendance_query->where('student_id', $request->student_id);
-        }
-        if ($request->month && $request->year) {
-            $attendance_query->whereMonth('date', $request->month)->whereYear('date', $request->year);
-        }
+//     return response()->json($subjects);
+// }
+public function attendance(Request $request)
+{
+    abort_if(!userCan('report.attendance'), 403);
 
-        if ($request->has('student_id') && $request->student_id != null) {
-            $data['attendances'] = $attendance_query->get();
-        }
+    $courseId = $request->input('course_id');
+    
 
-        return inertia('Admin/Report/Attendance', $data);
+    $data['courses'] = Course::get();
+     $data['subjects'] = Subject::get();
+    // $data['subjects'] = Subject::byCourseId($courseId)->get();
+    $data['students'] = User::role('student')->get(); // Assuming users have a role 'student'
+    
+//     $courseId = 17; // Misalkan ini id course yang Anda cari
+
+//     $data['subjects'] = Subject::whereHas('course', function ($query) use ($courseId) {
+//     $query->where('id', $courseId);
+// })->get();
+    
+    if ($request->has('course_id')) {
+        $data['subjects'] = Subject::where('course_id', $request->course_id)->get();
+        $userCourse = UserCourse::where('course_id', $request->course_id)->pluck('user_id')->toArray();
+        $data['students'] = User::whereIn('id', $userCourse)->get();
     }
+
+    $data['filter_data'] = $request->all();
+
+    // Attendance
+    $data['attendances'] = [];
+
+    $attendance_query = StudentAttendance::query();
+
+    if ($request->has('student_id') && $request->student_id != null) {
+        $attendance_query->where('student_id', $request->student_id);
+    }
+    if ($request->month && $request->year) {
+        $attendance_query->whereMonth('date', $request->month)->whereYear('date', $request->year);
+    }
+
+    if ($request->has('student_id') && $request->student_id != null) {
+        $data['attendances'] = $attendance_query->get();
+    }
+
+    return inertia('Admin/Report/Attendance', $data);
+}
+
+
     
 
     public function studentsEnroll()

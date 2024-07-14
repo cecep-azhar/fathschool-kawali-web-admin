@@ -7,22 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Rating extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
-        'user_id',
-        'teacher_id',
-        'rating',
-        'comment'
+        'user_id', 'teacher_id', 'rating', 'comment'
     ];
 
-    // Relasi ke pengguna yang memberikan rating
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Relasi ke guru yang dinilai
     public function teacher()
     {
         return $this->belongsTo(User::class, 'teacher_id');

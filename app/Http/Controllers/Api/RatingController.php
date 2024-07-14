@@ -3,18 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Rating;
 use Illuminate\Http\Request;
+use App\Models\Rating;
 
 class RatingController extends Controller
 {
     public function store(Request $request)
     {
         $request->validate([
-            'teacher_id' => 'required|exists:users,id,role,teacher',
-            'rating' => 'required|integer|between:1,5',
+            'teacher_id' => 'required|exists:users,id',
+            'rating' => 'required|integer|min:1|max:5',
             'comment' => 'nullable|string',
-        ]);        
+        ]);
 
         $rating = Rating::create([
             'user_id' => auth()->id(),
@@ -23,8 +23,9 @@ class RatingController extends Controller
             'comment' => $request->comment,
         ]);
 
-        return response()->json(['message' => 'Rating created successfully', 'rating' => $rating], 201);
+        return response()->json([
+            'message' => 'Rating submitted successfully',
+            'rating' => $rating,
+        ]);
     }
-
-    // Tambahkan metode lain jika diperlukan
 }

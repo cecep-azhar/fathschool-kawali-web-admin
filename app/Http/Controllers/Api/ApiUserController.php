@@ -19,6 +19,17 @@ class ApiUserController extends Controller
         }
     }
 
+    public function getbyid(Request $request, $userId)
+    {
+        $user = User::where('id', $userId)->orderBy('id', 'desc')->first();
+
+        if ($user) {
+            return response()->json($user, 200);
+        } else {
+            return response()->json(['message' => 'User not found or not a teacher'], 404);
+        }
+    }
+
     public function index(Request $request)
     {
         $user = User::where('id', $request->user()->id)->orderBy('id', 'desc')->get();

@@ -41,6 +41,8 @@ Route::post('/forget-password', [App\Http\Controllers\Api\AuthController::class,
 //user
 Route::get('/user', [App\Http\Controllers\Api\ApiUserController::class, 'show'])->middleware('auth:sanctum');
 
+Route::get('/user/{userId}', [App\Http\Controllers\Api\ApiUserController::class, 'getbyid'])->middleware('auth:sanctum');
+
 //school
 Route::get('/school', [App\Http\Controllers\Api\ApiSchoolController::class, 'show'])->middleware('auth:sanctum');
 

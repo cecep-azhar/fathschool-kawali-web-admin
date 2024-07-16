@@ -20,7 +20,7 @@ class JournalController extends Controller
             'description' => 'required|string',
             'img' => 'required|string',
             'course_id' => 'required|string',
-        ]);        
+        ]);
 
         $journal = new Journal();
         $journal->date = $data['date'];
@@ -55,7 +55,12 @@ class JournalController extends Controller
             return [
                 'id' => $journal->id,
                 'course_id' => $journal->course_id,
-                'time' => $journal->time, 
+                'user_id' => $journal->user_id,
+                'description' => $journal->description,
+                'img' => $journal->img,
+                'security_code' => $journal->security_code,
+                'security_code_expiration' => $journal->security_code_expiration,
+                'time' => $journal->time,
                 'date' => $journal->date,
             ];
         });

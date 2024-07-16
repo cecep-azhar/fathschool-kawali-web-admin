@@ -29,25 +29,18 @@ class ClassAttendanceController extends Controller
         // Get the current user
         $user = $request->user();
 
+        // Get today's weekday (0 = Sunday, 6 = Saturday)
+        $today = date('w');  // This will give you today's day of the week
+
         // Get the class routine for the user
         $classRoutine = ClassRoutine::where('teacher_id', $user->id)
             ->where('course_id', $course->id)
-            ->where('start_date', date('Y-m-d'))
+            ->where('weekday', $today)
             ->first();
 
         // Check if class routine not found
         if (!$classRoutine) {
             return response(['message' => 'Anda tidak memiliki jadwal'], 400);
-        }
-
-        // Check if course_id does not match
-        if ($classRoutine->course_id !== $course->id) {
-            return response(['message' => 'Anda tidak memiliki jadwal pada kelas ini'], 400);
-        }
-
-        // Check if date is different from start_date
-        if ($classRoutine->start_date !== date('Y-m-d')) {
-            return response(['message' => 'Ini bukan hari pembelajaran anda'], 400);
         }
 
         // Check if time_in is before start_time
@@ -72,9 +65,11 @@ class ClassAttendanceController extends Controller
             ->useLog('default')
             ->causedBy(auth()->user())
             ->event('Qrin')
-            ->withProperties(['ip' => $request->ip(),
-                              'user' => $user->username,
-                              'time' => date('H:i')])
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user' => $user->username,
+                'time' => date('H:i')
+            ])
             ->log('User Qrin');
 
         return response([
@@ -83,6 +78,7 @@ class ClassAttendanceController extends Controller
             'attendance_id' => $attendance->id
         ], 200);
     }
+
 
     // Qrout
     public function qrout(Request $request)

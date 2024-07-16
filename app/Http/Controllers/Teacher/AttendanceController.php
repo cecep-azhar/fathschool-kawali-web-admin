@@ -54,28 +54,28 @@ class AttendanceController extends Controller
                      ->on('class_attendances.date', '=', 'class_routines.start_date');
             })
             ->get();
-        
+
         // Ambil informasi tambahan seperti nama kelas dan mata pelajaran dari class_routines
         foreach ($teacherAttendances as $attendance) {
             $classRoutine = ClassRoutine::where('teacher_id', $attendance->user_id)
                 ->where('course_id', $attendance->course_id)
                 ->where('start_date', $attendance->date)
                 ->first();
-    
+
             if ($classRoutine) {
                 // Ambil informasi kelas dari model Course yang terhubung dengan ClassRoutine
                 $course = Course::find($classRoutine->course_id);
                 $attendance->class_name = $course ? $course->name : 'Nama Kelas Tidak Ditemukan';
-    
+
                 // Ambil informasi mata pelajaran dari model Subject yang terhubung dengan ClassRoutine
                 $subject = Subject::find($classRoutine->subject_id);
                 $attendance->subject_name = $subject ? $subject->name : 'Nama Mata Pelajaran Tidak Ditemukan';
             }
         }
-    
+
         return inertia('Admin/Report/TeacherClassAttendance', ['teacherAttendances' => $teacherAttendances]);
     }
-    
+
 
 
     public function attendancesExport(Request $request)

@@ -5,12 +5,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Api\ApiUserIdController;
+use App\Http\Controllers\Api\ClassAttendanceController;
 use App\Http\Controllers\Api\ClassListController;
 use App\Http\Controllers\Api\StudentAttendanceController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\TotalController;
 use App\Http\Controllers\Api\QuotesController;
 use App\Http\Controllers\Api\RatingController;
+use App\Models\Api\ClassAttendance;
 use Spatie\Activitylog\Models\Activity;
 
 
@@ -137,5 +139,5 @@ Route::get('/quote-of-the-day', [QuotesController::class, 'getQuoteOfTheDay']);
 Route::post('/add-quote', [QuotesController::class, 'addQuote']);
 
 //rating
-Route::middleware('auth:sanctum')->post('/rate-teacher', [RatingController::class, 'store']);
+Route::middleware('auth:sanctum')->post('/rate-teacher', [ClassAttendanceController::class, 'rating']);
 

@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use App\Models\Api\ClassAttendance;
 use App\Models\Course;
 use App\Models\ClassRoutine;
+use App\Models\Rating;
+use App\Models\User;
+use Carbon\Carbon;
 
 class ClassAttendanceController extends Controller
 {
@@ -29,18 +32,19 @@ class ClassAttendanceController extends Controller
         // Get the current user
         $user = $request->user();
 
-        // Get today's weekday (0 = Sunday, 6 = Saturday)
-        $today = date('w');  // This will give you today's day of the week
-
         // Get the class routine for the user
         $classRoutine = ClassRoutine::where('teacher_id', $user->id)
             ->where('course_id', $course->id)
-            ->where('weekday', $today)
             ->first();
 
         // Check if class routine not found
         if (!$classRoutine) {
             return response(['message' => 'Anda tidak memiliki jadwal'], 400);
+        }
+
+        // Check if course_id does not match
+        if ($classRoutine->course_id !== $course->id) {
+            return response(['message' => 'Anda tidak memiliki jadwal pada kelas ini'], 400);
         }
 
         // Check if time_in is before start_time
@@ -65,11 +69,9 @@ class ClassAttendanceController extends Controller
             ->useLog('default')
             ->causedBy(auth()->user())
             ->event('Qrin')
-            ->withProperties([
-                'ip' => $request->ip(),
-                'user' => $user->username,
-                'time' => date('H:i')
-            ])
+            ->withProperties(['ip' => $request->ip(),
+                              'user' => $user->username,
+                              'time' => date('H:i')])
             ->log('User Qrin');
 
         return response([
@@ -78,7 +80,6 @@ class ClassAttendanceController extends Controller
             'attendance_id' => $attendance->id
         ], 200);
     }
-
 
     // Qrout
     public function qrout(Request $request)
@@ -144,6 +145,78 @@ class ClassAttendanceController extends Controller
         return response([
             'checkedin' => $attendance ? true : false,
             'checkedout' => $isCheckout ? true : false,
+        ], 200);
+    }
+
+    public function rating(Request $request)
+    {
+        // Validasi input
+        $request->validate([
+            'rating' => 'required|integer|min:0|max:5',
+            'comment' => 'nullable|string',
+        ]);
+
+        // Dapatkan pengguna saat ini
+        $user = $request->user();
+
+        // Dapatkan daftar course_id yang diikuti oleh student
+        $courseIds = $user->courses()->pluck('course_id');
+
+        // Dapatkan attendance terbaru yang telah dilakukan qrout oleh teacher dengan course_id yang sama
+        $attendance = ClassAttendance::whereIn('course_id', $courseIds)
+            ->whereNotNull('time_out')
+            ->latest()
+            ->first();
+
+        // Periksa apakah attendance tidak ditemukan
+        if (!$attendance) {
+            return response(['message' => 'You cannot rate no teacher has entered today'], 400);
+        }
+
+        // Periksa apakah waktu sudah lebih dari 30 menit setelah time_out
+        $timeOut = Carbon::parse($attendance->time_out);
+        $now = Carbon::now();
+        $minutesSinceQrout = $now->diffInMinutes($timeOut);
+
+        if ($minutesSinceQrout > 30) {
+            return response(['message' => 'You cannot rate the teacher after 30 minutes of Qrout'], 400);
+        }
+
+        // Dapatkan teacher_id dari attendance
+        $teacherId = $attendance->user_id;
+
+        // Periksa apakah rating sudah diberikan untuk teacher_id dan course_id yang sama pada hari yang sama
+        $existingRating = Rating::where('student_id', $user->id)
+            ->where('teacher_id', $teacherId)
+            ->where('course_id', $attendance->course_id)
+            ->whereDate('created_at', Carbon::today())
+            ->exists();
+
+        if ($existingRating) {
+            return response(['message' => 'You have already rated this teacher today'], 400);
+        }
+
+        // Simpan rating baru
+        $rating = new Rating();
+        $rating->student_id = $user->id;
+        $rating->teacher_id = $teacherId;
+        $rating->course_id = $attendance->course_id;
+        $rating->attendance_id = $attendance->id;
+        $rating->rating = $request->rating;
+        $rating->comment = $request->comment;
+        $rating->save();
+
+        return response([
+            'message' => 'Rating submitted successfully',
+            'rating' => [
+                'id' => $rating->id,
+                'teacher_id' => $rating->teacher_id,
+                'course_id' => $rating->course_id,
+                'attendance_id' => $rating->attendance_id,
+                'rating' => $rating->rating,
+                'comment' => $rating->comment,
+                'created_at' => $rating->created_at->format('Y-m-d H:i:s'),
+            ]
         ], 200);
     }
 }

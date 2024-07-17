@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ClassRoutine;
 use App\Models\Course;
 use App\Models\Currency;
+use App\Models\Rating;
 use App\Models\Result;
 use App\Models\Setting;
 use App\Models\StudentAttendance;
@@ -109,19 +110,19 @@ public function attendance(Request $request)
     abort_if(!userCan('report.attendance'), 403);
 
     $courseId = $request->input('course_id');
-    
+
 
     $data['courses'] = Course::get();
      $data['subjects'] = Subject::get();
     // $data['subjects'] = Subject::byCourseId($courseId)->get();
     $data['students'] = User::role('student')->get(); // Assuming users have a role 'student'
-    
+
 //     $courseId = 17; // Misalkan ini id course yang Anda cari
 
 //     $data['subjects'] = Subject::whereHas('course', function ($query) use ($courseId) {
 //     $query->where('id', $courseId);
 // })->get();
-    
+
     if ($request->has('course_id')) {
         $data['subjects'] = Subject::where('course_id', $request->course_id)->get();
         $userCourse = UserCourse::where('course_id', $request->course_id)->pluck('user_id')->toArray();
@@ -150,7 +151,7 @@ public function attendance(Request $request)
 }
 
 
-    
+
 
     public function studentsEnroll()
     {
@@ -656,5 +657,26 @@ public function attendance(Request $request)
 
         // Stream the PDF to the user's browser for download with a descriptive filename
         return $pdf->stream('School_expense_report_for' . $monthName . '_' . $year . '.pdf');
+    }
+
+    public function rating()
+    {
+        abort_if(! userCan('academic.management'), 403);
+
+        // Ambil semua data rating dengan relasi user, teacher, dan course
+        $ratingTeachers = Rating::with(['user:id,name', 'teacher:id,name', 'course:id,name'])
+            ->select('id', 'teacher_id', 'course_id', 'rating', 'comment', 'created_at')
+            ->get();
+
+        // Mengubah struktur data untuk menambahkan informasi nama pengguna, nama teacher, dan nama course
+        $ratingTeachers->each(function ($rating) {
+            $rating->teacher_name = $rating->teacher->name;
+            $rating->course_name = $rating->course->name;
+            unset($rating->teacher); // Hapus relasi teacher setelah digunakan
+            unset($rating->course); // Hapus relasi course setelah digunakan
+        });
+
+        // Kembalikan respons menggunakan Inertia.js dengan data ratingteacher
+        return inertia('Admin/Report/RatingTeacher', compact('ratingteacher'));
     }
 }

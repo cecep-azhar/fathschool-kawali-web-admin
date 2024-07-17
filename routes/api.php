@@ -108,10 +108,10 @@ Route::get('/api-attendances', [App\Http\Controllers\Api\AttendanceController::c
 Route::middleware('auth:sanctum')->get('/student-attendances', [StudentAttendanceController::class, 'index']);
 
 //class lists
-Route::middleware('auth:sanctum')->get('/class-lists', [ClassListController::class, 'index']);
+Route::middleware('auth:sanctum')->get('/course', [ClassListController::class, 'index']);
 
 //class lists by id
-Route::middleware('auth:sanctum')->get('/class-lists/{class_list_id}', [ClassListController::class, 'show']);
+Route::middleware('auth:sanctum')->get('/course/{course_id}', [ClassListController::class, 'show']);
 
 //
 Route::get('students/{student_id}/course/{course_id}', [StudentController::class, 'show']);

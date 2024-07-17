@@ -25,7 +25,7 @@ class Course extends Model
         $this->attributes['slug'] = Str::slug($value);
     }
 
-    // One to many relation with student model
+    // One to many relation with student model  
     public function students()
     {
         return $this->hasMany(UserCourse::class, 'course_id')->with('user');
@@ -87,5 +87,12 @@ class Course extends Model
     {
         return $this->belongsToMany(Exam::class, 'course_result');
     }
+
+    protected $fillable = [
+        'name',
+        'description',
+        'photo',
+    ];
+    
 
 }

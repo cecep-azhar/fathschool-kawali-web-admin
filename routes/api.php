@@ -7,6 +7,7 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Api\ApiUserIdController;
 use App\Http\Controllers\Api\ClassAttendanceController;
 use App\Http\Controllers\Api\ClassListController;
+use App\Http\Controllers\Api\NoticeController;
 use App\Http\Controllers\Api\StudentAttendanceController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\TotalController;
@@ -141,3 +142,5 @@ Route::post('/add-quote', [QuotesController::class, 'addQuote']);
 //rating
 Route::middleware('auth:sanctum')->post('/rate-teacher', [ClassAttendanceController::class, 'rating']);
 
+//announcement
+Route::middleware('auth:sanctum')->get('/notices', [NoticeController::class, 'index']);

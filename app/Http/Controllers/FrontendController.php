@@ -6,6 +6,7 @@ use App\Http\Requests\Website\StudentAdmissionRequest;
 use App\Models\AdmissionFormField;
 use App\Models\Course;
 use App\Models\GallerySlider;
+use App\Models\LandingVideo;
 use App\Models\Notice;
 use App\Services\Frontend\Admission\AdmissionRequestService;
 use Carbon\Carbon;
@@ -24,11 +25,15 @@ class FrontendController extends Controller
     public function index()
     {
         $sliders = GallerySlider::all();
+        $landings = LandingVideo::all();
+
+        // dd($youtube);
 
         return inertia('Frontend/Welcome', [
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),
             'sliders' => $sliders,
+            'landing' => $landings,
         ]);
     }
 

@@ -13,6 +13,18 @@
                 <home-slider :sliders="sliders" />
             </section>
         </div>
+        <div class="flex flex-col lg:flex-row items-start mt-8">
+        <!-- Video Section -->
+        <div class="lg:w-1/2 w-full lg:mr-8 mb-8 lg:mb-0">
+            <iframe :src="videoUrl" class="w-full h-64 lg:h-full rounded-lg shadow-lg" frameborder="0" allowfullscreen></iframe>
+        </div>
+
+        <!-- Text Section -->
+        <div class="lg:w-1/2 w-full">
+            <h2 class="text-2xl font-semibold mb-4"></h2>
+            <p class="text-gray-700"></p>
+        </div>
+    </div>
     </FrontendLayout>
 </template>
 

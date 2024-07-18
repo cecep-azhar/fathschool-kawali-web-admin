@@ -179,6 +179,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::get('/website', 'website')->name('website');
             Route::post('/website/slider', 'sliderStore')->name('website.slider.store');
             Route::delete('/website/slider/{slider}', 'sliderDelete')->name('website.slider.delete');
+            Route::post('/website/landing', 'landingStore')->name('website.landing.store');
+            Route::delete('/website/landing/{landing}', 'LandingDelete')->name('website.landing.delete');
             // Social Media Settings
             Route::post('/social', 'socialMediaStore')->name('social.store');
             Route::put('/{socialLink}/update', 'socialMediaUpdate')->name('social.update');
@@ -200,6 +202,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::get('/all/student/fees', 'allStudentFees')->name('report.all.student.fees');
             Route::get('/get-courses', [ReportController::class, 'getCourses'])->name('get.courses');
             Route::get('/get-subjects', [ReportController::class, 'getSubjects'])->name('get.subjects');
+            Route::get('studentt/attendance', [ReportController::class, 'attendance'])->name('student.attendance');
 
             // Report Export as pdf or excel
             Route::post('/transaction/export', 'transactionExport')->name('report.transaction.export');

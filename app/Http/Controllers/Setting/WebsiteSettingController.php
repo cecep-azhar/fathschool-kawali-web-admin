@@ -17,6 +17,7 @@ use App\Http\Requests\CurrencyUpdateRequest;
 use App\Mail\SmtpTestEmail;
 use App\Models\Currency;
 use App\Models\GallerySlider;
+use App\Models\LandingVideo;
 use App\Models\Language;
 use App\Models\Setting;
 use App\Models\SocialLink;
@@ -147,13 +148,39 @@ class WebsiteSettingController extends Controller
 
         return back();
     }
-
+    public function landingStore(Request $request)
+    {
+        // $request->validate([
+        //     'title' => 'string|max:255',
+        //     'description' => 'string',
+        //     'youtubeLink' => 'required|string'
+        // ]);
+    
+        LandingVideo::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'youtube_link' => $request->youtube_link
+        ]);
+        
+    
+        $this->flashSuccess('Slider Content Added Successfully');
+    
+        return back();
+    }
     /**
      * Website slider delete
      *
      * @return \Illuminate\Http\Response
      */
     public function sliderDelete(GallerySlider $slider)
+    {
+        $slider->delete();
+
+        $this->flashSuccess('Slider Deleted Successfully');
+
+        return back();
+    }
+    public function LandingDelete(LandingVideo $slider)
     {
         $slider->delete();
 

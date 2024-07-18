@@ -132,6 +132,36 @@
                         </div>
                         <input-error :error="$page.props.errors.status" />
                     </div>
+                    <div class="mb-3">
+                        <global-label class="text-gray-900" for="roles" :value="__('Role')" :required="true" />
+                        <div class="flex gap-2 items-center">
+                            <div class="flex w-1/3 items-center pl-4 rtl:pl-0 rtl:pr-4 border border-gray-200 rounded dark:border-gray-700">
+                                <input v-model="form.roles" checked id="role_student" type="radio" value="Student" name="roles"
+                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                <label for="role_student"
+                                    class="w-full py-2.5 ml-2 rtl:ml-0 rtl:mr-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                                    {{ __('Student') }}
+                                </label>
+                            </div>
+                            <div class="flex w-1/3 items-center pl-4 rtl:pl-0 rtl:pr-4 border border-gray-200 rounded dark:border-gray-700">
+                                <input v-model="form.roles" id="role_teacher" type="radio" value="Teacher" name="roles"
+                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                <label for="role_teacher"
+                                    class="w-full py-2.5 ml-2 rtl:ml-0 rtl:mr-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                                    {{ __('Teacher') }}
+                                </label>
+                            </div>
+                            <div class="flex w-1/3 items-center pl-4 rtl:pl-0 rtl:pr-4 border border-gray-200 rounded dark:border-gray-700">
+                                <input v-model="form.roles" id="role_partner" type="radio" value="Partner" name="roles"
+                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                <label for="role_partner"
+                                    class="w-full py-2.5 ml-2 rtl:ml-0 rtl:mr-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                                    {{ __('Partner') }}
+                                </label>
+                            </div>
+                        </div>
+                        <input-error :error="$page.props.errors.roles" />
+                    </div>
                     <div class="flex justify-end">
                         <global-button type="submit" :loading="form.processing" cssClass="mt-3" theme="primary">
                             {{ __('Save') }}
@@ -167,6 +197,7 @@ export default {
                 title: '',
                 description: '',
                 file: '',
+                roles: '',
                 status: 'public',
                 _method: 'POST'
             })
@@ -197,13 +228,13 @@ export default {
             if (this.update) {
                 this.form.post(this.route('notice-board.update', this.form.id), {
                     onSuccess: () => {
-                        this.form.reset('title', 'description', 'file', 'id', '_method')
+                        this.form.reset('title', 'description', 'file', 'id', 'roles', '_method')
                     }
                 })
             } else {
                 this.form.post(this.route('notice-board.store'), {
                     onSuccess: () => {
-                        this.form.reset('title', 'description', 'file', 'id', '_method')
+                        this.form.reset('title', 'description', 'file', 'id', 'roles', '_method')
                     }
                 })
             }

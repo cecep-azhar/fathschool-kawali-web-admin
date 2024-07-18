@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Api\PermissionAttendance;
 use App\Models\Attendance;
 use App\Models\Leave;
+use App\Models\LeaveType;
 
 class PermissionController extends Controller
 {
@@ -32,7 +33,10 @@ class PermissionController extends Controller
                 'integer',
                 function ($attribute, $value, $fail) {
                     // Validasi leave_type_id berdasarkan role_type teacher
-                    $leaveType = \App\Models\LeaveType::where('id', $value)->where('role_type', 'teacher')->first();
+                    $leaveType = LeaveType::where('id', $value)
+                        ->where('role_type', 'teacher')
+                        ->first();
+
                     if (!$leaveType) {
                         $fail('The selected leave type is invalid for teachers.');
                     }
@@ -41,9 +45,7 @@ class PermissionController extends Controller
             'title' => 'required|string|max:255',
             'start' => 'required|date',
             'end' => 'required|date',
-            'status' => 'required|in:pending,accepted,rejected',
             'description' => 'required|string',
-            'rejected_cause' => 'nullable|string',
             'image' => 'nullable|image|max:2048', // validasi untuk gambar, max 2MB
         ]);
 
@@ -54,9 +56,8 @@ class PermissionController extends Controller
         $leave->title = $request->title;
         $leave->start = $request->start;
         $leave->end = $request->end;
-        $leave->status = $request->status;
+        $leave->status = 'pending'; // Status otomatis diisi dengan 'pending'
         $leave->description = $request->description;
-        $leave->rejected_cause = $request->rejected_cause;
 
         // Penanganan file gambar
         if ($request->hasFile('image')) {
@@ -74,10 +75,11 @@ class PermissionController extends Controller
             ->useLog('default')
             ->causedBy(auth()->user())
             ->event('makePermission')
-            ->withProperties([  'ip' => $request->ip(),
-                                'user' => $user->username,
-                                'time' => date('H:i')])
-            
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user' => $user->username,
+                'time' => date('H:i')
+            ])
             ->log('User made a leave request');
 
         // Kembalikan respons

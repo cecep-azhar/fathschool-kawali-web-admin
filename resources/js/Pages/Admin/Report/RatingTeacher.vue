@@ -40,23 +40,23 @@
           <th class="py-4 px-5">{{ __('Created At') }}</th>
         </template>
         <template #body>
-          <template v-if="filteredAttendance.length > 0">
-            <template v-for="attendance in filteredAttendance" :key="attendance.id">
+          <template v-if="filteredRating.length > 0">
+            <template v-for="rating in filteredRating" :key="rating.id">
               <tr class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <td class="py-4 px-5 text-gray-900 dark:text-white">
-                  {{ attendance.teacher_name }}
+                  {{ rating.teacher_name }}
                 </td>
                 <td class="py-4 px-5 text-gray-900 dark:text-white">
-                  {{ attendance.course_name }}
+                  {{ rating.course_name }}
                 </td>
                 <td class="py-4 px-5 text-gray-900 dark:text-white">
-                  {{ attendance.rating }}
+                  {{ rating.rating }}
                 </td>
                 <td class="py-4 px-5 text-gray-900 dark:text-white">
-                  {{ attendance.comment }}
+                  {{ rating.comment }}
                 </td>
                 <td class="py-4 px-5 text-gray-900 dark:text-white">
-                  {{ attendance.created_at }}
+                  {{ rating.created_date }}
                 </td>
               </tr>
             </template>
@@ -96,7 +96,7 @@ export default {
     ExportModal
   },
   props: {
-    teacherAttendances: {
+    teacherRatings: {
       type: Array,
       required: true,
     },
@@ -121,28 +121,28 @@ export default {
     };
   },
   setup(props) {
-    const teacherAttendances = ref(props.teacherAttendances);
+    const teacherRatings = ref(props.teacherRatings);
 
     return {
-      teacherAttendances,
+      teacherRatings,
     };
   },
   computed: {
     // Menghitung data yang sudah difilter berdasarkan nama dan bulan
-    filteredAttendance() {
-      return this.teacherAttendances.filter(attendance => {
+    filteredRating() {
+      return this.teacherRatings.filter(rating => {
         let nameMatch = true;
         let monthMatch = true;
 
         // Filter berdasarkan nama
         if (this.filter.name.trim() !== '') {
-          nameMatch = attendance.user.name.toLowerCase().includes(this.filter.name.trim().toLowerCase());
+          nameMatch = rating.teacher_name.toLowerCase().includes(this.filter.name.trim().toLowerCase());
         }
 
         // Filter berdasarkan bulan
         if (this.filter.month !== '') {
-          let attendanceMonth = new Date(attendance.date).toISOString().slice(0, 7);
-          monthMatch = attendanceMonth === this.filter.month;
+          let ratingMonth = new Date(rating.created_date).toISOString().slice(0, 7);
+          monthMatch = ratingMonth === this.filter.month;
         }
 
         return nameMatch && monthMatch;
@@ -156,7 +156,7 @@ export default {
       // Jika Anda ingin menampilkan loading indicator, Anda bisa mengatur this.loading = true; di sini
 
       // Lakukan filter berdasarkan nama dan bulan
-      this.teacherAttendances = this.filteredAttendance;
+      this.teacherRatings = this.filteredRating;
     },
 
     // Metode untuk mengekspor data
@@ -175,7 +175,7 @@ export default {
       }
 
       axios({
-        url: this.route('teacherclass.export'),
+        url: this.route('rateteacher.export'),
         method: "POST",
         data: {
           ...this.export_data,
@@ -191,7 +191,7 @@ export default {
         var fileLink = document.createElement("a");
 
         fileLink.href = fileURL;
-        fileLink.setAttribute("download", "teacherclass-report." + 'xlsx');
+        fileLink.setAttribute("download", "rateteacher-report." + 'xlsx');
         document.body.appendChild(fileLink);
 
         fileLink.click();

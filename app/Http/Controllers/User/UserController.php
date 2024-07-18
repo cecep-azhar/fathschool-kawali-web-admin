@@ -6,6 +6,7 @@ use App\Actions\File\FileDelete;
 use App\Exports\StudentExport;
 use App\Exports\TeacherClassExport;
 use App\Exports\TeacherExport;
+use App\Exports\TeacherRateExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UserRequest;
 use App\Models\Course;
@@ -318,6 +319,18 @@ class UserController extends Controller
 
         // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
         $export = new TeacherClassExport($name, $month);
+
+        // Download file Excel sesuai dengan filter
+        return Excel::download($export, 'teachers.xlsx');
+    }
+
+    public function teacherRateExport(Request $request)
+    {
+        $name = $request->name;
+        $month = $request->month;
+
+        // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
+        $export = new TeacherRateExport($name, $month);
 
         // Download file Excel sesuai dengan filter
         return Excel::download($export, 'teachers.xlsx');

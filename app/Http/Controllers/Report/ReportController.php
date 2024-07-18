@@ -664,19 +664,22 @@ public function attendance(Request $request)
         abort_if(! userCan('academic.management'), 403);
 
         // Ambil semua data rating dengan relasi user, teacher, dan course
-        $ratingTeachers = Rating::with(['user:id,name', 'teacher:id,name', 'course:id,name'])
+        $teacherRatings = Rating::with(['user:id,name', 'teacher:id,name', 'course:id,name'])
             ->select('id', 'teacher_id', 'course_id', 'rating', 'comment', 'created_at')
             ->get();
 
         // Mengubah struktur data untuk menambahkan informasi nama pengguna, nama teacher, dan nama course
-        $ratingTeachers->each(function ($rating) {
+        $teacherRatings->each(function ($rating) {
             $rating->teacher_name = $rating->teacher->name;
             $rating->course_name = $rating->course->name;
+            $rating->created_date = $rating->created_at->format('Y-m-d'); // Format tanggal
             unset($rating->teacher); // Hapus relasi teacher setelah digunakan
             unset($rating->course); // Hapus relasi course setelah digunakan
+            unset($rating->created_at); // Hapus original created_at setelah digunakan
         });
 
-        // Kembalikan respons menggunakan Inertia.js dengan data ratingteacher
-        return inertia('Admin/Report/RatingTeacher', compact('ratingteacher'));
+        // Kembalikan respons menggunakan Inertia.js dengan data teacherRatings
+        return inertia('Admin/Report/RatingTeacher', compact('teacherRatings'));
     }
+
 }

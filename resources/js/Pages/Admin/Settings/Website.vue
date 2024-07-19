@@ -87,54 +87,25 @@
                     </h2>
                 </div>
                 <div class="w-full bg-white rounded-lg dark:bg-gray-800 dark:border-gray-700">
-  <template v-if="landings.length > 0">
-    <div class="overflow-x-auto">
-      <div class="min-w-full">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Title
-              </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Description
-              </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                YouTube Link
-              </th>
-              <th scope="col" class="relative px-6 py-3">
-                <span class="sr-only">Delete</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="landing in landings" :key="landing.id">
-              <td class="px-6 py-4 whitespace-nowrap">
-                {{ landing.title }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                {{ landing.description }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                {{ landing.youtube_link }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <span :id="'delete'+landing.id"
-                  class="text-red-600 hover:text-red-900 cursor-pointer"
-                  @click.prevent="deleteContent(landing.id)">
-                  <TrashIcon />
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </template>
-  <template v-else>
-    <NothingFound asShow="div" />
-  </template>
-</div>
+                                    <template v-if="landings.length > 0">
+                                        <div class="grid grid-cols-4 gap-3">
+                                            <div v-for="landing in landings" :key="landing.id"
+                                                class="h-full relative bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                                <img class="rounded-lg" :src="landing.thumbnail" alt="" />
+                                                <span :id="'delete'+landing.id"
+                                                    class="absolute inline-flex bg-gray-900 opacity-70 rounded-lg p-1 w-8 text-red-500 cursor-pointer top-0 right-0"
+                                                    @click.prevent="
+                                                        deleteContent(landing.id)
+                                                    ">
+                                                    <TrashIcon />
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template v-else>
+                                        <NothingFound asShow="div" />
+                                    </template>
+                                </div>
 
 
             </div>
@@ -167,6 +138,11 @@
         <global-input type="text" id="youtubelink" name="youtubelink" v-model="form.youtubelink" class="mt-1 block w-full dark:bg-gray-700" />
         <input-error :error="$page.props.errors.youtubelink" />
     </div>
+    <div class="mb-3">
+                                    <global-label for="thumbnail" value="thumbnail" :required="true" />
+                                    <global-input type="file" id="thumbnail" name="thumbnail" class="mt-1 block w-full dark:bg-gray-700" @change="onFileChange" />
+                                    <input-error :error="$page.props.errors.thumbnail" />
+                                </div>
     <global-button :loading="form.processing" type="submit" cssClass="mt-3" theme="primary">
         {{__('Add Content')}}
     </global-button>
@@ -254,7 +230,8 @@
                 image: "",
                 youtubelink: "",
                 title: "",
-                description: ""
+                description: "",
+                thumbnail: "",
             }),
             update: false,
             socialLink: "",
@@ -274,6 +251,11 @@
         onFileChange(e) {
             const file = e.target.files[0];
             this.form.image = file;
+            this.previewImage = URL.createObjectURL(file);
+        },
+        onFileChange(e) {
+            const file = e.target.files[0];
+            this.form.thumbnail = file;
             this.previewImage = URL.createObjectURL(file);
         },
         deleteImage(id) {
@@ -317,6 +299,7 @@
                     this.form.title = "";
                     this.form.description = "";
                     this.form.youtubelink = "";
+                    this.form.thumbnail = "";
                 },
             });
         },

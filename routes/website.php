@@ -56,6 +56,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::post('teacher/export', 'teacherExport')->name('teacherattendance.export');
             Route::post('teacher-class/export', 'teacherClassExport')->name('teacherclass.export');
             Route::post('teacher-rate/export', 'teacherRateExport')->name('rateteacher.export');
+            Route::post('student-attendance/export', 'StudentAttendanceExport')->name('studentattendance.export');
             Route::post('user-doc/destroy/{doc}', 'docDestroy')->name('doc.destroy');
         });
 

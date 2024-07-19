@@ -25,25 +25,24 @@ class TeacherRateExport implements FromCollection, WithHeadings, WithMapping
 
     public function collection()
     {
-
         $query = Rating::query();
 
         if ($this->name) {
-            // Filter berdasarkan nama pengguna
-            $query->whereHas('user', function ($q) {
+            // Filter berdasarkan nama guru
+            $query->whereHas('teacher', function ($q) {
                 $q->where('name', 'like', '%' . $this->name . '%');
             });
         }
 
         if ($this->month) {
             // Filter berdasarkan bulan (gunakan tanggal ISO untuk kompatibilitas database)
-            $query->whereMonth('date', '=', date('m', strtotime($this->month)));
-            $query->whereYear('date', '=', date('Y', strtotime($this->month)));
+            $query->whereMonth('created_at', '=', date('m', strtotime($this->month)))
+                  ->whereYear('created_at', '=', date('Y', strtotime($this->month)));
         }
 
-        $teacherRatings = Rating::with(['user:id,name', 'teacher:id,name', 'course:id,name'])
-            ->select('id', 'teacher_id', 'course_id', 'rating', 'comment', 'created_at')
-            ->get();
+        $teacherRatings = $query->with(['teacher:id,name', 'course:id,name'])
+                                ->select('id', 'teacher_id', 'course_id', 'rating', 'comment', 'created_at')
+                                ->get();
 
         // Mengubah struktur data untuk menambahkan informasi nama pengguna, nama teacher, dan nama course
         $teacherRatings->each(function ($rating) {
@@ -57,6 +56,7 @@ class TeacherRateExport implements FromCollection, WithHeadings, WithMapping
 
         return $teacherRatings;
     }
+
 
     public function map($attendance): array
     {

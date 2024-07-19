@@ -150,19 +150,12 @@ export default {
     }
   },
   methods: {
-    // Metode untuk meng-handle submit filter
-    filterData() {
-      // Filter data berdasarkan nilai yang dimasukkan
-      // Jika Anda ingin menampilkan loading indicator, Anda bisa mengatur this.loading = true; di sini
-
-      // Lakukan filter berdasarkan nama dan bulan
-      this.teacherRatings = this.filteredRating;
-    },
-
-    // Metode untuk mengekspor data
     exportSubmit() {
       this.loading = true;
-      let exportData = {};
+      let exportData = {
+        type: this.export_data.type,
+        course: this.export_data.course
+      };
 
       // Jika ada filter nama yang aktif
       if (this.filter.name.trim() !== '') {
@@ -174,33 +167,27 @@ export default {
         exportData.month = this.filter.month;
       }
 
-      axios({
-        url: this.route('rateteacher.export'),
-        method: "POST",
-        data: {
-          ...this.export_data,
-          ...exportData
-        },
+      axios.post(this.route('rateteacher.export'), exportData, {
         headers: {
           'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
-        responseType: "blob",
+        responseType: "blob"
       }).then((response) => {
         let extension = this.export_data.type;
         var fileURL = window.URL.createObjectURL(new Blob([response.data]));
         var fileLink = document.createElement("a");
 
         fileLink.href = fileURL;
-        fileLink.setAttribute("download", "rateteacher-report." + 'xlsx');
+        fileLink.setAttribute("download", "ratingteacher-report." + 'xlsx');
         document.body.appendChild(fileLink);
 
         fileLink.click();
 
         this.loading = false;
-        this.visible = false;
+        this.export_visible = false;
       }).catch((e) => {
         this.loading = false;
-        this.visible = false;
+        this.export_visible = false;
       });
     }
   }

@@ -57,6 +57,8 @@ Route::apiResource('/api-permissions', App\Http\Controllers\Api\PermissionContro
 
 Route::get('/permissions/{id}', [App\Http\Controllers\Api\PermissionController::class, 'show'])->middleware('auth:sanctum');
 
+Route::apiResource('/permissions-type', App\Http\Controllers\Api\PermissionTypeController::class)->middleware('auth:sanctum');
+
 //Qrin
 Route::post('/qrin', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrin'])->middleware('auth:sanctum');
 

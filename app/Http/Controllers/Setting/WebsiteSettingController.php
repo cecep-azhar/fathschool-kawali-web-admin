@@ -125,9 +125,12 @@ class WebsiteSettingController extends Controller
         abort_if(! userCan('settings'), 403);
 
         $sliders = GallerySlider::all();
+        $landings = LandingVideo::all();
         $socialLinks = SocialLink::paginate(15)->onEachSide(-1);
 
-        return Inertia::render('Admin/Settings/Website', compact('sliders', 'socialLinks'));
+        // dd($landings);
+
+        return Inertia::render('Admin/Settings/Website', compact('sliders', 'socialLinks', 'landings'));
     }
 
     /**
@@ -150,17 +153,14 @@ class WebsiteSettingController extends Controller
     }
     public function landingStore(Request $request)
     {
-        // $request->validate([
-        //     'title' => 'string|max:255',
-        //     'description' => 'string',
-        //     'youtubeLink' => 'required|string'
-        // ]);
-    
-        LandingVideo::create([
+
+     LandingVideo::create([
             'title' => $request->title,
             'description' => $request->description,
-            'youtube_link' => $request->youtube_link
+            'youtube_link' => $request->youtubelink
         ]);
+
+        // dd($video);
         
     
         $this->flashSuccess('Slider Content Added Successfully');
@@ -180,11 +180,11 @@ class WebsiteSettingController extends Controller
 
         return back();
     }
-    public function LandingDelete(LandingVideo $slider)
+    public function landingDelete(LandingVideo $landing)
     {
-        $slider->delete();
+        $landing->delete();
 
-        $this->flashSuccess('Slider Deleted Successfully');
+        $this->flashSuccess('Landing Deleted Successfully');
 
         return back();
     }

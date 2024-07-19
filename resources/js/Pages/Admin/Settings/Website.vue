@@ -87,27 +87,56 @@
                     </h2>
                 </div>
                 <div class="w-full bg-white rounded-lg dark:bg-gray-800 dark:border-gray-700">
-                    <template>
-                        <div class="grid grid-cols-4
-                         gap-3">
+  <template v-if="landings.length > 0">
+    <div class="overflow-x-auto">
+      <div class="min-w-full">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Title
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Description
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                YouTube Link
+              </th>
+              <th scope="col" class="relative px-6 py-3">
+                <span class="sr-only">Delete</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="landing in landings" :key="landing.id">
+              <td class="px-6 py-4 whitespace-nowrap">
+                {{ landing.title }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                {{ landing.description }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                {{ landing.youtube_link }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <span :id="'delete'+landing.id"
+                  class="text-red-600 hover:text-red-900 cursor-pointer"
+                  @click.prevent="deleteContent(landing.id)">
+                  <TrashIcon />
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </template>
+  <template v-else>
+    <NothingFound asShow="div" />
+  </template>
+</div>
 
-                            <div v-for="landing in landings" :key="landing.id"
-                                class="h-full relative bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                <global-input class="rounded-lg" :src="landing.title" />
-                                <global-input class="rounded-lg" :src="landing.video_link" />
-                                <global-input class="rounded-lg" :src="landing.paragraph" />
-                                <span :id="'delete'+landing.id"
-                                    class="absolute inline-flex bg-gray-900 opacity-70 rounded-lg p-1 w-8 text-red-500 cursor-pointer top-0 right-0"
-                                    @click.prevent="deleteContent(landing.id)">
-                                    <TrashIcon />
-                                </span>
-                            </div>
-                        </div>
-                    </template>
-                    <template>
-                        <NothingFound asShow="div" />
-                    </template>
-                </div>
+
             </div>
         </div>
     </div>
@@ -123,28 +152,26 @@
                 <!-- Add landing video -->
                 <div class="w-full bg-white rounded-lg dark:bg-gray-800 dark:border-gray-700">
                     <form class="mt-2" @submit.prevent="saveLandingContent()">
-                        <div class="mb-3">
-                            <global-label for="title" value="Title" :required="true" />
-                            <global-input type="text" id="title" name="title" v-model="form.title"
-                                class="mt-1 block w-full dark:bg-gray-700" />
-                            <input-error :error="$page.props.errors.title" />
-                        </div>
-                        <div class="mb-3">
-                            <global-label for="description" value="Description" :required="true" />
-                            <textarea id="description" name="description" v-model="form.description"
-                                class="mt-1 block w-full dark:bg-gray-700"></textarea>
-                            <input-error :error="$page.props.errors.description" />
-                        </div>
-                        <div class="mb-3">
-                            <global-label for="youtubeLink" value="YouTube Link" :required="true" />
-                            <global-input type="text" id="youtubeLink" name="youtubeLink" v-model="form.youtubeLink"
-                                class="mt-1 block w-full dark:bg-gray-700" />
-                            <input-error :error="$page.props.errors.youtubeLink" />
-                        </div>
-                        <global-button :loading="form.processing" type="submit" cssClass="mt-3" theme="primary">
-                            {{__('Add Content')}}
-                        </global-button>
-                    </form>
+    <div class="mb-3">
+        <global-label for="title" value="Title" :required="true" />
+        <global-input type="text" id="title" name="title" v-model="form.title" class="mt-1 block w-full dark:bg-gray-700" />
+        <input-error :error="$page.props.errors.title" />
+    </div>
+    <div class="mb-3">
+        <global-label for="description" value="Description" :required="true" />
+        <global-input type="text" id="description" name="description" v-model="form.description" class="mt-1 block w-full dark:bg-gray-700" />
+        <input-error :error="$page.props.errors.description" />
+    </div>
+    <div class="mb-3">
+        <global-label for="youtubelink" value="YouTube Link" :required="true" />
+        <global-input type="text" id="youtubelink" name="youtubelink" v-model="form.youtubelink" class="mt-1 block w-full dark:bg-gray-700" />
+        <input-error :error="$page.props.errors.youtubelink" />
+    </div>
+    <global-button :loading="form.processing" type="submit" cssClass="mt-3" theme="primary">
+        {{__('Add Content')}}
+    </global-button>
+</form>
+
                 </div>
             </div>
         </div>
@@ -206,82 +233,77 @@
     import NothingFound from "@/Shared/NothingFound.vue";
 
     export default {
-        props: {
-            sliders: {
-                type: Object,
-                required: true,
-            },
-            setting: {
-                type: Object,
-                required: true,
-            },
-            socialLinks: Array,
+    props: {
+        sliders: {
+            type: Object,
+            required: true,
         },
-        data() {
-            return {
-                form: useForm({
-                    image: "",
-                }),
-
-                update: false,
-                socialLink: "",
-            };
+        landings: {
+            type: Array,
+            required: true,
         },
-        data() {
+        setting: {
+            type: Object,
+            required: true,
+        },
+        socialLinks: Array,
+    },
+    data() {
         return {
             form: useForm({
-                video_link: "",
+                image: "",
+                youtubelink: "",
                 title: "",
-                paragraph: ""
+                description: ""
             }),
             update: false,
             socialLink: "",
         };
     },
-        components: {
-            AppLayout,
-            SettingLayout,
-            ToolTip,
-            TrashIcon,
-            TableContent,
-            CreateForm,
-            UpdateForm,
-            NothingFound
+    components: {
+        AppLayout,
+        SettingLayout,
+        ToolTip,
+        TrashIcon,
+        TableContent,
+        CreateForm,
+        UpdateForm,
+        NothingFound
+    },
+    methods: {
+        onFileChange(e) {
+            const file = e.target.files[0];
+            this.form.image = file;
+            this.previewImage = URL.createObjectURL(file);
         },
-        methods: {
-            onFileChange(e) {
-                const file = e.target.files[0];
-                this.form.image = file;
-                this.previewImage = URL.createObjectURL(file);
-            },
-            deleteImage(id) {
-                if (confirm("Are you sure ?")) {
-                    this.$inertia.delete(
-                        this.route("settings.website.slider.delete", id)
-                    );
-                }
-            },
-            saveSlideImage() {
-                this.form.post(this.route("settings.website.slider.store"), {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        this.form.image = "";
-                    },
-                });
-            },
-            saveSocialMedia() {
-                this.socialForm.put(
-                    this.route("settings.website.social.update"),
-                    {
-                        preserveScroll: true,
-                    }
+        deleteImage(id) {
+            if (confirm("Are you sure ?")) {
+                this.$inertia.delete(
+                    this.route("settings.website.slider.delete", id)
                 );
-            },
-            edit(socialLink) {
-                this.update = true;
-                this.socialLink = socialLink;
-            },
-            deleteContent(id) {
+            }
+        },
+        saveSlideImage() {
+            this.form.post(this.route("settings.website.slider.store"), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    this.form.image = "";
+                },
+            });
+        },
+        saveSocialMedia() {
+            this.socialForm.put(
+                this.route("settings.website.social.update"),
+                {
+                    preserveScroll: true,
+                }
+            );
+        },
+        edit(socialLink) {
+            this.update = true;
+            this.socialLink = socialLink;
+        },
+        deleteContent(id) {
             if (confirm("Are you sure ?")) {
                 this.$inertia.delete(
                     this.route("settings.website.landing.delete", id)
@@ -294,10 +316,11 @@
                 onSuccess: () => {
                     this.form.title = "";
                     this.form.description = "";
-                    this.form.youtubeLink = "";
+                    this.form.youtubelink = "";
                 },
             });
         },
-        },
-    };
+    },
+};
+
 </script>

@@ -7,6 +7,7 @@ use App\Exports\StudentExport;
 use App\Exports\TeacherClassExport;
 use App\Exports\TeacherExport;
 use App\Exports\TeacherRateExport;
+use App\Exports\StudentAttendanceExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UserRequest;
 use App\Models\Course;
@@ -336,6 +337,25 @@ class UserController extends Controller
         return Excel::download($export, 'teachers.xlsx');
     }
 
+    public function StudentAttendanceExport(Request $request)
+    {
+        $name = $request->name;
+        $month = $request->month;
+
+        if ($name && $month) {
+            // Filter berdasarkan nama dan bulan
+            return Excel::download(new StudentAttendanceExport($name, $month), 'teachers.xlsx');
+        } elseif ($name) {
+            // Filter berdasarkan nama
+            return Excel::download(new StudentAttendanceExport($name), 'teachers.xlsx');
+        } elseif ($month) {
+            // Filter berdasarkan bulan
+            return Excel::download(new StudentAttendanceExport(null, $month), 'teachers.xlsx');
+        } else {
+            // Tanpa filter (semua data)
+            return Excel::download(new StudentAttendanceExport(), 'teachers.xlsx');
+        }
+    }
 
 
     /**

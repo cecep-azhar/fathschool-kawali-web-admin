@@ -50,11 +50,11 @@ class ReportController extends Controller
         $attendancestudent = AttendanceStudent::with('user')->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
 
         // Map untuk menyertakan nama pengguna
-        $attendancestudent->each(function ($attendance) {   
+        $attendancestudent->each(function ($attendance) {
             $attendance->user_name = $attendance->user->name;
             $attendance->user_id = $attendance->user->id;
         });
-        
+
         // dd($attendancestudent);
 
         return inertia('Admin/Report/Attendance', ['attendancestudent' => $attendancestudent]);

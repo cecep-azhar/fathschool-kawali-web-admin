@@ -55,6 +55,9 @@ Route::get('/school-phone', [App\Http\Controllers\Api\ApiSchoolController::class
 //API permission
 Route::apiResource('/api-permissions', App\Http\Controllers\Api\PermissionController::class)->middleware('auth:sanctum');
 
+//API permission
+Route::apiResource('/permissions-type', App\Http\Controllers\Api\PermissionTypeController::class)->middleware('auth:sanctum');
+
 //Qrin
 Route::post('/qrin', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrin'])->middleware('auth:sanctum');
 

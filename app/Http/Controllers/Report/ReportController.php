@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Report;
 use App\Exports\ExportAdminStudentAttendance;
 use App\Exports\ExportResult;
 use App\Exports\ExportTransaction;
+use App\Exports\StudentExport;
 use App\Http\Controllers\Controller;
+use App\Models\AttendanceStudent;
 use App\Models\ClassRoutine;
 use App\Models\Course;
 use App\Models\Currency;
+use App\Models\Rating;
 use App\Models\Result;
 use App\Models\Setting;
 use App\Models\StudentAttendance;
@@ -36,6 +39,44 @@ class ReportController extends Controller
         abort_if(!userCan('report.index'), 403);
 
         return inertia('Admin/Report/Index');
+    }
+
+    public function attendance()
+    {
+        abort_if(! userCan('academic.management'), 403);
+
+        // Ambil data kehadiran beserta nama pengguna
+        // $attendancestudent =AttendanceStudent::with('user:id,name')->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
+        $attendancestudent = AttendanceStudent::with('user')->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
+
+        // Map untuk menyertakan nama pengguna
+        $attendancestudent->each(function ($attendance) {
+            $attendance->user_name = $attendance->user->name;
+            $attendance->user_id = $attendance->user->id;
+        });
+
+        // dd($attendancestudent);
+
+        return inertia('Admin/Report/Attendance', ['attendancestudent' => $attendancestudent]);
+}
+public function studentExport(Request $request)
+    {
+        $name = $request->name;
+        $month = $request->month;
+
+        if ($name && $month) {
+            // Filter berdasarkan nama dan bulan
+            return Excel::download(new StudentExport($name, $month), 'student.xlsx');
+        } elseif ($name) {
+            // Filter berdasarkan nama
+            return Excel::download(new StudentExport($name), 'student.xlsx');
+        } elseif ($month) {
+            // Filter berdasarkan bulan
+            return Excel::download(new StudentExport(null, $month), 'student.xlsx');
+        } else {
+            // Tanpa filter (semua data)
+            return Excel::download(new StudentExport(null), 'student.xlsx');
+        }
     }
 
     /**
@@ -104,53 +145,53 @@ class ReportController extends Controller
 
 //     return response()->json($subjects);
 // }
-public function attendance(Request $request)
-{
-    abort_if(!userCan('report.attendance'), 403);
+// public function attendance(Request $request)
+// {
+//     abort_if(!userCan('report.attendance'), 403);
 
-    $courseId = $request->input('course_id');
-    
-
-    $data['courses'] = Course::get();
-     $data['subjects'] = Subject::get();
-    // $data['subjects'] = Subject::byCourseId($courseId)->get();
-    $data['students'] = User::role('student')->get(); // Assuming users have a role 'student'
-    
-//     $courseId = 17; // Misalkan ini id course yang Anda cari
-
-//     $data['subjects'] = Subject::whereHas('course', function ($query) use ($courseId) {
-//     $query->where('id', $courseId);
-// })->get();
-    
-    if ($request->has('course_id')) {
-        $data['subjects'] = Subject::where('course_id', $request->course_id)->get();
-        $userCourse = UserCourse::where('course_id', $request->course_id)->pluck('user_id')->toArray();
-        $data['students'] = User::whereIn('id', $userCourse)->get();
-    }
-
-    $data['filter_data'] = $request->all();
-
-    // Attendance
-    $data['attendances'] = [];
-
-    $attendance_query = StudentAttendance::query();
-
-    if ($request->has('student_id') && $request->student_id != null) {
-        $attendance_query->where('student_id', $request->student_id);
-    }
-    if ($request->month && $request->year) {
-        $attendance_query->whereMonth('date', $request->month)->whereYear('date', $request->year);
-    }
-
-    if ($request->has('student_id') && $request->student_id != null) {
-        $data['attendances'] = $attendance_query->get();
-    }
-
-    return inertia('Admin/Report/Attendance', $data);
-}
+//     $courseId = $request->input('course_id');
 
 
-    
+//     $data['courses'] = Course::get();
+//      $data['subjects'] = Subject::get();
+//     // $data['subjects'] = Subject::byCourseId($courseId)->get();
+//     $data['students'] = User::role('student')->get(); // Assuming users have a role 'student'
+
+// //     $courseId = 17; // Misalkan ini id course yang Anda cari
+
+// //     $data['subjects'] = Subject::whereHas('course', function ($query) use ($courseId) {
+// //     $query->where('id', $courseId);
+// // })->get();
+
+//     if ($request->has('course_id')) {
+//         $data['subjects'] = Subject::where('course_id', $request->course_id)->get();
+//         $userCourse = UserCourse::where('course_id', $request->course_id)->pluck('user_id')->toArray();
+//         $data['students'] = User::whereIn('id', $userCourse)->get();
+//     }
+
+//     $data['filter_data'] = $request->all();
+
+//     // Attendance
+//     $data['attendances'] = [];
+
+//     $attendance_query = StudentAttendance::query();
+
+//     if ($request->has('student_id') && $request->student_id != null) {
+//         $attendance_query->where('student_id', $request->student_id);
+//     }
+//     if ($request->month && $request->year) {
+//         $attendance_query->whereMonth('date', $request->month)->whereYear('date', $request->year);
+//     }
+
+//     if ($request->has('student_id') && $request->student_id != null) {
+//         $data['attendances'] = $attendance_query->get();
+//     }
+
+//     return inertia('Admin/Report/Attendance', $data);
+// }
+
+
+
 
     public function studentsEnroll()
     {
@@ -657,4 +698,28 @@ public function attendance(Request $request)
         // Stream the PDF to the user's browser for download with a descriptive filename
         return $pdf->stream('School_expense_report_for' . $monthName . '_' . $year . '.pdf');
     }
+
+    public function rating()
+    {
+        abort_if(! userCan('academic.management'), 403);
+
+        // Ambil semua data rating dengan relasi user, teacher, dan course
+        $teacherRatings = Rating::with(['user:id,name', 'teacher:id,name', 'course:id,name'])
+            ->select('id', 'teacher_id', 'course_id', 'rating', 'comment', 'created_at')
+            ->get();
+
+        // Mengubah struktur data untuk menambahkan informasi nama pengguna, nama teacher, dan nama course
+        $teacherRatings->each(function ($rating) {
+            $rating->teacher_name = $rating->teacher->name;
+            $rating->course_name = $rating->course->name;
+            $rating->created_date = $rating->created_at->format('Y-m-d'); // Format tanggal
+            unset($rating->teacher); // Hapus relasi teacher setelah digunakan
+            unset($rating->course); // Hapus relasi course setelah digunakan
+            unset($rating->created_at); // Hapus original created_at setelah digunakan
+        });
+
+        // Kembalikan respons menggunakan Inertia.js dengan data teacherRatings
+        return inertia('Admin/Report/RatingTeacher', compact('teacherRatings'));
+    }
+
 }

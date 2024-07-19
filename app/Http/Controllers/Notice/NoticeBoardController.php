@@ -62,6 +62,7 @@ class NoticeBoardController extends Controller
             'file' => 'required|image',
             'description' => 'required',
             'status' => 'required',
+            'roles' => 'required',
         ]);
 
         if ($request->hasFile('file')) {
@@ -74,6 +75,7 @@ class NoticeBoardController extends Controller
             'attachment' => $url ?? '',
             'description' => $request->description,
             'status' => $request->status,
+            'roles' => $request->roles,
         ]);
 
         $this->flashSuccess('Notice created');

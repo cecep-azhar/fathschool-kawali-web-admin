@@ -13,15 +13,20 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('class_attendances', function (Blueprint $table) {
+        Schema::create('attendance_students', function (Blueprint $table) {
             $table->id();
             // $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            // $table->unsignedBigInteger('course_id')->constrained('courses')->onDelete('cascade');
             $table->bigInteger('user_id');
-            $table->bigInteger('course_id');
+            //date
             $table->date('date');
+            //time_in
             $table->time('time_in');
+            //time_out
             $table->time('time_out')->nullable();
+            //latlon_in
+            $table->string('latlon_in');
+            //latlon_out
+            $table->string('latlon_out')->nullable();
             $table->timestamps();
         });
     }
@@ -33,6 +38,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('class_attendances');
+        Schema::dropIfExists('attendance_students');
     }
 };

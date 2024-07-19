@@ -13,11 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('nisn')->nullable()->after('email'); // Sesuaikan dengan jenis data dan pengaturan yang Anda butuhkan
+        Schema::table('landing_videos', function (Blueprint $table) {
+            $table->string('thumbnail');
         });
     }
-    
 
     /**
      * Reverse the migrations.
@@ -26,8 +25,8 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('users', function (Blueprint $table) {
-            //
+        Schema::table('landing_videos', function (Blueprint $table) {
+            $table->dropColumn('thunbnail');
         });
     }
 };

@@ -17,6 +17,7 @@ use App\Http\Requests\CurrencyUpdateRequest;
 use App\Mail\SmtpTestEmail;
 use App\Models\Currency;
 use App\Models\GallerySlider;
+use App\Models\LandingVideo;
 use App\Models\Language;
 use App\Models\Setting;
 use App\Models\SocialLink;
@@ -124,9 +125,12 @@ class WebsiteSettingController extends Controller
         abort_if(! userCan('settings'), 403);
 
         $sliders = GallerySlider::all();
+        $landings = LandingVideo::all();
         $socialLinks = SocialLink::paginate(15)->onEachSide(-1);
 
-        return Inertia::render('Admin/Settings/Website', compact('sliders', 'socialLinks'));
+        // dd($landings);
+
+        return Inertia::render('Admin/Settings/Website', compact('sliders', 'socialLinks', 'landings'));
     }
 
     /**
@@ -147,7 +151,22 @@ class WebsiteSettingController extends Controller
 
         return back();
     }
+    public function landingStore(Request $request)
+    {
 
+     LandingVideo::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'youtube_link' => $request->youtubelink
+        ]);
+
+        // dd($video);
+        
+    
+        $this->flashSuccess('Slider Content Added Successfully');
+    
+        return back();
+    }
     /**
      * Website slider delete
      *
@@ -158,6 +177,14 @@ class WebsiteSettingController extends Controller
         $slider->delete();
 
         $this->flashSuccess('Slider Deleted Successfully');
+
+        return back();
+    }
+    public function landingDelete(LandingVideo $landing)
+    {
+        $landing->delete();
+
+        $this->flashSuccess('Landing Deleted Successfully');
 
         return back();
     }

@@ -64,7 +64,31 @@
                                 </div>
                             </div>
                         </li>
-
+                        <li class="flow-root"  v-if="can('report.transaction')">
+                            <div
+                                class="relative -m-2 flex items-center gap-4 rounded-xl p-2 focus-within:ring-2 transition-all duration-300 focus-within:ring-indigo-500 hover:bg-gray-200 dark:hover:bg-gray-500">
+                                <div
+                                    class="flex-shrink-0 flex items-center justify-center h-16 w-16 rounded-lg bg-yellow-500">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z">
+                                        </path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-medium text-gray-900">
+                                        <Link :href="route('teacher.rating')" class="focus:outline-none">
+                                        <span class="absolute inset-0" aria-hidden="true"></span>
+                                        <span>
+                                            {{ __('Teacher Rating') }}
+                                        </span>
+                                        <span aria-hidden="true"> &rarr;</span>
+                                        </Link>
+                                    </h3>
+                                </div>
+                            </div>
+                        </li>
                         <li class="flow-root" v-if="can('report.attendance')">
                             <div
                                 class="relative -m-2 flex items-center gap-4 rounded-xl p-2 transition-all duration-300 focus-within:ring-2 focus-within:ring-indigo-500 hover:bg-gray-200 dark:hover:bg-gray-500">

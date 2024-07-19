@@ -309,3 +309,5 @@ Route::controller(GlobalController::class)->group(function () {
     Route::get('/fetch/pinned/announcement', 'pinnedAnnouncement')->name('pinnedAnnouncement');
     Route::get('/fetch/group/attachments/{group_id}', 'fetchAttachments')->name('fetch.groupAttachments');
 });
+
+Route::put('/settings/updateMobile', [WebsiteSettingController::class, 'updateMobile'])->name('settings.updateMobile');

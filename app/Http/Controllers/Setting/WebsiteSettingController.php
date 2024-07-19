@@ -161,10 +161,10 @@ class WebsiteSettingController extends Controller
         ]);
 
         // dd($video);
-        
-    
+
+
         $this->flashSuccess('Slider Content Added Successfully');
-    
+
         return back();
     }
     /**
@@ -725,4 +725,21 @@ class WebsiteSettingController extends Controller
         return redirect()->route('languages.index');
 
     }
+
+    // SettingController.php
+    public function updateMobile(Request $request)
+    {
+        $request->validate([
+            'production_status' => 'required',
+            'mobile_version' => 'required',
+        ]);
+
+        Setting::first()->update([
+            'production_status' => $request->production_status,
+            'mobile_version' => $request->mobile_version,
+        ]);
+
+        return back()->with('success', 'Mobile settings updated successfully.');
+    }
+
 }

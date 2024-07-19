@@ -14,6 +14,7 @@ use App\Models\Course;
 use App\Models\Department;
 use App\Models\Notice;
 use App\Models\Plan;
+use App\Models\StudentAttendance;
 use App\Models\User;
 use App\Models\UserCourse;
 use App\Models\UserDocument;
@@ -342,19 +343,14 @@ class UserController extends Controller
         $name = $request->name;
         $month = $request->month;
 
-        if ($name && $month) {
-            // Filter berdasarkan nama dan bulan
-            return Excel::download(new StudentAttendanceExport($name, $month), 'teachers.xlsx');
-        } elseif ($name) {
-            // Filter berdasarkan nama
-            return Excel::download(new StudentAttendanceExport($name), 'teachers.xlsx');
-        } elseif ($month) {
-            // Filter berdasarkan bulan
-            return Excel::download(new StudentAttendanceExport(null, $month), 'teachers.xlsx');
-        } else {
-            // Tanpa filter (semua data)
-            return Excel::download(new StudentAttendanceExport(), 'teachers.xlsx');
-        }
+        $name = $request->name;
+        $month = $request->month;
+
+        // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
+        $export = new StudentAttendanceExport($name, $month);
+
+        // Download file Excel sesuai dengan filter
+        return Excel::download($export, 'students.xlsx');
     }
 
 

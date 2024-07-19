@@ -283,6 +283,45 @@
                     <!-- School Schedule  -->
                     <ScheduleSetting :working_days="working_days" />
                 </div>
+                <div class="divide-y divide-gray-200 dark:divide-gray-600 overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow pb-6 mt-6">
+                    <div class="py-6 px-4 sm:p-6 lg:pb-8">
+                        <div>
+                            <h2 class="text-lg font-medium dark:text-gray-400 leading-6 text-gray-900">
+                                {{ __('Mobile Settings') }}
+                            </h2>
+                        </div>
+                        <form class="mt-2" @submit.prevent="submitMobileSettings()" enctype="multipart/form-data">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div class="mb-3">
+                                    <global-label for="production_status" :value="__('Production Status')" :required="true" />
+                                    <select v-model="form.production_status" id="production_status" name="production_status"
+                                            class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400">
+                                        <option value="Alpha">{{ __('Alpha') }}</option>
+                                        <option value="Beta">{{ __('Beta') }}</option>
+                                        <option value="Production">{{ __('Production') }}</option>
+                                        <option value="Maintenance">{{ __('Maintenance') }}</option>
+                                    </select>
+                                    <input-error :error="$page.props.errors.production_status" />
+                                </div>
+                                <div class="mb-3">
+                                    <global-label for="mobile_version" :value="__('Mobile Version')" :required="true" />
+                                    <global-input type="text" v-model="form.mobile_version" id="mobile_version" name="mobile_version"
+                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                                :placeholder="__('Enter Mobile Version')" :error="$page.props.errors.mobile_version" />
+                                    <input-error :error="$page.props.errors.mobile_version" />
+                                </div>
+                            </div>
+                            <div class="border-gray-700 mb-1">
+                                <div class="flex justify-end py-4 gap-4 px-4 sm:px-6">
+                                    <global-button :loading="form.processing" @click="submitMobileSettings()" type="button" cssClass="w-full mt-3"
+                                        theme="primary">
+                                        {{ __('Save Changes') }}
+                                    </global-button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </SettingLayout>
         </div>
     </AppLayout>
@@ -343,6 +382,8 @@ export default {
                 principal_name: this.setting.principal_name,
                 app_address: this.setting.app_address,
                 app_description: this.setting.app_description,
+                production_status: this.setting.production_status,
+                mobile_version: this.setting.mobile_version,
                 _method: 'PUT'
             })
         }
@@ -412,6 +453,11 @@ export default {
         },
         submit() {
             this.form.post(this.route('settings.update'), {
+                preserveScroll: true,
+            })
+        },
+        submitMobileSettings() {
+            this.form.post(this.route('settings.updateMobile'), {
                 preserveScroll: true,
             })
         }

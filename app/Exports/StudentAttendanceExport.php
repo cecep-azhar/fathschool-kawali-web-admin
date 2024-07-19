@@ -37,8 +37,9 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
         }
 
         if ($this->month) {
-            // Filter berdasarkan bulan
-            $query->whereMonth('date', $this->month);
+            // Filter berdasarkan bulan (gunakan tanggal ISO untuk kompatibilitas database)
+            $query->whereMonth('date', '=', date('m', strtotime($this->month)))
+                  ->whereYear('date', '=', date('Y', strtotime($this->month)));
         }
 
         return $query->get();

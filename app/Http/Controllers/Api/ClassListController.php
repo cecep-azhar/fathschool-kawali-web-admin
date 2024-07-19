@@ -3,18 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Api\ClassList;
 use App\Models\Course;
-use App\Models\User;
+use App\Models\User; // Pastikan untuk mengimpor model User
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ClassListController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
     {
         // Ambil semua course
@@ -30,6 +26,7 @@ class ClassListController extends Controller
             return [
                 'id' => $course->id,
                 'name' => $course->name,
+                'photo_url' => $course->photo_url, // Pastikan ada properti photo_url di model Course
                 'total_users' => $userCount,
             ];
         });
@@ -38,10 +35,37 @@ class ClassListController extends Controller
         return response()->json($result);
     }
 
+    public function store(Request $request)
+    {
+        // Validasi request untuk memastikan gambar ada dan valid
+        $request->validate([
+            'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
 
+        // Buat instance baru dari model Course
+        $course = new Course();
 
+        // Ambil file gambar dari request
+        $image = $request->file('photo');
 
+        // Jika ada foto lama, hapus sebelum menyimpan yang baru
+        if ($course->photo) {
+            Storage::delete('public/images/' . $course->photo);
+        }
 
+        // Simpan gambar baru ke penyimpanan
+        $path = $image->store('public/images');
+
+        // Simpan nama file gambar ke dalam kolom 'photo' pada model Course
+        $course->photo = basename($path);
+        
+        // Simpan instance Course ke database
+        $course->save();
+
+        // Kembalikan respons JSON dengan instance Course yang telah disimpan
+        return response()->json($course, 201);
+    }
+    
     public function show($courseId)
     {
         // Ambil course berdasarkan courseId
@@ -78,7 +102,8 @@ class ClassListController extends Controller
         $result = [
             'course' => [
                 'id' => $course->id,
-                'name' => $course->name
+                'name' => $course->name,
+                'photo_url' => $course->photo_url, // Pastikan ada properti photo_url di model Course
             ],
             'users' => $usersResult,
         ];
@@ -86,8 +111,4 @@ class ClassListController extends Controller
         // Kembalikan sebagai respons JSON
         return response()->json($result);
     }
-    
-
-
-
 }

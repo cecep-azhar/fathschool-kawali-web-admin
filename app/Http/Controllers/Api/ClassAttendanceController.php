@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Api\ClassAttendance;
 use App\Models\Course;
 use App\Models\ClassRoutine;
+use Illuminate\Support\Carbon;
 
 class ClassAttendanceController extends Controller
 {
@@ -134,10 +135,26 @@ class ClassAttendanceController extends Controller
     // Check is isQrin
     public function isQrin(Request $request)
     {
+        $start_time = date('H:i:s');
+        $end_time = date('H:i:s');
+        $today = Carbon::now()->dayOfWeek;
+
+        $lesson = ClassRoutine::with(['teacher', 'subject', 'course'])
+            ->where('teacher_id', $request->user()->id)
+            ->where('weekday', $today)
+            ->where('start_time', '<=', $end_time)
+            ->where('end_time', '>=', $start_time)
+            ->first();
+
+            // dd($lesson);
+
         // Get today's attendance
         $attendance = ClassAttendance::where('user_id', $request->user()->id)
             ->where('date', date('Y-m-d'))
+            ->where('course_id', $lesson->course_id)
             ->first();
+
+        
 
         $isCheckout = $attendance ? $attendance->time_out : false;
 

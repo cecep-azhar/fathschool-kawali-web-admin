@@ -41,40 +41,33 @@ class DisplayDashboardController extends Controller
         
         // Kelas
         $totalClass = Course::count();
-        $totalClassAbsent = ClassAttendance::count();
+        $classWithAttendance = ClassAttendance::distinct('course_id')->count('course_id');
+        $totalEmptyClass = $totalClass - $classWithAttendance;
 
-        $classAttendancePercentage = $totalClass > 0 ? number_format(($totalClassAbsent / $totalClass) * 100) . '%' : '0%';
-        
-        $totalEmptyClass = $totalClass - $totalClassAbsent;
+        $classAttendancePercentage = $totalClass > 0 ? number_format(($classWithAttendance / $totalClass) * 100) . '%' : '0%';
 
         $courseName = Course::orderBy('id')->pluck('name');
-
         $coursePhotos = Course::orderBy('id')->pluck('photo');
 
         // Jadwal guru di kelas berdasarkan jam sekarang
         $now = Carbon::now()->format('H:i:s');
         $dayOfWeek = Carbon::now()->dayOfWeekIso;
 
-        // dd($dayOfWeek);
-
         $teacherNames = ClassRoutine::with('teacher')
             ->where('start_time', '<=', $now)
             ->where('end_time', '>=', $now)
-            // ->where('start', $dayOfWeek)
             ->get()
             ->pluck('teacher.name');
 
-        $courseNames = ClassRoutine::with('course')
+        $courseNames = ClassRoutine::with('courses')
             ->where('start_time', '<=', $now)
             ->where('end_time', '>=', $now)
-            // ->where('start', $dayOfWeek)
             ->get()
             ->pluck('course.name');
 
         $subjectNames = ClassRoutine::with('subject')
             ->where('start_time', '<=', $now)
             ->where('end_time', '>=', $now)
-            // ->where('start', $dayOfWeek)
             ->get()
             ->pluck('subject.name');
 
@@ -146,8 +139,6 @@ class DisplayDashboardController extends Controller
             'total_class' => $totalClass,
             'total_class_absent' => $totalEmptyClass,
             'course_name' => $courseName,
-            // Nama-nama guru yang mengajar saat ini
-            'teacher_names' => $teacherNames,
             // Kelas dengan jamkos terbanyak minggu ini
             'class_with_most_empty_sessions' => $classNameWithMostEmptySessions,
             // Quote
@@ -163,12 +154,10 @@ class DisplayDashboardController extends Controller
 
             'course' => [
                         'course_photo' => $coursePhotos,
-                        'course_name' => $courseNames,
+                        'course_name' => $courseName,
                         'teacher_names' => $teacherNames,
                         'lesson_name' => $subjectNames
                         ]
-
-            
         ];
 
         return response()->json($response);

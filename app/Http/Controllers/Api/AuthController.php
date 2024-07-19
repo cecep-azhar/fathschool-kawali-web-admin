@@ -151,28 +151,35 @@ class AuthController extends Controller
         $image = $request->file('profile_photo_path');
         // $face_embedding = $request->face_embedding;
 
-        // //save image
+        // Delete the previous profile photo if it exists
+        if ($user->profile_photo_path) {
+            Storage::delete('public/images/' . $user->profile_photo_path);
+        }
+
+        // Save new image
         $image->storeAs('public/images', $image->hashName());
         $user->profile_photo_path = $image->hashName();
         // $user->face_embedding = $face_embedding;
         $user->save();
 
-        $user = $request->user();
-
+        // Log the activity
         activity()
-        ->useLog('default')
-        ->causedBy(auth()->user())
-        ->event('updateProfile')
-        ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username,
-                          'time' => date('H:i')])
-        ->log('User Update Profile');
+            ->useLog('default')
+            ->causedBy(auth()->user())
+            ->event('updateProfile')
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user' => $user->username,
+                'time' => date('H:i')
+            ])
+            ->log('User Update Profile');
 
         return response([
             'message' => 'Profile updated',
             'user' => $user,
         ], 200);
     }
+
 
     public function updateFcmToken(Request $request)
     {

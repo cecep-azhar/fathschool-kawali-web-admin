@@ -41,7 +41,7 @@ class PermissionController extends Controller
             'title' => 'required|string|max:255',
             'start' => 'required|date',
             'end' => 'required|date',
-            'status' => 'required|in:pending,accepted,rejected',
+            // 'status' => 'required|in:pending,accepted,rejected',
             'description' => 'required|string',
             'rejected_cause' => 'nullable|string',
             'image' => 'nullable|image|max:2048', // validasi untuk gambar, max 2MB
@@ -54,7 +54,7 @@ class PermissionController extends Controller
         $leave->title = $request->title;
         $leave->start = $request->start;
         $leave->end = $request->end;
-        $leave->status = $request->status;
+        $leave->status = 'pending';
         $leave->description = $request->description;
         $leave->rejected_cause = $request->rejected_cause;
 
@@ -82,6 +82,17 @@ class PermissionController extends Controller
 
         // Kembalikan respons
         return response()->json(['message' => 'Leave request created successfully'], 201);
+    }
+
+    public function show(Request $request, $id)
+    {
+        $School = Leave::where('user_id', $request->user()->id)->where('id', $id)->first();
+
+        if ($School) {
+            return response()->json($School, 200);
+        } else {
+            return response()->json(['message' => 'School not found'], 404);
+        }
     }
 
 }

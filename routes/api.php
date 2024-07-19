@@ -52,6 +52,8 @@ Route::get('/school-phone', [App\Http\Controllers\Api\ApiSchoolController::class
 //API permission
 Route::apiResource('/api-permissions', App\Http\Controllers\Api\PermissionController::class)->middleware('auth:sanctum');
 
+Route::get('/permissions/{id}', [App\Http\Controllers\Api\PermissionController::class, 'show'])->middleware('auth:sanctum');
+
 //Qrin
 Route::post('/qrin', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrin'])->middleware('auth:sanctum');
 
@@ -107,8 +109,11 @@ Route::get('/api-attendances', [App\Http\Controllers\Api\AttendanceController::c
 //student attendances
 Route::middleware('auth:sanctum')->get('/student-attendances', [StudentAttendanceController::class, 'index']);
 
-//class lists
+//course
 Route::middleware('auth:sanctum')->get('/course', [ClassListController::class, 'index']);
+
+//post course
+Route::middleware('auth:sanctum')->post('/course', [ClassListController::class, 'store']);
 
 //class lists by id
 Route::middleware('auth:sanctum')->get('/course/{course_id}', [ClassListController::class, 'show']);

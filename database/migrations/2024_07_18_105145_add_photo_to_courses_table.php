@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class RenameClassListsIdToCourseIdInClassAttendancesTable extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class RenameClassListsIdToCourseIdInClassAttendancesTable extends Migration
      */
     public function up()
     {
-        Schema::table('class_attendances', function (Blueprint $table) {
-            $table->renameColumn('class_lists_id', 'course_id');
+        Schema::table('courses', function (Blueprint $table) {
+            $table->string('photo')->nullable();
         });
     }
 
@@ -25,8 +25,8 @@ class RenameClassListsIdToCourseIdInClassAttendancesTable extends Migration
      */
     public function down()
     {
-        Schema::table('class_attendances', function (Blueprint $table) {
-            $table->renameColumn('course_id', 'class_lists_id');
+        Schema::table('courses', function (Blueprint $table) {
+            $table->dropColumn('photo');
         });
     }
-}
+};

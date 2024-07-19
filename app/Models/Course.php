@@ -6,23 +6,33 @@ use App\Models\Api\StudentList;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use Ramsey\Uuid\Uuid;
 
 class Course extends Model
 {
+    
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'name',
+        'description',
+        'photo',
+    ];
 
     protected $casts = [
         'created_at' => 'datetime:Y-m-d',
     ];
 
-    //mutator
+    // Mutator
     public function setNameAttribute($value)
     {
         $this->attributes['name'] = $value;
         $this->attributes['slug'] = Str::slug($value);
+    }
+
+    // Accessor for photo URL
+    public function getPhotoUrlAttribute()
+    {
+        return $this->photo ? asset('storage/' . str_replace('public/', '', $this->photo)) : null;
     }
 
     // One to many relation with student model  
@@ -82,17 +92,9 @@ class Course extends Model
         return $this->hasMany(Plan::class, 'course_id');
     }
 
-    // many to many relation with plan model
+    // Many to many relation with plan model
     public function examResults()
     {
         return $this->belongsToMany(Exam::class, 'course_result');
     }
-
-    protected $fillable = [
-        'name',
-        'description',
-        'photo',
-    ];
-    
-
 }

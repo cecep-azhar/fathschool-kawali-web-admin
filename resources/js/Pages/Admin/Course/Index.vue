@@ -236,13 +236,30 @@
                             <input-error :error="$page.props.errors.name" />
                         </div>
                         <div class="mb-2">
-                            <global-label value="Photo" for="photo" />
-                            <global-input type="file" id="photo" v-model="courseInfo.photo" photo="photo" class="mt-1 block w-full" />
-                            <input-error :error="$page.props.errors.photo" />
-                            <div v-if="photoUrl" class="mt-2">
-                                <img :src="photoUrl" alt="Course Photo" class="max-w-full h-auto" />
+                        <global-label for="file" class="tetx-lg" :value="__('Image')" :required="true" />
+                        <button type="button" @click="picFile" class="bg-gray-100 dark:bg-gray-700 w-full py-2.5 px-3 rounded testImage">
+                            <div class="flex gap-2 items-center">
+                                <div>
+                                    <ArrowUpTrayIcon class="w-6 h-6 dark:text-gray-400" />
+                                </div>
+                                <div>
+                                    <span v-if="file_name" class="text-blue-500">
+                                        {{ file_name }}
+                                    </span>
+                                    <span v-else class="dark:text-gray-500">
+                                        {{ __('Upload Image') }}
+                                    </span>
+                                </div>
                             </div>
-                        </div>
+                        </button>
+                        <span class="text-gray-500">
+                            {{ __('Supported format - png, jpg, jpeg') }}
+                        </span>
+                        <input @change="change"
+                            accept="image/*"
+                            type="file" ref="assignment_file" class="hidden" readonly>
+                        <input-error :error="$page.props.errors.file" />
+                    </div>
                         <div class="mb-2">
                             <div class="relative flex items-start">
                                 <div class="flex h-5 items-center">
@@ -367,13 +384,13 @@ export default {
     },
     data() {
         return {
-            file_name: '',
+            file_name: "",
             loading: false,
             options: [],
             form: {
                 name: "",
                 qr_code_id: "",
-                file: '',
+                file: "",
                 has_multiple_subject: false,
                 subjects: [],
             },
@@ -381,7 +398,7 @@ export default {
                 id: "",
                 name: "",
                 qr_code_id: "",
-                file: '',
+                file: "",
                 subjects: [],
                 has_multiple_subject: true,
             },
@@ -448,10 +465,9 @@ export default {
                     this.courseInfo.subjects = [];
                 },
                 onFinish: (visit) => {
-                    this.loading = false;
+                    this.loading = false;   
                 },
-            }
-            );
+            });
         },
         destroyData(id) {
             if (confirm("Are you sure to delete ?")) {

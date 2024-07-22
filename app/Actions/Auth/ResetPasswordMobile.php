@@ -27,8 +27,28 @@ class ResetPasswordMobile
             'password' => bcrypt($code),
         ]);
 
+        $currentDate = date('d-m-Y');
+        $currentTime = date('H:i:s');
+        $hour = date('H');
+
+        if ($hour >= 0 && $hour < 12) {
+            $greeting = 'Selamat Pagi';
+        } elseif ($hour >= 12 && $hour < 18) {
+            $greeting = 'Selamat Sore';
+        } else {
+            $greeting = 'Selamat Malam';
+        }
+
+        $message = "$currentDate\n\n";
+        $message .= "Pukul $currentTime\n\n";
+        $message .= "$greeting {$user->name},\n";
+        $message .= "Password anda telah diganti menjadi\n\n";
+        $message .= "$code\n\n";
+        $message .= "Harap simpan perubahan password anda dengan hati-hati. Terima kasih.\n\n";
+        $message .= "Send by Fathschool";
+
         $curl = curl_init();
-        $link = 'https://wa.fath.my.id/send-message?api_key=VNDDEZ5KBWDQGl5XBTXv9pW2Y6GpNn&sender=6289635850446&number=' . $user->phone . '&message=PasswordAnda:' . $code;
+        $link = 'https://wa.fath.my.id/send-message?api_key=VNDDEZ5KBWDQGl5XBTXv9pW2Y6GpNn&sender=6289635850446&number=' . $user->phone . '&message=' . urlencode($message);
         curl_setopt_array($curl, array(
             CURLOPT_URL => $link,
             CURLOPT_RETURNTRANSFER => true,
@@ -46,17 +66,6 @@ class ResetPasswordMobile
         $response = curl_exec($curl);
 
         curl_close($curl);
-
-        // Hapus atau komentar bagian pengiriman email
-        // (new SendMailTemplate)->execute(
-        //     email: $user->email,
-        //     code: 'reset-password-confirmation',
-        //     variables: [
-        //         'name' => $user->name,
-        //         'code' => $code,
-        //         'token_lifetime' => config('config.auth.reset_password_token_lifetime', 30),
-        //     ]
-        // );
     }
 
     private function getUser(Request $request): User

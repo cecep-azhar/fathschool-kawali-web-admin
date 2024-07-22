@@ -151,3 +151,12 @@ Route::middleware('auth:sanctum')->post('/rate-teacher', [ClassAttendanceControl
 
 //announcement
 Route::middleware('auth:sanctum')->get('/notices', [NoticeController::class, 'index']);
+
+//checkin student
+Route::post('/checkin/student', [App\Http\Controllers\ApiStudent\AttendanceController::class, 'checkin'])->middleware('auth:sanctum');
+
+//is checkin
+Route::get('/is-checkin/student', [App\Http\Controllers\ApiStudent\AttendanceController::class, 'isCheckedin'])->middleware('auth:sanctum');
+
+//checkout
+Route::post('/checkout/student', [App\Http\Controllers\ApiStudent\AttendanceController::class, 'checkout'])->middleware('auth:sanctum');

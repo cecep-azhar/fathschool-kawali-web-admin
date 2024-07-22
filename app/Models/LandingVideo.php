@@ -11,6 +11,7 @@ class LandingVideo extends Model
     protected $fillable = [
         'title',
         'description',
-        'youtube_link'
+        'youtube_link',
+        'thumbnail'
     ];
 }

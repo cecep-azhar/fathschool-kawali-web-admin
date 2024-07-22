@@ -153,14 +153,25 @@ class WebsiteSettingController extends Controller
     }
     public function landingStore(Request $request)
     {
+        $request->validate(['thumbnail' => 'required|file|mimes:png,jpg,jpeg|max:5120']);
+
+        if ($request->hasFile('thumbnail')) {
+            $url = FileUpload::uploadImage($request->thumbnail, 'landingvideo');
+            // $url = $request->file('thumbnail')->store('landingvideo', 'uploads');
+        // } else {
+        //     return back()->withErrors(['thumbnail' => 'Thumbnail is required.']);
+        // }
+        }
 
      LandingVideo::create([
             'title' => $request->title,
             'description' => $request->description,
-            'youtube_link' => $request->youtubelink
+            'youtube_link' => $request->youtubelink,
+            'thumbnail' => $url
         ]);
 
         // dd($video);
+
 
 
         $this->flashSuccess('Slider Content Added Successfully');
@@ -180,6 +191,7 @@ class WebsiteSettingController extends Controller
 
         return back();
     }
+
     public function landingDelete(LandingVideo $landing)
     {
         $landing->delete();

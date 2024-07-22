@@ -25,7 +25,7 @@ class FrontendController extends Controller
     public function index()
     {
         $sliders = GallerySlider::all();
-        $landings = LandingVideo::all();
+        $landings = LandingVideo::first();
 
         // dd($youtube);
 

@@ -287,6 +287,14 @@ class RolePermissionSeeder extends Seeder
                     'student.dashboard',
                 ],
             ],
+            [
+                'group_name' => 'Other Update',
+                'permissions' => [
+                    'courses.qr-codes',
+                    'teacher.attendance',
+                    'teacher.rating',
+                ],
+            ],
         ];
 
         for ($i = 0; $i < count($permissions); $i++) {
@@ -387,6 +395,10 @@ class RolePermissionSeeder extends Seeder
             'admission.destroy',
             'bulk.admission',
             'report.other',
+
+            'courses.qr-codes',
+            'teacher.attendance',
+            'teacher.rating',
         ]);
 
         $roleAccountant->givePermissionTo([

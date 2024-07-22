@@ -19,12 +19,13 @@ return new class extends Migration
             // $table->foreignId('teacher_id')->constrained('users')->onDelete('cascade');
             $table->bigInteger('user_id');
             $table->bigInteger('teacher_id');
+            $table->bigInteger('course_id');
             $table->integer('rating');
             $table->text('comment')->nullable();
             $table->timestamps();
         });
     }
-    
+
 
     /**
      * Reverse the migrations.

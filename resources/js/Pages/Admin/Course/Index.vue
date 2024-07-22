@@ -236,6 +236,14 @@
                             <input-error :error="$page.props.errors.name" />
                         </div>
                         <div class="mb-2">
+                            <global-label value="Photo" for="photo" />
+                            <global-input type="file" id="photo" v-model="courseInfo.photo" photo="photo" class="mt-1 block w-full" />
+                            <input-error :error="$page.props.errors.photo" />
+                            <div v-if="photoUrl" class="mt-2">
+                                <img :src="photoUrl" alt="Course Photo" class="max-w-full h-auto" />
+                            </div>
+                        </div>
+                        <div class="mb-2">
                             <div class="relative flex items-start">
                                 <div class="flex h-5 items-center">
                                     <input id="edit_multiple_subjects" type="checkbox"

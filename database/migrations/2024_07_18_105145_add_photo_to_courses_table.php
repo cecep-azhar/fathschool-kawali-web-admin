@@ -30,3 +30,4 @@ class AddPhotoToCoursesTable extends Migration
         });
     }
 };
+ 

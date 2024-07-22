@@ -9,12 +9,13 @@ use Illuminate\Support\Str;
 
 class Course extends Model
 {
-    
+
     use HasFactory;
 
     protected $fillable = [
         'name',
         'description',
+        'qr_code_id',
         'photo',
     ];
 
@@ -35,7 +36,7 @@ class Course extends Model
         return $this->photo ? asset('storage/' . str_replace('public/', '', $this->photo)) : null;
     }
 
-    // One to many relation with student model  
+    // One to many relation with student model
     public function students()
     {
         return $this->hasMany(UserCourse::class, 'course_id')->with('user');

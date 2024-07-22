@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Api\ClassAttendance;
 use App\Models\Course;
 use App\Models\ClassRoutine;
+use App\Models\Rating;
 use Illuminate\Support\Carbon;
 
 class ClassAttendanceController extends Controller
@@ -152,7 +153,7 @@ class ClassAttendanceController extends Controller
             ->where('course_id', $lesson->course_id)
             ->first();
 
-        
+
 
         $isCheckout = $attendance ? $attendance->time_out : false;
 

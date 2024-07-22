@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Academic;
 
+use App\Actions\File\FileDelete;
+use App\Actions\File\FileUpload;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Subject;
@@ -55,11 +57,17 @@ class CourseController extends Controller
         $request->validate([
             'name' => 'required|unique:courses,name',
             'qr_code_id' => 'required|unique:courses,qr_code_id|max:10',
+            'file' => 'required|image',
         ]);
+
+        if ($request->hasFile('file')) {
+            $url = FileUpload::uploadImage($request->file, 'course');
+        }
 
         $course = Course::create([
             'name' => $request->name,
-            'qr_code_id' => $request->qr_code_id, // Save unique ID to database
+            'qr_code_id' => $request->qr_code_id,
+            'photo' => $url ?? '',
             'has_multiple_subject' => $request->has_multiple_subject ?? 0,
         ]);
 
@@ -158,13 +166,20 @@ class CourseController extends Controller
         $course = Course::findOrFail($id);
 
         $request->validate([
+            'photo' => 'nullable|image',
             'name' => 'required|unique:courses,name,'.$course->id,
         ], [
             'name.required' => 'The name field is required',
         ]);
 
+        if ($request->hasFile('photo')) {
+            $url = FileUpload::uploadImage($request->photo, 'course');
+            FileDelete::deleteImage($course->photo);
+        }
+
         $course->update([
             'name' => $request->name,
+            'photo' => $url ?? $course->photo,
             'has_multiple_subject' => $request->has_multiple_subject ?? 0,
         ]);
 

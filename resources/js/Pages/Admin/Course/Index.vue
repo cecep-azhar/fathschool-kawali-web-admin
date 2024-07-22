@@ -104,6 +104,31 @@
                             <input-error :error="$page.props.errors.qr_code_id" />
                         </div>
                         <div class="mb-2">
+                        <global-label for="file" class="tetx-lg" :value="__('Image')" :required="true" />
+                        <button type="button" @click="picFile" class="bg-gray-100 dark:bg-gray-700 w-full py-2.5 px-3 rounded testImage">
+                            <div class="flex gap-2 items-center">
+                                <div>
+                                    <ArrowUpTrayIcon class="w-6 h-6 dark:text-gray-400" />
+                                </div>
+                                <div>
+                                    <span v-if="file_name" class="text-blue-500">
+                                        {{ file_name }}
+                                    </span>
+                                    <span v-else class="dark:text-gray-500">
+                                        {{ __('Upload Image') }}
+                                    </span>
+                                </div>
+                            </div>
+                        </button>
+                        <span class="text-gray-500">
+                            {{ __('Supported format - png, jpg, jpeg') }}
+                        </span>
+                        <input @change="change"
+                            accept="image/*"
+                            type="file" ref="assignment_file" class="hidden" readonly>
+                        <input-error :error="$page.props.errors.file" />
+                    </div>
+                        <div class="mb-2">
                             <div class="relative flex items-start">
                                 <div class="flex h-5 items-center">
                                     <input id="multiple_subjects" type="checkbox"
@@ -334,11 +359,13 @@ export default {
     },
     data() {
         return {
+            file_name: '',
             loading: false,
             options: [],
             form: {
                 name: "",
                 qr_code_id: "",
+                file: '',
                 has_multiple_subject: false,
                 subjects: [],
             },
@@ -346,6 +373,7 @@ export default {
                 id: "",
                 name: "",
                 qr_code_id: "",
+                file: '',
                 subjects: [],
                 has_multiple_subject: true,
             },
@@ -377,6 +405,15 @@ export default {
         };
     },
     methods: {
+        picFile() {
+            this.$refs.assignment_file.click();
+        },
+        change(e) {
+            this.form.file = e.target.files[0];
+
+            let selectedFiles = e.target.files[0];
+            this.file_name = selectedFiles.name;
+        },
         storeData() {
             this.loading = true;
 
@@ -422,6 +459,7 @@ export default {
             this.courseInfo.has_multiple_subject = true;
             this.courseInfo.name = course.name;
             this.courseInfo.qr_code_id = course.qr_code_id;
+            this.courseInfo.file = course.file;
 
             this.courseInfo.subjects = [];
             for (let index = 0; index < course.subjects.length; index++) {

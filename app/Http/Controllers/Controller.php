@@ -8,6 +8,10 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 
+use App\Models\User;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
+
 class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests, NotifyAble;
@@ -35,5 +39,19 @@ class Controller extends BaseController
 
         $response = curl_exec($curl);
         curl_close($curl);
+    }
+
+    public function sendNotificationToUser($userId, $title, $message)
+    {
+        $user = User::find($userId);
+        $token = $user->fcm_token;
+
+        $messaging = app('firebase.messaging');
+        $notification = Notification::create($title, $message);
+
+        $message = CloudMessage::withTarget('token', $token)
+            ->withNotification($notification);
+
+        $messaging->send($message);
     }
 }

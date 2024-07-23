@@ -112,7 +112,7 @@ Route::get('/activity-example', [ActivityLogController::class, 'index'])->middle
 Route::get('/api-attendances', [App\Http\Controllers\Api\AttendanceController::class, 'index'])->middleware('auth:sanctum');
 
 //student attendances
-Route::middleware('auth:sanctum')->get('/student-attendances', [StudentAttendanceController::class, 'index']);
+Route::get('/student-attendances', [StudentAttendanceController::class, 'index'])->middleware('auth:sanctum');
 
 //course
 Route::middleware('auth:sanctum')->get('/course', [ClassListController::class, 'index']);

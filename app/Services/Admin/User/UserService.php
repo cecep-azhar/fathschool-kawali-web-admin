@@ -91,7 +91,7 @@ class UserService
 
         $token = Str::random(60);
         DB::table('password_resets')->insert([
-            'email' => $user->email,
+            'phone' => $user->phone,
             'token' => bcrypt($token),
             'created_at' => now(),
         ]);

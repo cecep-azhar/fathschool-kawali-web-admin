@@ -48,7 +48,9 @@ class Kernel extends ConsoleKernel
 
             // Log atau proses fcm_token (contoh: logging untuk keperluan debugging)
             // Log::info('FCM Tokens:', $fcmTokens->toArray());
-            Controller::sendNotificationToUser($fcmTokens->toArray(), 'Pemberitahuan', 'Anda memiliki jadwal dalam 6 menit lagi!');
+            foreach ($fcmTokens as $token) {
+                Controller::sendNotificationToUser($token, 'Pemberitahuan', 'Ada jadwal kelas yang akan dimulai');
+            }
 
             // Anda bisa menambahkan logika lain di sini, misalnya mengirim notifikasi
         })->everyFiveMinutes(); // Menjalankan setiap 5 menit

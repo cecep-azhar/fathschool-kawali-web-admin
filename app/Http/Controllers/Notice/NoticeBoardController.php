@@ -6,6 +6,7 @@ use App\Actions\File\FileDelete;
 use App\Actions\File\FileUpload;
 use App\Http\Controllers\Controller;
 use App\Models\Notice;
+use App\Models\User;
 use App\Services\Notice\NoticeBoardService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -79,6 +80,18 @@ class NoticeBoardController extends Controller
         ]);
 
         $this->flashSuccess('Notice created');
+
+        if ($request->roles == 'Teacher') {
+            $teachers_fcm_token = User::where('role', 'Teacher')->whereNotNull('fcm_token')->pluck('fcm_token')->toArray();
+            foreach ($teachers_fcm_token as $token) {
+                Controller::sendNotificationToUser($token, 'Pemberitahuan', 'Ada pengumuman baru');
+            }
+        }else if ($request->roles == 'Student') {
+            $students_fcm_token = User::where('role', 'Student')->whereNotNull('fcm_token')->pluck('fcm_token')->toArray();
+            foreach ($students_fcm_token as $token) {
+                Controller::sendNotificationToUser($token, 'Pemberitahuan', 'Ada pengumuman baru');
+            }
+        }
 
         return redirect()->route('notice-board.index');
     }

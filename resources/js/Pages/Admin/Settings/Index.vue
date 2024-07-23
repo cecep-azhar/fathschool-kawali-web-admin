@@ -310,6 +310,13 @@
                                                 :placeholder="__('Enter Mobile Version')" :error="$page.props.errors.mobile_version" />
                                     <input-error :error="$page.props.errors.mobile_version" />
                                 </div>
+                                <div class="mb-3">
+                                    <global-label for="link_google_play" :value="__('Link Google Play')" :required="true" />
+                                    <global-input type="text" v-model="form.link_google_play" id="link_google_play" name="link_google_play"
+                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                                :placeholder="__('Enter Google Play Link')" :error="$page.props.errors.link_google_play" />
+                                    <input-error :error="$page.props.errors.link_google_play" />
+                                </div>
                             </div>
                             <div class="border-gray-700 mb-1">
                                 <div class="flex justify-end py-4 gap-4 px-4 sm:px-6">
@@ -384,6 +391,7 @@ export default {
                 app_description: this.setting.app_description,
                 production_status: this.setting.production_status,
                 mobile_version: this.setting.mobile_version,
+                link_google_play: this.setting.link_google_play,
                 _method: 'PUT'
             })
         }

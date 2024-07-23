@@ -186,7 +186,7 @@ class WebsiteSettingController extends Controller
     return response()->json($landingVideo, 201);
 }
 
-    
+
 public function DocumentationStore(Request $request)
 {
     $request->validate([
@@ -793,11 +793,13 @@ public function store(Request $request)
         $request->validate([
             'production_status' => 'required',
             'mobile_version' => 'required',
+            'link_google_play' => 'required'
         ]);
 
         Setting::first()->update([
             'production_status' => $request->production_status,
             'mobile_version' => $request->mobile_version,
+            'link_google_play' => $request->link_google_play,
         ]);
 
         return back()->with('success', 'Mobile settings updated successfully.');

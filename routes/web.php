@@ -81,10 +81,11 @@ Route::controller(FrontendController::class)->group(function () {
     Route::get('/aboutschool', 'aboutschool');
     Route::get('/feature', 'feature');
     Route::get('/contact', 'contact');
+    Route::get('/coba', 'coba');
     Route::get('/documentation', 'documentation');
     Route::get('/announcement/{notice:slug}', 'announcementDetails')->name('announcement.details');
 });
-
+Route::post('/coba', [WebsiteSettingController::class, 'store'])->name('coba.store');
 Route::get('/change/language/{language:code}', function (Language $language) {
     Session()->put('locale', $language->code);
     Session()->put('current_dir', $language->direction);

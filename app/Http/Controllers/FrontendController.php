@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Website\StudentAdmissionRequest;
 use App\Models\AdmissionFormField;
 use App\Models\Course;
+use App\Models\Documentation;
 use App\Models\GallerySlider;
 use App\Models\LandingVideo;
 use App\Models\Notice;
@@ -26,14 +27,16 @@ class FrontendController extends Controller
     {
         $sliders = GallerySlider::all();
         $landings = LandingVideo::first();
+        $documentations = Documentation::all();
 
-        // dd($youtube);
+        //  dd($documentation);
 
         return inertia('Frontend/Welcome', [
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),
             'sliders' => $sliders,
             'landing' => $landings,
+            'documentation' => $documentations,
         ]);
     }
 
@@ -123,14 +126,24 @@ class FrontendController extends Controller
             'notices' => $notices,
         ]);
     }
-    public function documentation()
+    public function coba()
     {
         $notices = Notice::with('user:id,name,username')->public()->latest()->limit(18)->get();
+
+        return inertia('Frontend/coba', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'notices' => $notices,
+        ]);
+    }
+    public function documentation()
+    {
+        $documentations = Documentation::all();
 
         return inertia('Frontend/Dokumentasi', [
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),
-            'notices' => $notices,
+            'documentations' => $documentations,
         ]);
     }
 

@@ -173,7 +173,7 @@
                                 </div>
                             </div>
                         </li>
-
+                        
                         <li class="flow-root" v-if="can('report.transaction')">
                             <div
                                 class="relative -m-2 flex items-center gap-4 rounded-xl p-2 transition-all duration-300 focus-within:ring-2 focus-within:ring-indigo-500 hover:bg-gray-200 dark:hover:bg-gray-500">

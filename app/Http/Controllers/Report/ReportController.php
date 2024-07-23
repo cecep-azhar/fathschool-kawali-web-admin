@@ -11,6 +11,7 @@ use App\Models\AttendanceStudent;
 use App\Models\ClassRoutine;
 use App\Models\Course;
 use App\Models\Currency;
+use App\Models\Documentation;
 use App\Models\Rating;
 use App\Models\Result;
 use App\Models\Setting;
@@ -507,7 +508,6 @@ public function studentExport(Request $request)
         // Return the 'Admin/Report/SubjectAttendance' view with the necessary data for rendering the page
         return inertia('Admin/Report/SubjectAttendance', $data);
     }
-
     public function exportSubjectAttendanceReport(Request $request)
     {
         // Check if the authenticated user has permission to access the attendance report

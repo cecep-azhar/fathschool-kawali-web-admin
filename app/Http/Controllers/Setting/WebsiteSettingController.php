@@ -15,7 +15,9 @@ use App\Http\Requests\Admin\Setting\SocialLinkUpdateRequest;
 use App\Http\Requests\CurrencyCreateRequest;
 use App\Http\Requests\CurrencyUpdateRequest;
 use App\Mail\SmtpTestEmail;
+use App\Models\coba;
 use App\Models\Currency;
+use App\Models\Documentation;
 use App\Models\GallerySlider;
 use App\Models\LandingVideo;
 use App\Models\Language;
@@ -126,11 +128,13 @@ class WebsiteSettingController extends Controller
 
         $sliders = GallerySlider::all();
         $landings = LandingVideo::all();
+        $documentations = Documentation::all();
         $socialLinks = SocialLink::paginate(15)->onEachSide(-1);
+        $isDataExist = $landings->isNotEmpty();
 
-        // dd($landings);
+        //  dd($documentations);
 
-        return Inertia::render('Admin/Settings/Website', compact('sliders', 'socialLinks', 'landings'));
+        return Inertia::render('Admin/Settings/Website', compact('sliders', 'socialLinks', 'landings', 'documentations','isDataExist',));
     }
 
     /**
@@ -152,32 +156,69 @@ class WebsiteSettingController extends Controller
         return back();
     }
     public function landingStore(Request $request)
-    {
-        $request->validate(['thumbnail' => 'required|file|mimes:png,jpg,jpeg|max:5120']);
+{
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'description' => 'required|string|max:500',
+        'youtubelink' => 'required|string|max:255',
+        'thumbnail' => 'required|file|mimes:png,jpg,jpeg|max:5120'
+    ]);
 
-        if ($request->hasFile('thumbnail')) {
-            $url = FileUpload::uploadImage($request->thumbnail, 'landingvideo');
-            // $url = $request->file('thumbnail')->store('landingvideo', 'uploads');
-        // } else {
-        //     return back()->withErrors(['thumbnail' => 'Thumbnail is required.']);
-        // }
-        }
-
-     LandingVideo::create([
-            'title' => $request->title,
-            'description' => $request->description,
-            'youtube_link' => $request->youtubelink,
-            'thumbnail' => $url
-        ]);
-
-        // dd($video);
-
-
-
-        $this->flashSuccess('Slider Content Added Successfully');
-
-        return back();
+    // Mengecek apakah ada data yang sudah ada di dalam database
+    $existingLandingVideo = LandingVideo::first();
+    if ($existingLandingVideo) {
+        return response()->json(['message' => 'Data sudah ada, Anda hanya dapat memasukkan satu data.'], 400);
     }
+
+    if ($request->hasFile('thumbnail')) {
+        $url = FileUpload::uploadImage($request->thumbnail, 'landingvideo');
+    } else {
+        return response()->json(['message' => 'Thumbnail is required.'], 400);
+    }
+
+    $landingVideo = LandingVideo::create([
+        'title' => $request->title,
+        'description' => $request->description,
+        'youtube_link' => $request->youtubelink,
+        'thumbnail' => $url
+    ]);
+
+    return response()->json($landingVideo, 201);
+}
+
+    
+public function DocumentationStore(Request $request)
+{
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'description' => 'required|string',
+        'youtubelink' => 'required|url',
+        'thumbnail' => 'required|file|mimes:png,jpg,jpeg|max:5120'
+    ]);
+
+    if ($request->hasFile('thumbnail')) {
+        $url = FileUpload::uploadImage($request->thumbnail, 'images');
+    }
+
+    Documentation::create([
+        'title' => $request->title,
+        'description' => $request->description,
+        'video_link' => $request->youtubelink,
+        'thumbnail' => $url
+    ]);
+
+    return back()->with('success', 'Documentation Added Successfully');
+}
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+    ]);
+
+    $contact = coba::create($validated);
+
+    return response()->json($contact, 201);
+}
     /**
      * Website slider delete
      *
@@ -197,6 +238,14 @@ class WebsiteSettingController extends Controller
         $landing->delete();
 
         $this->flashSuccess('Landing Deleted Successfully');
+
+        return back();
+    }
+    public function DocumentationDelete(Documentation $documentation)
+    {
+        $documentation->delete();
+
+        $this->flashSuccess('Document Deleted Successfully');
 
         return back();
     }

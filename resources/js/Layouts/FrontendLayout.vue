@@ -115,7 +115,6 @@
             <div class="relative mx-auto mt-24 max-w-md px-4 pb-32 sm:max-w-3xl sm:px-6 md:mt-32 lg:max-w-7xl lg:px-8">
                 <slot name="header" />
             </div>
-            <p>ashgshsfcdfdsssssssssssssssssssssssss</p>
         </header>
 
         <main>
@@ -190,6 +189,7 @@ export default {
                 { name: 'Fitur', href: '/feature' },
                 { name: 'Kontak', href: '/contact' },
                 { name: 'Dokumentasi Program', href: '/documentation' },
+                { name: 'coba', href: '/coba' },
             ],
             showAnnouncement: true,
             videoSrc: "https://www.youtube.com/embed/dQw4w9WgXcQ",

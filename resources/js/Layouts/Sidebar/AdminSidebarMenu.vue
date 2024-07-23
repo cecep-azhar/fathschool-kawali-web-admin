@@ -85,12 +85,12 @@
             </ul>
         </Transition>
     </li>
-    <li v-if="can('meeting.index')" class="meeting_section">
+    <!-- <li v-if="can('meeting.index')" class="meeting_section">
         <NavLink :href="route('meeting.index')" :active="route().current('meeting.*')">
             <VideoCameraIcon class="h-5 w-5" />
             {{ __("Meeting") }}
         </NavLink>
-    </li>
+    </li> -->
     <li v-if="can('event.index')" class="leave_request_section">
         <NavLink :href="route('manage-leave.index')" :active="route().current('manage-leave.*')">
             <QueueListIcon class="w-5 h-5" />

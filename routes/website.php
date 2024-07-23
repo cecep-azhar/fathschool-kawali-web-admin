@@ -182,6 +182,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::delete('/website/slider/{slider}', 'sliderDelete')->name('website.slider.delete');
             Route::post('/website/landing', 'landingStore')->name('website.landing.store');
             Route::delete('/website/landing/{landing}', 'landingDelete')->name('website.landing.delete');
+            Route::post('/website/documentation', 'DocumentationStore')->name('website.documentation.store');
+            Route::delete('/website/documentation/{documentation}', 'DocumentationDelete')->name('website.documentation.delete');
+
             // Social Media Settings
             Route::post('/social', 'socialMediaStore')->name('social.store');
             Route::put('/{socialLink}/update', 'socialMediaUpdate')->name('social.update');

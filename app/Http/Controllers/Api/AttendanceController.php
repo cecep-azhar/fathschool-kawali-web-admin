@@ -179,7 +179,7 @@ class AttendanceController extends Controller
             ], 200);
         } else {
             return response()->json([
-                'message' => 'No upcoming class within the next 30 minutes',
+                'message' => 'No upcoming class within the next 20 minutes',
                 'current_time' => $now->toDateTimeString()
             ], 200);
         }

@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\TotalController;
 use App\Http\Controllers\Api\QuotesController;
 use App\Http\Controllers\Api\RatingController;
+use App\Http\Controllers\Api\AttendanceController;
 use App\Models\Api\ClassAttendance;
 use Spatie\Activitylog\Models\Activity;
 
@@ -160,3 +161,5 @@ Route::get('/is-checkin/student', [App\Http\Controllers\ApiStudent\AttendanceCon
 
 //checkout
 Route::post('/checkout/student', [App\Http\Controllers\ApiStudent\AttendanceController::class, 'checkout'])->middleware('auth:sanctum');
+
+Route::middleware('auth:sanctum')->get('/check-upcoming-class', [AttendanceController::class, 'checkUpcomingClass']);

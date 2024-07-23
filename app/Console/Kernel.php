@@ -8,6 +8,7 @@ use App\Jobs\ClearExpiredSecurityCodes;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 
 class Kernel extends ConsoleKernel
 {
@@ -46,7 +47,8 @@ class Kernel extends ConsoleKernel
                 ->pluck('fcm_token');
 
             // Log atau proses fcm_token (contoh: logging untuk keperluan debugging)
-            Log::info('FCM Tokens:', $fcmTokens->toArray());
+            // Log::info('FCM Tokens:', $fcmTokens->toArray());
+            Controller::sendNotificationToUser($fcmTokens->toArray(), 'Pemberitahuan', 'Anda memiliki jadwal dalam 6 menit lagi!');
 
             // Anda bisa menambahkan logika lain di sini, misalnya mengirim notifikasi
         })->everyFiveMinutes(); // Menjalankan setiap 5 menit

@@ -5,7 +5,9 @@ namespace App\Console;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Jobs\ClearExpiredSecurityCodes;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
@@ -29,12 +31,26 @@ class Kernel extends ConsoleKernel
             // Periksa dan update jadwal
             DB::table('class_routines')
                 ->whereBetween('start_time', [$currentTimeForChecking->format('H:i:s'), $endTimeForChecking->format('H:i:s')])
-                ->whereDate('start', '<=', $currentTimeForChecking->format('Y-m-d'))
-                ->whereDate('end', '>=', $currentTimeForChecking->format('Y-m-d'))
                 ->update(['is_spaced' => 0]);
+
+            // Ambil teacher_id yang memiliki jadwal dalam rentang 6 menit
+            $teacherIds = DB::table('class_routines')
+                ->whereBetween('start_time', [$currentTimeForChecking->format('H:i:s'), $endTimeForChecking->format('H:i:s')])
+                ->pluck('teacher_id')
+                ->unique(); // Mengambil ID unik
+
+            // Ambil fcm_token untuk setiap teacher
+            $fcmTokens = DB::table('users')
+                ->whereIn('id', $teacherIds)
+                ->whereNotNull('fcm_token')
+                ->pluck('fcm_token');
+
+            // Log atau proses fcm_token (contoh: logging untuk keperluan debugging)
+            Log::info('FCM Tokens:', $fcmTokens->toArray());
+
+            // Anda bisa menambahkan logika lain di sini, misalnya mengirim notifikasi
         })->everyFiveMinutes(); // Menjalankan setiap 5 menit
     }
-
 
     /**
      * Register the commands for the application.

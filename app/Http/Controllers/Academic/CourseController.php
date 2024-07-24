@@ -192,14 +192,14 @@ class CourseController extends Controller
         return inertia('CoursesQrCodes', ['courses' => $coursesWithQrCodes]);
     }
 
-    public function printQrCode($id)
+    public function printQrCode($qr_code_id)
     {
-        $course = Course::findOrFail($id);
+        $course = Course::findOrFail($qr_code_id);
 
         // Generate QR Code
         $qrCode = Builder::create()
             ->writer(new PngWriter())
-            ->data($course->id)
+            ->data($course->qr_code_id)
             ->size(300)
             ->build();
 

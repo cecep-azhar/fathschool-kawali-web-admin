@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\ClassRoutine\ClassRoutineCreateRequest;
 use App\Http\Requests\Admin\ClassRoutine\ClassRoutineUpdateRequest;
 use App\Models\ClassRoutine;
 use App\Models\Course;
+use App\Models\Setting;
 use App\Models\Subject;
 use App\Models\TeacherSubject;
 use App\Models\User;
@@ -43,7 +44,11 @@ class ClassRoutineController extends Controller
             $query->where('teacher_id', $request->teacher_id);
         }
 
-        $schedules = $query->with(['course:id,name', 'teacher:id,name', 'subject:id,name,color'])->get()
+        // Menyaring berdasarkan nilai activation yang sesuai dengan status di tabel activation
+        $activationStatus = Setting::pluck('status')->toArray();
+        $query->whereIn('activation', $activationStatus);
+
+        $schedules = $query->with(['course:id,name', 'teacher:id,name', 'subject:id,name,color', 'setting'])->get()
             ->transform(function ($data) {
                 $data->daysOfWeek = (string) $data->weekday;
                 $data->startTime = $data->start_time;
@@ -63,6 +68,7 @@ class ClassRoutineController extends Controller
             'query' => $request,
         ]);
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -151,6 +157,7 @@ class ClassRoutineController extends Controller
             'course_id' => $request->class,
             'subject_id' => $request->subject,
             'weekday' => $request->weekday,
+            'activation' => $request->activation,
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
         ]);
@@ -261,6 +268,7 @@ class ClassRoutineController extends Controller
                 'course_id' => $request->class ?? $routine->course_id,
                 'subject_id' => $request->subject ?? $routine->subject_id,
                 'weekday' => $request->weekday ?? $routine->weekday,
+                'activation' => $request->activation ?? $routine->activation,
                 'start_time' => $request->start_time ?? $routine->start_time,
                 'end_time' => $request->end_time ?? $routine->end_time,
                 'is_recurring' => false,
@@ -276,6 +284,7 @@ class ClassRoutineController extends Controller
                 'course_id' => $request->class ?? $routine->course_id,
                 'subject_id' => $request->subject ?? $routine->subject_id,
                 'weekday' => $request->weekday ?? $routine->weekday,
+                'activation' => $request->activation ?? $routine->activation,
                 'start_time' => $request->start_time ?? $routine->start_time,
                 'end_time' => $request->end_time ?? $routine->end_time,
             ]);

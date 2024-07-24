@@ -189,7 +189,6 @@ export default {
                 { name: 'Fitur', href: '/feature' },
                 { name: 'Kontak', href: '/contact' },
                 { name: 'Dokumentasi Program', href: '/documentation' },
-                { name: 'coba', href: '/coba' },
             ],
             showAnnouncement: true,
             videoSrc: "https://www.youtube.com/embed/dQw4w9WgXcQ",

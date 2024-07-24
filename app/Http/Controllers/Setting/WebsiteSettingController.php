@@ -156,35 +156,36 @@ class WebsiteSettingController extends Controller
         return back();
     }
     public function landingStore(Request $request)
-{
-    $request->validate([
-        'title' => 'required|string|max:255',
-        'description' => 'required|string|max:500',
-        'youtubelink' => 'required|string|max:255',
-        'thumbnail' => 'required|file|mimes:png,jpg,jpeg|max:5120'
-    ]);
-
-    // Mengecek apakah ada data yang sudah ada di dalam database
-    $existingLandingVideo = LandingVideo::first();
-    if ($existingLandingVideo) {
-        return response()->json(['message' => 'Data sudah ada, Anda hanya dapat memasukkan satu data.'], 400);
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|max:500',
+            'youtubelink' => 'required|string|max:255',
+            'thumbnail' => 'required|file|mimes:png,jpg,jpeg|max:5120'
+        ]);
+    
+        // Mengecek apakah ada data yang sudah ada di dalam database
+        $existingLandingVideo = LandingVideo::first();
+        if ($existingLandingVideo) {
+            return redirect()->back()->with('error', 'Data sudah ada, Anda hanya dapat memasukkan satu data.');
+        }
+    
+        if ($request->hasFile('thumbnail')) {
+            $url = FileUpload::uploadImage($request->thumbnail, 'landingvideo');
+        } else {
+            return redirect()->back()->with('error', 'Thumbnail is required.');
+        }
+    
+        $landingVideo = LandingVideo::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'youtube_link' => $request->youtubelink,
+            'thumbnail' => $url
+        ]);
+    
+        return redirect()->route('settings.website')->with('success', 'Landing video created successfully.');
     }
-
-    if ($request->hasFile('thumbnail')) {
-        $url = FileUpload::uploadImage($request->thumbnail, 'landingvideo');
-    } else {
-        return response()->json(['message' => 'Thumbnail is required.'], 400);
-    }
-
-    $landingVideo = LandingVideo::create([
-        'title' => $request->title,
-        'description' => $request->description,
-        'youtube_link' => $request->youtubelink,
-        'thumbnail' => $url
-    ]);
-
-    return response()->json($landingVideo, 201);
-}
+    
 
 
 public function DocumentationStore(Request $request)

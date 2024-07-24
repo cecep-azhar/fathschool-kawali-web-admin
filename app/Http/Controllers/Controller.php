@@ -41,10 +41,10 @@ class Controller extends BaseController
         curl_close($curl);
     }
 
-    public function sendNotificationToUser($userId, $title, $message)
+    public function sendNotificationToUser($token, $title, $message)
     {
-        $user = User::find($userId);
-        $token = $user->fcm_token;
+        // $user = User::find($userId);
+        // $token = $user->fcm_token;
 
         $messaging = app('firebase.messaging');
         $notification = Notification::create($title, $message);

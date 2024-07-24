@@ -41,8 +41,6 @@ $app->singleton(
     App\Exceptions\Handler::class
 );
 
-$app->register(Kreait\Laravel\Firebase\ServiceProvider::class);
-
 /*
 |--------------------------------------------------------------------------
 | Return The Application

@@ -47,7 +47,7 @@ class Controller extends BaseController
         // $user = User::find($userId);
         // $token = $user->fcm_token;
 
-        $messaging = app(Messaging::class);
+        $messaging = app('firebase.messaging');
         $notification = Notification::create($title, $message);
 
         $message = CloudMessage::withTarget('token', $token)

@@ -14,7 +14,7 @@ class NoticeController extends Controller
         $userRole = $request->user()->role;
 
         // Mengambil semua notices berdasarkan role pengguna yang sedang login
-        $notices = Notice   ::where('roles', $userRole)->get();
+        $notices = Notice::where('roles', $userRole)->get();
 
         // Mengembalikan data notices sebagai respon JSON
         return response()->json($notices);

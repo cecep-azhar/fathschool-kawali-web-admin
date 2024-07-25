@@ -16,7 +16,7 @@ use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Models\Api\ClassAttendance;
 use Spatie\Activitylog\Models\Activity;
-
+use Carbon\Carbon;
 
 /*
 |--------------------------------------------------------------------------
@@ -132,9 +132,15 @@ Route::post('forgot-password', [App\Http\Controllers\Api\AuthController::class, 
 
 //log activity
 Route::get('/activity-logs/{causer_id}', function ($causer_id) {
-    $logs = Activity::where('causer_id', $causer_id)->select('id', 'causer_id', 'properties', 'description', 'created_at')->orderBy('created_at', 'DESC')->get();
+    $threeDaysAgo = Carbon::now()->subDays(3);
+    $logs = Activity::where('causer_id', $causer_id)
+                    ->where('created_at', '>=', $threeDaysAgo)
+                    ->select('id', 'causer_id', 'properties', 'description', 'created_at')
+                    ->orderBy('created_at', 'DESC')
+                    ->get();
     return response($logs);
 });
+
 
 Route::get('/userid', [ApiUserIdController::class, 'show'])->middleware('auth:sanctum');
 

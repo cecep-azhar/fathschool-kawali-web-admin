@@ -6,6 +6,8 @@ use App\Models\Api\StudentList;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Models\Api\ClassAttendance;
+use App\Models\Api\LearningLesson;
 
 class Course extends Model
 {
@@ -97,5 +99,19 @@ class Course extends Model
     public function examResults()
     {
         return $this->belongsToMany(Exam::class, 'course_result');
+    }
+
+    public function courseAttendance(){
+        return $this->hasMany(ClassAttendance::class);
+    }
+
+    public function learningLessons()
+    {
+        return $this->hasMany(LearningLesson::class, 'class_lists_id');
+    }
+
+    public function studentLists()
+    {
+        return $this->hasMany(StudentList::class);
     }
 }

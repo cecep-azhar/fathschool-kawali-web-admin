@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Facade;
+use Kreait\Laravel\Firebase\Facades\Firebase;
+use Kreait\Laravel\Firebase\ServiceProvider;
 
 return [
 
@@ -184,6 +186,8 @@ return [
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
+        Kreait\Laravel\Firebase\ServiceProvider::class,
+
 
         /*
          * Package Service Providers...
@@ -201,7 +205,7 @@ return [
         App\Providers\FortifyServiceProvider::class,
         App\Providers\JetstreamServiceProvider::class,
         App\Providers\CurrencyServiceProvider::class,
-        
+
         App\Providers\BroadcastServiceProvider::class,
 
         SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class,
@@ -224,6 +228,7 @@ return [
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         'Rave' => KingFlamez\Rave\Facades\Rave::class,
         'QrCode' => SimpleSoftwareIO\QrCode\Facades\QrCode::class,
+        'Firebase' => Kreait\Laravel\Firebase\Facades\Firebase::class,
     ])->toArray(),
 
 ];

@@ -8,6 +8,7 @@ use App\Models\Api\ClassAttendance;
 use App\Models\Course;
 use App\Models\ClassRoutine;
 use App\Models\Rating;
+use App\Models\Setting;
 use Illuminate\Support\Carbon;
 
 class ClassAttendanceController extends Controller
@@ -31,9 +32,12 @@ class ClassAttendanceController extends Controller
         // Get the current user
         $user = $request->user();
 
+        $activeStatus = Setting::pluck('status')->toArray();
+
         // Get the class routine for the user
         $classRoutine = ClassRoutine::where('teacher_id', $user->id)
             ->where('course_id', $course->id)
+            ->where('activation', $activeStatus)
             ->first();
 
         // Check if class routine not found
@@ -138,11 +142,14 @@ class ClassAttendanceController extends Controller
         $end_time = date('H:i:s');
         $today = Carbon::now()->dayOfWeek;
 
+        $activeStatus = Setting::pluck('status')->toArray();
+
         $lesson = ClassRoutine::with(['teacher', 'subject', 'course'])
             ->where('teacher_id', $request->user()->id)
             ->where('weekday', $today)
             ->where('start_time', '<=', $end_time)
             ->where('end_time', '>=', $start_time)
+            ->where('activation', $activeStatus)
             ->first();
 
             // dd($lesson);

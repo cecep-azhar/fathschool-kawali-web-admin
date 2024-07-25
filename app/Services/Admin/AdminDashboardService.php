@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\Exam;
 use App\Models\Holiday;
 use App\Models\Leave;
+use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
@@ -37,10 +38,16 @@ class AdminDashboardService
         // today event
         $data['this_week_events'] = Event::whereBetween('start', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->count();
 
+        // Get the active status from settings
+        $activeStatus = Setting::pluck('status')->toArray();
+
+        // Modify the query to filter class routines based on activation status
         $holidays = Holiday::all(['id', 'title', 'start', 'end']);
-        $schedules = ClassRoutine::with(['course:id,name', 'teacher:id,name', 'subject:id,name,color'])->get()
+        $schedules = ClassRoutine::with(['course:id,name', 'teacher:id,name', 'subject:id,name,color'])
+            ->where('activation', $activeStatus) // Filter based on the active status
+            ->get()
             ->transform(function ($data) {
-                $data->title = 'Course: '.$data->course->name.'<br>'.'Teacher: '.$data->teacher->name.'<br>'.'Subject: '.$data->subject->name.'<br>Time: '.Carbon::parse($data->start_time)->format('h:i').' - '.Carbon::parse($data->end_time)->format('h:i A');
+                $data->title = 'Course: ' . $data->course->name . '<br>' . 'Teacher: ' . $data->teacher->name . '<br>' . 'Subject: ' . $data->subject->name . '<br>Time: ' . Carbon::parse($data->start_time)->format('h:i') . ' - ' . Carbon::parse($data->end_time)->format('h:i A');
                 $data->color = $data->subject->color;
                 $data->startTime = $data->start_time;
                 $data->endTime = $data->end_time;
@@ -48,6 +55,7 @@ class AdminDashboardService
 
                 return $data;
             });
+
         $events = Event::all(['id', 'title', 'start', 'end']);
         $data['events'] = Arr::collapse([$holidays, $events, $schedules]);
 
@@ -70,6 +78,7 @@ class AdminDashboardService
 
         return $data;
     }
+
 
     public function barChartIncomeTransaction($request)
     {

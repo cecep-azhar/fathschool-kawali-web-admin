@@ -329,6 +329,36 @@
                         </form>
                     </div>
                 </div>
+                <div class="divide-y divide-gray-200 dark:divide-gray-600 overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow pb-6 mt-6">
+                    <div class="py-6 px-4 sm:p-6 lg:pb-8">
+                        <div>
+                            <h2 class="text-lg font-medium dark:text-gray-400 leading-6 text-gray-900">
+                                {{ __('Weekday') }}
+                            </h2>
+                        </div>
+                        <form class="mt-2" @submit.prevent="submitWeekdaySettings()" enctype="multipart/form-data">
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                    <div class="mb-3">
+                                        <global-label for="status" :value="__('Weekday Schedule')" :required="true" />
+                                        <select v-model="form.status" id="status" name="status"
+                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400">
+                                            <option value="1">{{ __('Weekday 1') }}</option>
+                                            <option value="2">{{ __('Weekday 2') }}</option>
+                                        </select>
+                                        <input-error :error="$page.props.errors.status" />
+                                    </div>
+                                </div>
+                                <div class="border-gray-700 mb-1">
+                                    <div class="flex justify-end py-4 gap-4 px-4 sm:px-6">
+                                        <global-button :loading="form.processing" @click="submitWeekdaySettings()" type="button" cssClass="w-full mt-3"
+                                            theme="primary">
+                                            {{ __('Save Changes') }}
+                                        </global-button>
+                                    </div>
+                                </div>
+                        </form>
+                    </div>
+                </div>
             </SettingLayout>
         </div>
     </AppLayout>
@@ -392,6 +422,7 @@ export default {
                 production_status: this.setting.production_status,
                 mobile_version: this.setting.mobile_version,
                 link_google_play: this.setting.link_google_play,
+                status: this.setting.status,
                 _method: 'PUT'
             })
         }
@@ -466,6 +497,11 @@ export default {
         },
         submitMobileSettings() {
             this.form.post(this.route('settings.updateMobile'), {
+                preserveScroll: true,
+            })
+        },
+        submitWeekdaySettings() {
+            this.form.post(this.route('settings.updateWeekday'), {
                 preserveScroll: true,
             })
         }

@@ -314,3 +314,5 @@ Route::controller(GlobalController::class)->group(function () {
 });
 
 Route::put('/settings/updateMobile', [WebsiteSettingController::class, 'updateMobile'])->name('settings.updateMobile');
+
+Route::put('/settings/updateWeekday', [WebsiteSettingController::class, 'updateWeekday'])->name('settings.updateWeekday');

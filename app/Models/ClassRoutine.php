@@ -82,4 +82,10 @@ public function subjects()
     {
         return Carbon::parse($this->end_time)->diffInMinutes($this->start_time);
     }
+
+    public function setting()
+    {
+        return $this->belongsTo(Setting::class, 'status');
+    }
+
 }

@@ -143,38 +143,43 @@ class WebsiteSettingController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function sliderStore(Request $request)
-    {
-        $request->validate(['image' => 'required|file|mimes:png,jpg,jpeg|max:5120']);
+    public function SliderStore(Request $request)
+{
+    $request->validate([
+        'image' => 'required|file|mimes:png,jpg,jpeg|max:5120'
+    ]);
 
-        if ($request->hasFile('image')) {
-            $url = FileUpload::uploadImage($request->image, 'slider');
-            GallerySlider::create(['image' => $url]);
-        }
-
-        $this->flashSuccess('Slider Image Added Successfully');
-
-        return back();
+    $url = null;
+    if ($request->hasFile('image')) {
+        $url = FileUpload::uploadImage($request->image, 'images');
     }
+
+    GallerySlider::create([
+        'image' => $url,
+    ]);
+
+    return back()->with('success', 'Slider Image Added Successfully');
+}
+
     public function landingStore(Request $request)
     {
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:500',
             'youtubelink' => 'required|string|max:255',
-            'thumbnail' => 'required|file|mimes:png,jpg,jpeg|max:5120'
+            'thumbnail' => 'nullable|file|mimes:png,jpg,jpeg|max:5120'
         ]);
-
         // Mengecek apakah ada data yang sudah ada di dalam database
         $existingLandingVideo = LandingVideo::first();
         if ($existingLandingVideo) {
             return redirect()->back()->with('error', 'Data sudah ada, Anda hanya dapat memasukkan satu data.');
         }
-
         if ($request->hasFile('thumbnail')) {
             $url = FileUpload::uploadImage($request->thumbnail, 'landingvideo');
-        } else {
-            return redirect()->back()->with('error', 'Thumbnail is required.');
+        }
+    
+        if (empty($request->youtubelink)) {
+            return redirect()->back()->with('error', 'YouTube link is required.');
         }
 
         $landingVideo = LandingVideo::create([
@@ -189,28 +194,31 @@ class WebsiteSettingController extends Controller
 
 
 
-public function DocumentationStore(Request $request)
-{
-    $request->validate([
-        'title' => 'required|string|max:255',
-        'description' => 'required|string',
-        'youtubelink' => 'required|url',
-        'thumbnail' => 'required|file|mimes:png,jpg,jpeg|max:5120'
-    ]);
 
-    if ($request->hasFile('thumbnail')) {
-        $url = FileUpload::uploadImage($request->thumbnail, 'images');
+    public function DocumentationStore(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'youtubelink' => 'required|url',
+            'thumbnail' => 'nullable|file|mimes:png,jpg,jpeg|max:5120'
+        ]);
+    
+        $url = null;
+        if ($request->hasFile('thumbnail')) {
+            $url = FileUpload::uploadImage($request->thumbnail, 'images');
+        }
+    
+        Documentation::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'video_link' => $request->youtubelink,
+            'thumbnail' => $url
+        ]);
+    
+        return back()->with('success', 'Documentation Added Successfully');
     }
-
-    Documentation::create([
-        'title' => $request->title,
-        'description' => $request->description,
-        'video_link' => $request->youtubelink,
-        'thumbnail' => $url
-    ]);
-
-    return back()->with('success', 'Documentation Added Successfully');
-}
+    
 public function store(Request $request)
 {
     $validated = $request->validate([

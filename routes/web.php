@@ -144,6 +144,9 @@ Route::get('teacher/attendance', [AttendanceController::class, 'index'])->name('
 Route::get('teacher-rating/attendance', [ReportController::class, 'rating'])->name('teacher.rating');
 Route::get('teacher-class/attendance', [AttendanceController::class, 'getTeacherClassAttendance'])->name('teacher.class');
 Route::get('courses/{id}/print-qr-code', [CourseController::class, 'printQrCode'])->name('courses.printQrCode');
+// web.php atau routes file yang relevan
+Route::put('/course/{id}', [CourseController::class, 'update'])->name('course.update');
+
 
 
 include base_path('routes/auth.php');

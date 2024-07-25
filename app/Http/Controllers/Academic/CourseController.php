@@ -116,56 +116,117 @@ class CourseController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id, SubjectChatGroupService $subjectChatGroupService)
-    {
-        abort_if(! userCan('academic.management'), 403);
+    // public function update(Request $request, $id, SubjectChatGroupService $subjectChatGroupService)
+    // {
+    //     abort_if(! userCan('academic.management'), 403);
 
-        $course = Course::findOrFail($id);
+    //     $course = Course::findOrFail($id);
 
-        // Validasi termasuk file
-        $request->validate([
-            'name' => 'required|unique:courses,name,'.$course->id,
-            'file' => 'nullable|image',
-        ], [
-            'name.required' => 'The name field is required',
-        ]);
+    //     // Validasi termasuk file
+    //     $request->validate([
+    //         'name' => 'required|unique:courses,name,'.$course->id,
+    //         'file' => 'nullable|image',
+    //     ], [
+    //         'name.required' => 'The name field is required',
+    //     ]);
 
-        if ($request->hasFile('file')) {
-            $url = FileUpload::uploadImage($request->file('file'), 'course');
+    //     if ($request->hasFile('file')) {
+    //         $url = FileUpload::uploadImage($request->file('file'), 'course');
+    //         FileDelete::deleteImage($course->photo);
+    //     }
+
+    //     $course->update([
+    //         'name' => $request->name,
+    //         'photo' => $url ?? $course->photo,
+    //         'has_multiple_subject' => $request->has_multiple_subject ?? 0,
+    //     ]);
+
+    //     if ($request->has_multiple_subject) {
+    //         $course->subjects()->delete();
+    //         $subjects = $request->subjects;
+
+    //         foreach ($subjects as $subject) {
+    //             $sub = $course->subjects()->create([
+    //                 'name' => $subject['name'],
+    //                 'color' => $subject['color'],
+    //             ]);
+
+    //             $subjectChatGroupService->subjectChatGroupStore($sub);
+    //         }
+    //     } else {
+    //         $course->subjects()->delete();
+    //         $sub = $course->subjects()->create([
+    //             'name' => $request->name.' Subject',
+    //             'color' => '#C93737',
+    //         ]);
+    //         $subjectChatGroupService->subjectChatGroupStore($sub);
+    //     }
+
+    //     $this->flashSuccess('Course updated successfully.');
+
+    //     return back();
+    // }
+   public function update(Request $request, $id, SubjectChatGroupService $subjectChatGroupService)
+{
+    abort_if(! userCan('academic.management'), 403);
+
+    $course = Course::findOrFail($id);
+
+    // Validasi termasuk file
+    $request->validate([
+        'name' => 'required|unique:courses,name,' . $course->id,
+        'file' => 'nullable|image',
+    ], [
+        'name.required' => 'The name field is required',
+    ]);
+
+    // Inisialisasi $url dengan nilai default
+    $url = $course->photo;
+
+    if ($request->hasFile('file')) {
+        $url = FileUpload::uploadImage($request->file('file'), 'course');
+        if ($url) {
+            // Hanya hapus gambar lama jika upload berhasil
             FileDelete::deleteImage($course->photo);
-        }
-
-        $course->update([
-            'name' => $request->name,
-            'photo' => $url ?? $course->photo,
-            'has_multiple_subject' => $request->has_multiple_subject ?? 0,
-        ]);
-
-        if ($request->has_multiple_subject) {
-            $course->subjects()->delete();
-            $subjects = $request->subjects;
-
-            foreach ($subjects as $subject) {
-                $sub = $course->subjects()->create([
-                    'name' => $subject['name'],
-                    'color' => $subject['color'],
-                ]);
-
-                $subjectChatGroupService->subjectChatGroupStore($sub);
-            }
         } else {
-            $course->subjects()->delete();
+            // Jika upload gagal, kembalikan dengan pesan error
+            return back()->withErrors(['file' => 'Failed to upload image.']);
+        }
+    }
+
+    // Update data course
+    $course->update([
+        'name' => $request->name,
+        'photo' => $url,
+        'has_multiple_subject' => $request->has_multiple_subject ?? 0,
+    ]);
+
+    if ($request->has_multiple_subject) {
+        $course->subjects()->delete();
+        $subjects = $request->subjects;
+
+        foreach ($subjects as $subject) {
             $sub = $course->subjects()->create([
-                'name' => $request->name.' Subject',
-                'color' => '#C93737',
+                'name' => $subject['name'],
+                'color' => $subject['color'],
             ]);
+
             $subjectChatGroupService->subjectChatGroupStore($sub);
         }
-
-        $this->flashSuccess('Course updated successfully.');
-
-        return back();
+    } else {
+        $course->subjects()->delete();
+        $sub = $course->subjects()->create([
+            'name' => $request->name . ' Subject',
+            'color' => '#C93737',
+        ]);
+        $subjectChatGroupService->subjectChatGroupStore($sub);
     }
+
+    $this->flashSuccess('Course updated successfully.');
+
+    return back();
+}
+
 
 
 

@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\AttendanceController;
 use App\Models\Api\ClassAttendance;
 use Spatie\Activitylog\Models\Activity;
 use Carbon\Carbon;
+use App\Http\Controllers\Api\MobileNotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -169,3 +170,6 @@ Route::get('/is-checkin/student', [App\Http\Controllers\ApiStudent\AttendanceCon
 Route::post('/checkout/student', [App\Http\Controllers\ApiStudent\AttendanceController::class, 'checkout'])->middleware('auth:sanctum');
 
 Route::middleware('auth:sanctum')->get('/check-upcoming-class', [AttendanceController::class, 'checkUpcomingClass']);
+
+//get data mobile notification
+Route::get('/mobile-notifications', [MobileNotificationController::class, 'index'])->middleware('auth:sanctum');

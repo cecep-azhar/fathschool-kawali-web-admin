@@ -8,7 +8,7 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 
-use App\Models\User;
+use App\Models\MobileNotification;
 use Kreait\Firebase\Messaging;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
@@ -42,11 +42,8 @@ class Controller extends BaseController
         curl_close($curl);
     }
 
-    public function sendNotificationToUser($token, $title, $message)
+    public function sendNotificationToUser($token, $title, $message, $content)
     {
-        // $user = User::find($userId);
-        // $token = $user->fcm_token;
-
         $messaging = app(Messaging::class);
         $notification = Notification::create($title, $message);
 
@@ -54,5 +51,10 @@ class Controller extends BaseController
             ->withNotification($notification);
 
         $messaging->send($message);
+        $mobile_notification = new MobileNotification();
+        $mobile_notification->title = $message;
+        $mobile_notification->message = $content;
+        $mobile_notification->token = $token;
+        $mobile_notification->save();
     }
 }

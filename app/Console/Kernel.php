@@ -49,7 +49,12 @@ class Kernel extends ConsoleKernel
             // Log atau proses fcm_token (contoh: logging untuk keperluan debugging)
             // Log::info('FCM Tokens:', $fcmTokens->toArray());
             foreach ($fcmTokens as $token) {
-                Controller::sendNotificationToUser($token, 'Pemberitahuan', 'Ada jadwal kelas yang akan dimulai');
+                // Mengambil jadwal sesuai dengan token untuk dikirimkan ke content notifikasi
+                $schedules = DB::table('class_routines')
+                    ->where('teacher_id', User::where('fcm_token', $token)->first()->id)
+                    ->whereBetween('start_time', [$currentTimeForChecking->format('H:i:s'), $endTimeForChecking->format('H:i:s')])
+                    ->get();
+                Controller::sendNotificationToUser($token, 'Pemberitahuan', 'Ada jadwal kelas yang akan dimulai', 'Jadwal kelas yang akan dimulai: ' . $schedules->pluck('class_name')->implode(', '));
             }
 
             // Anda bisa menambahkan logika lain di sini, misalnya mengirim notifikasi

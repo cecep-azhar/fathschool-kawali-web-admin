@@ -84,12 +84,12 @@ class NoticeBoardController extends Controller
         if ($request->roles == 'Teacher') {
             $teachers_fcm_token = User::where('role', 'Teacher')->whereNotNull('fcm_token')->pluck('fcm_token')->toArray();
             foreach ($teachers_fcm_token as $token) {
-                Controller::sendNotificationToUser($token, 'Pemberitahuan', 'Ada pengumuman baru');
+                Controller::sendNotificationToUser($token, 'Pemberitahuan', $request->title, $request->description);
             }
         }else if ($request->roles == 'Student') {
             $students_fcm_token = User::where('role', 'Student')->whereNotNull('fcm_token')->pluck('fcm_token')->toArray();
             foreach ($students_fcm_token as $token) {
-                Controller::sendNotificationToUser($token, 'Pemberitahuan', 'Ada pengumuman baru');
+                Controller::sendNotificationToUser($token, 'Pemberitahuan', $request->title, $request->description);
             }
         }
 

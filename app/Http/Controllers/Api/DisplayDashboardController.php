@@ -11,6 +11,7 @@ use App\Models\Api\ClassAttendance;
 use App\Models\Quote;
 use App\Models\Rating;
 use App\Models\ClassRoutine;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
@@ -39,18 +40,21 @@ class DisplayDashboardController extends Controller
             ->whereHas('user', function($query) {
                 $query->where('role', 'teacher');
             })->count();
-        
+
         $totalStudentAbsent = $totalStudent - $totalStudentAttendance;
         $totalTeacherAbsent = $totalTeacher - $totalTeacherAttendance;
-        
+
         $studentAttendancePercentage = $totalStudent > 0 ? number_format(($totalStudentAttendance / $totalStudent) * 100) . '%' : '0%';
         $teacherAttendancePercentage = $totalTeacher > 0 ? number_format(($totalTeacherAttendance / $totalTeacher) * 100) . '%' : '0%';
-        
+
         // Kelas
+        $activeStatus = Setting::pluck('status')->toArray();
+
         $lessons = ClassRoutine::with(['subject', 'course'])
         ->where('weekday', $weekRoutines)
         ->where('start_time', '<=', $end_time)
         ->where('end_time', '>=', $start_time)
+        ->where('activation', $activeStatus)
         ->get();
         $courses = Course::count();
         // $classWithAttendance = ClassAttendance::where('time_in', '<=', $now)
@@ -75,7 +79,7 @@ class DisplayDashboardController extends Controller
 
             $attendanceCount = $attendanceData->count();
 
-            
+
 
             $totalEmptyClass = $courses - $attendanceCount;
 
@@ -89,25 +93,28 @@ class DisplayDashboardController extends Controller
         $teacherNames = ClassRoutine::with('teacher')
             ->where('start_time', '<=', $now)
             ->where('end_time', '>=', $now)
+            ->where('activation', $activeStatus)
             ->get()
             ->pluck('teacher.name');
 
         $courseNames = ClassRoutine::with('courses')
             ->where('start_time', '<=', $now)
             ->where('end_time', '>=', $now)
+            ->where('activation', $activeStatus)
             ->get()
             ->pluck('course.name');
 
         $subjectNames = ClassRoutine::with('subject')
             ->where('start_time', '<=', $now)
             ->where('end_time', '>=', $now)
+            ->where('activation', $activeStatus)
             ->get()
             ->pluck('subject.name');
 
         // Kelas dengan jam kosong terbanyak minggu ini
         $startOfWeek = now()->startOfWeek()->format('Y-m-d');
         $endOfWeek = now()->endOfWeek()->format('Y-m-d');
-        
+
         $classWithLeastSessions = DB::table('class_attendances')
         ->select('course_id', DB::raw('COUNT(*) as session_count'))
         ->whereBetween('date', [$startOfWeek, $endOfWeek])
@@ -116,7 +123,7 @@ class DisplayDashboardController extends Controller
         ->first();
 
         // Quotes
-        $quote = Quote::pluck('quote'); 
+        $quote = Quote::pluck('quote');
 
         // Guru favorit bulan ini
         $startOfMonth = now()->startOfMonth()->format('Y-m-d');
@@ -157,15 +164,15 @@ class DisplayDashboardController extends Controller
         $coursesWithAttendanceCount = Course::withCount(['courseAttendance' => function($query) use ($startOfWeek, $endOfWeek) {
             $query->whereBetween('date', [$startOfWeek, $endOfWeek]);
         }])->get();
-        
+
         // Temukan jumlah kehadiran terendah
         $minAttendanceCount = $coursesWithAttendanceCount->min('course_attendance_count');
-        
+
         // Ambil semua kursus dengan jumlah kehadiran terendah
         $coursesWithLeastAttendanceThisWeek = $coursesWithAttendanceCount->filter(function ($course) use ($minAttendanceCount) {
             return $course->course_attendance_count === $minAttendanceCount;
         });
-        
+
         // $coursesNamesWithLeastAttendanceThisWeek = $coursesWithLeastAttendanceThisWeek->pluck('name')->implode(', ');
         // Ambil maksimal 3 kursus dengan jumlah kehadiran terendah
         $coursesNamesWithLeastAttendanceThisWeek = $coursesWithLeastAttendanceThisWeek->pluck('name')->take(3)->implode(', ');
@@ -174,14 +181,14 @@ class DisplayDashboardController extends Controller
         if ($coursesWithLeastAttendanceThisWeek->count() > 3) {
             $coursesNamesWithLeastAttendanceThisWeek .= ' dan beberapa lainnya';
         }
-                
-        
+
+
         // Kelas dengan murid kosong terbanyak hari ini
         $totalStudents = User::where('role', 'student')->count();
         $studentsAbsentPerClass = Course::withCount(['courseAttendance' => function($query) use ($today) {
             $query->where('date', $today);
         }])->get();
-        
+
         $studentsAbsentPerClass = $studentsAbsentPerClass->map(function ($course) use ($totalStudents) {
             $studentsPresent = $course->course_attendance_count;
             $studentsAbsent = $totalStudents - $studentsPresent;
@@ -194,7 +201,7 @@ class DisplayDashboardController extends Controller
         $maxAbsentClass = $studentsAbsentPerClass->sortByDesc('students_absent')->first();
 
         $response = [
-            // Kehadiran 
+            // Kehadiran
             'total_student' => $totalStudent,
             'total_teacher' => $totalTeacher,
             'total_teacher_attendance' => $totalTeacherAttendance,
@@ -213,7 +220,7 @@ class DisplayDashboardController extends Controller
             'quote_of_the_day' => $quote,
             // Guru dengan rating tertinggi bulan ini
             'highest_rating_teacher' => $teacherWithHighestRatingMonthly->name ?? '',
-            
+
             'lowest_rating_teacher' => $teacherWithLowestRatingMonthly->name ?? '',
             // Guru teladan
             'teacher_of_the_month' => $exemplaryTeacher,

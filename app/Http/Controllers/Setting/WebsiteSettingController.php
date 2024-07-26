@@ -15,6 +15,7 @@ use App\Http\Requests\Admin\Setting\SocialLinkUpdateRequest;
 use App\Http\Requests\CurrencyCreateRequest;
 use App\Http\Requests\CurrencyUpdateRequest;
 use App\Mail\SmtpTestEmail;
+use App\Models\Activation;
 use App\Models\coba;
 use App\Models\Currency;
 use App\Models\Documentation;
@@ -168,13 +169,11 @@ class WebsiteSettingController extends Controller
             'youtubelink' => 'required|string|max:255',
             'thumbnail' => 'nullable|file|mimes:png,jpg,jpeg|max:5120'
         ]);
-    
+        // Mengecek apakah ada data yang sudah ada di dalam database
         $existingLandingVideo = LandingVideo::first();
         if ($existingLandingVideo) {
             return redirect()->back()->with('error', 'Data sudah ada, Anda hanya dapat memasukkan satu data.');
         }
-    
-        $url = '';
         if ($request->hasFile('thumbnail')) {
             $url = FileUpload::uploadImage($request->thumbnail, 'landingvideo');
         }
@@ -182,17 +181,17 @@ class WebsiteSettingController extends Controller
         if (empty($request->youtubelink)) {
             return redirect()->back()->with('error', 'YouTube link is required.');
         }
-    
+
         $landingVideo = LandingVideo::create([
             'title' => $request->title,
             'description' => $request->description,
             'youtube_link' => $request->youtubelink,
             'thumbnail' => $url
         ]);
-    
+
         return redirect()->route('settings.website')->with('success', 'Landing video created successfully.');
     }
-    
+
 
 
 
@@ -816,4 +815,17 @@ public function store(Request $request)
         return back()->with('success', 'Mobile settings updated successfully.');
     }
 
+    // SettingController.php
+    public function updateWeekday(Request $request)
+    {
+        $request->validate([
+            'status' => 'required',
+        ]);
+
+        Setting::first()->update([
+            'status' => $request->status,
+        ]);
+
+        return back()->with('success', 'Weekday settings updated successfully.');
+    }
 }

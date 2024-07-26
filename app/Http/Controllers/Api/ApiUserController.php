@@ -21,10 +21,23 @@ class ApiUserController extends Controller
 
     public function getbyid(Request $request, $userId)
     {
-        $user = User::where('id', $userId)->orderBy('id', 'desc')->first();
+        $users = User::where('id', $userId)->orderBy('id', 'desc')->first();
+        $absenNumber = 1;
+        $usersResult = $users->map(function($user) use (&$absenNumber) {
+            // Increment nomor absen
+            $absen = $absenNumber;
+            $absenNumber++;
 
-        if ($user) {
-            return response()->json($user, 200);
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'absen_number' => $absen,
+            ];
+        });
+
+        if ($usersResult) {
+            return response()->json($usersResult, 200);
         } else {
             return response()->json(['message' => 'User not found or not a teacher'], 404);
         }

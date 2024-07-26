@@ -28,20 +28,21 @@ class PermissionController extends Controller
     {
         // Validasi request
         $request->validate([
-            'leave_type_id' => [
-                'required',
-                'integer',
-                function ($attribute, $value, $fail) {
-                    // Validasi leave_type_id berdasarkan role_type teacher
-                    $leaveType = LeaveType::where('id', $value)
-                        ->where('role_type', 'teacher')
-                        ->first();
+            // 'leave_type_id' => [
+            //     'required',
+            //     'integer',
+            //     function ($attribute, $value, $fail) {
+            //         // Validasi leave_type_id berdasarkan role_type teacher
+            //         $leaveType = LeaveType::where('id', $value)
+            //             ->where('role_type', 'teacher')
+            //             ->first();
 
-                    if (!$leaveType) {
-                        $fail('The selected leave type is invalid for teachers.');
-                    }
-                },
-            ],
+            //         if (!$leaveType) {
+            //             $fail('The selected leave type is invalid for teachers.');
+            //         }
+            //     },
+            // ],
+            'leave_type_id' =>'required',
             'title' => 'required|string|max:255',
             'start' => 'required|date',
             'end' => 'required|date',

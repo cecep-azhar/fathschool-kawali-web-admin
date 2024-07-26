@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClassRoutine;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -21,12 +22,15 @@ class LearningLessonController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $activeStatus = Setting::pluck('status')->toArray();
+
         // Ambil data learning_lessons berdasarkan user yang sedang login
         $lesson = ClassRoutine::with(['teacher', 'subject', 'course'])
                             ->where('teacher_id', $user->id)
                             ->where('weekday', $today)
                             ->where('start_time', '<=', $end_time)
                             ->where('end_time', '>=', $start_time)
+                            ->where('activation', $activeStatus)
                             ->first();
 
 

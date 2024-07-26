@@ -194,14 +194,14 @@ class AuthController extends Controller
 
         $user = $request->user();
 
-        activity()
-        ->useLog('default')
-        ->causedBy(auth()->user())
-        ->event('updateFcmToken')
-        ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username,
-                          'time' => date('H:i')])
-        ->log('User Update FCM Token');
+        // activity()
+        // ->useLog('default')
+        // ->causedBy(auth()->user())
+        // ->event('updateFcmToken')
+        // ->withProperties(['ip' => $request->ip(),
+        //                   'user' => $user->username,
+        //                   'time' => date('H:i')])
+        // ->log('User Update FCM Token');
 
         return response([
             'message' => 'FCM token updated',

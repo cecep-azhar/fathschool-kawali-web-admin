@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AttendanceStudent;
 use App\Models\Leave;
 use App\Models\LeaveType; // Tambahkan model LeaveType
+use App\Models\Setting;
 use Carbon\Carbon;
 use App\Models\User;
 
@@ -36,9 +37,12 @@ class StudentAttendanceController extends Controller
         // Tentukan hari dalam seminggu (0 = Minggu, 1 = Senin, ..., 6 = Sabtu)
         $today = Carbon::parse($date)->dayOfWeek;
 
+        $activeStatus = Setting::pluck('status')->toArray();
+
         // Ambil semua kursus yang diikuti oleh guru pada hari tersebut
         $classRoutines = ClassRoutine::where('teacher_id', $currentUser->id)
             ->where('weekday', $today)
+            ->where('activation', $activeStatus)
             ->get();
 
         if ($classRoutines->isEmpty()) {

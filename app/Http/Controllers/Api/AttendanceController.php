@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Attendance;
 use App\Models\ClassRoutine;
+use App\Models\Setting;
 use Carbon\Carbon;
 
 class AttendanceController extends Controller
@@ -151,10 +152,13 @@ class AttendanceController extends Controller
             6 => 'Sabtu'
         ];
 
+        $activeStatus = Setting::pluck('status')->toArray();
+
         // Cari jadwal pelajaran yang dimulai dalam 20 menit ke depan
         $query = ClassRoutine::where('weekday', $nowWeekday)
             ->where('start_time', '>=', $nowTime)
-            ->where('start_time', '<=', $next30Minutes);
+            ->where('start_time', '<=', $next30Minutes)
+            ->where('activation', $activeStatus);
 
         if ($currentUser->role == 'Teacher') {
             $query->where('teacher_id', $currentUser->id);

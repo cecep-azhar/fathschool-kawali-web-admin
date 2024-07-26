@@ -73,6 +73,7 @@
             <BellAlertIcon class="w-6 h-6" />
             {{ __("Notice Board") }}
         </NavLink>
+    </li>
         <li v-if="can('courses.qr-codes')" class="corseqr_board_section">
         <NavLink :href="route('courses.qr-codes')" :active="route().current('courses.qr-codes')">
             <BellAlertIcon class="w-6 h-6" />

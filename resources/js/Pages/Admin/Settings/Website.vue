@@ -68,166 +68,157 @@
                         </div>
                     </div>
                 </div>
+                
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-2">
-       <!-- Landing Video -->
-<div class="lg:col-span-2">
+        <!-- Landing Video Section -->
+  <div class="lg:col-span-2">
     <div class="divide-y mt-5 divide-gray-200 dark:divide-gray-600 overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow pb-6">
-        <div class="py-6 px-4 sm:p-6 lg:pb-8">
-            <div>
-                <h2 class="text-lg font-medium dark:text-gray-400 leading-6 text-gray-900">
-                    {{ __('Landing Video') }}
-                </h2>
-            </div>
-            <div class="w-full bg-white rounded-lg dark:bg-gray-800 dark:border-gray-700">
-                <template v-if="landings.length > 0">
-                    <div class="grid grid-cols-4 gap-3">
-                        <div v-for="landing in landings" :key="landing.id" class="h-full relative bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                            <div class="rounded-lg p-4">
-                                <h3 class="text-sm font-medium dark:text-gray-400 leading-5 text-gray-900">
-                                    {{ landing.title }}
-                                </h3>
-                                <p class="text-xs dark:text-gray-400 leading-4 text-gray-700">
-                                    {{ landing.description }}
-                                </p>
-                                <iframe class="w-full rounded-lg mt-2" :src="getYouTubeEmbedUrl(landing.youtube_link)" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                            </div>
-                            <span :id="'delete'+landing.id" class="absolute inline-flex bg-gray-900 opacity-70 rounded-lg p-1 w-8 text-red-500 cursor-pointer top-0 right-0" @click.prevent="deleteContent(landing.id)">
-                                <TrashIcon />
-                            </span>
-                        </div>
-                    </div>
-                </template>
-                <template v-else>
-                    <NothingFound asShow="div" />
-                </template>
-            </div>
+      <div class="py-6 px-4 sm:p6 lg:pb-8">
+        <div>
+          <h2 class="text-lg font-medium dark:text-gray-400 leading-6 text-gray-900">
+            {{ __('Landing Video') }}
+          </h2>
         </div>
+        <div class="w-full bg-white rounded-lg dark:bg-gray-800 dark:border-gray-700">
+          <template v-if="landings.length > 0">
+            <div class="grid grid-cols-4 gap-3" style="width:400%; height:auto">
+              <div v-for="landing in landings" :key="landing.id" class="h-full relative bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                <div class="rounded-lg p-4">
+                  <h3 class="text-sm font-medium dark:text-gray-400 leading-5 text-gray-900">
+                    {{ landing.title }}
+                  </h3>
+                  <p class="text-xs dark:text-gray-400 leading-4 text-gray-700">
+                    {{ landing.description }}
+                  </p>
+                  <div v-if="landing.youtube_link">
+                    <iframe class="w-full rounded-lg mt-2" :src="getYouTubeEmbedUrl(landing.youtube_link)" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                  </div>
+                  <div v-else-if="landing.thumbnail">
+                    <img :src="landing.thumbnail" alt="Thumbnail" class="w-full rounded-lg mt-2"/>
+                  </div>
+                </div>
+                <span :id="'delete'+landing.id" class="absolute inline-flex bg-gray-900 opacity-70 rounded-lg p-1 w-8 text-red-500 cursor-pointer top-0 right-0" @click.prevent="deleteContent(landing.id)">
+                  <TrashIcon />
+                </span>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <NothingFound asShow="div" />
+          </template>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Add Landing Video -->
-<div>
+  <!-- Add Landing Video Form -->
+  <div>
     <div class="divide-y mt-5 divide-gray-200 dark:divide-gray-600 overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow pb-6">
-        <div class="py-6 px-4 sm:p6 lg:pb-8">
-            <div>
-                <h2 class="text-lg font-medium dark:text-gray-400 leading-6 text-gray-900">
-                    {{ update ? __("Update Landing Video") : __("Create Landing Video") }}
-                </h2>
-            </div>
-            <form class="mt-2" @submit.prevent="saveLandingContent">
-                <div v-if="error" class="mb-3 text-red-500">
-                    {{ error }}
-                </div>
-                <div class="mb-3">
-                    <global-label for="title" value="Title" :required="true" />
-                    <global-input type="text" id="title" name="title" v-model="form.title" class="mt-1 block w-full dark:bg-gray-700" :disabled="isDataExist" />
-                    <input-error :error="$page.props.errors.title" />
-                </div>
-                <div class="mb-3">
-                    <global-label for="description" value="Description" :required="true" />
-                    <global-input type="text" id="description" name="description" v-model="form.description" class="mt-1 block w-full dark:bg-gray-700" :disabled="isDataExist" />
-                    <input-error :error="$page.props.errors.description" />
-                </div>
-                <div class="mb-3">
-                    <global-label for="youtubelink" value="YouTube Link" :required="true" />
-                    <global-input type="text" id="youtubelink" name="youtubelink" v-model="form.youtubelink" class="mt-1 block w-full dark:bg-gray-700" :disabled="isDataExist" />
-                    <input-error :error="$page.props.errors.youtubelink" />
-                </div>
-                <div class="mb-3">
-                    <global-label for="thumbnail" value="Thumbnail" :required="true" />
-                    <global-input type="file" id="thumbnail" name="thumbnail" class="mt-1 block w-full dark:bg-gray-700" @change="onFileChange" ref="thumbnail" :disabled="isDataExist" />
-                    <!-- Notification for error -->
-                    <div v-if="errorMessage" class="text-red-500 mt-2">{{ errorMessage }}</div>
-                    <input-error :error="$page.props.errors.thumbnail" />
-                </div>
-                <global-button :loading="form.processing" type="submit" cssClass="mt-3" theme="primary" :disabled="isDataExist">
-                    {{__('Add Content')}}
-                </global-button>
-            </form>
+      <div class="py-6 px-4 sm:p6 lg:pb-8">
+        <div>
+          <h2 class="text-lg font-medium dark:text-gray-400 leading-6 text-gray-900">
+            {{ update ? __('Update Landing Video') : __('Create Landing Video') }}
+          </h2>
         </div>
+        <form class="mt-2" @submit.prevent="saveLandingContent">
+          <div class="mb-3">
+            <global-label for="title" value="Title" :required="true" />
+            <global-input type="text" id="title" name="title" v-model="form.title" class="mt-1 block w-full dark:bg-gray-700" :disabled="landings.length > 0" />
+            <div v-if="errorTitle" class="text-red-500 mt-2">{{ errorTitle }}</div>
+          </div>
+          <div class="mb-3">
+            <global-label for="description" value="Description" :required="true" />
+            <global-input type="text" id="description" name="description" v-model="form.description" class="mt-1 block w-full dark:bg-gray-700" :disabled="landings.length > 0" />
+            <div v-if="errorDescription" class="text-red-500 mt-2">{{ errorDescription }}</div>
+          </div>
+          <div class="mb-3">
+            <global-label for="youtubelink" value="YouTube Link" :required="false" />
+            <global-input type="text" id="youtubelink" name="youtubelink" v-model="form.youtubelink" class="mt-1 block w-full dark:bg-gray-700" :disabled="landings.length > 0" />
+            <div v-if="errorYoutubeLink" class="text-red-500 mt-2">{{ errorYoutubeLink }}</div>
+          </div>
+          <global-button :loading="form.processing" type="submit" cssClass="mt-3" theme="primary" :disabled="landings.length > 0">
+            {{__('Add Content')}}
+          </global-button>
+        </form>
+      </div>
     </div>
-</div>
-</div>
+  </div>
+                 </div>
 <!-- Documentation -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-2">
-        <div class="lg:col-span-2">
-            <div class="divide-y mt-5 divide-gray-200 dark:divide-gray-600 overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow pb-6">
-                <div class="py-6 px-4 sm:p-6 lg:pb-8">
-                    <div>
-                        <h2 class="text-lg font-medium dark:text-gray-400 leading-6 text-gray-900">
-                            {{ __('Documentation') }}
-                        </h2>
-                    </div>
-                    <div class="w-full bg-white rounded-lg dark:bg-gray-800 dark:border-gray-700">
-                        <template v-if="documentations.length > 0">
-                            <div class="grid grid-cols-4 gap-3">
-                                <div v-for="documentation in documentations" :key="documentation.id" class="h-full relative bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                    <div class="rounded-lg p-4">
-                                        <h3 class="text-sm font-medium dark:text-gray-400 leading-5 text-gray-900">
-                                            {{ documentation.title }}
-                                        </h3>
-                                        <p class="text-xs dark:text-gray-400 leading-4 text-gray-700">
-                                            {{ documentation.description }}
-                                        </p>
-                                        <!-- Embed YouTube Video -->
-                                        <iframe class="w-full rounded-lg mt-2" :src="getYouTubeEmbedUrl(documentation.video_link)" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                                    </div>
-                                    <span :id="'delete'+documentation.id" class="absolute inline-flex bg-gray-900 opacity-70 rounded-lg p-1 w-8 text-red-500 cursor-pointer top-0 right-0" @click.prevent="deleteDocumentation(documentation.id)">
-                                        <TrashIcon />
-                                    </span>
+    <div class="lg:col-span-2">
+        <div class="divide-y mt-5 divide-gray-200 dark:divide-gray-600 overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow pb-6">
+            <div class="py-6 px-4 sm:p-6 lg:pb-8">
+                <div>
+                    <h2 class="text-lg font-medium dark:text-gray-400 leading-6 text-gray-900">
+                        {{ __('Documentation') }}
+                    </h2>
+                </div>
+                <div class="w-full bg-white rounded-lg dark:bg-gray-800 dark:border-gray-700">
+                    <template v-if="documentations.length > 0">
+                        <div class="grid grid-cols-4 gap-3">
+                            <div v-for="documentation in documentations" :key="documentation.id" class="h-full relative bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                                <div class="rounded-lg p-4">
+                                    <h3 class="text-sm font-medium dark:text-gray-400 leading-5 text-gray-900">
+                                        {{ documentation.title }}
+                                    </h3>
+                                    <p class="text-xs dark:text-gray-400 leading-4 text-gray-700">
+                                        {{ documentation.description }}
+                                    </p>
+                                    <!-- Embed YouTube Video -->
+                                    <iframe class="w-full rounded-lg mt-2" :src="getYouTubeEmbedUrl(documentation.video_link)" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                                 </div>
+                                <span :id="'delete'+documentation.id" class="absolute inline-flex bg-gray-900 opacity-70 rounded-lg p-1 w-8 text-red-500 cursor-pointer top-0 right-0" @click.prevent="deleteDocumentation(documentation.id)">
+                                    <TrashIcon />
+                                </span>
                             </div>
-                        </template>
-                        <template v-else>
-                            <NothingFound asShow="div" />
-                        </template>
-                    </div>
+                        </div>
+                    </template>
+                    <template v-else>
+                        <NothingFound asShow="div" />
+                    </template>
                 </div>
             </div>
         </div>
-        <div>
-            <div class="divide-y mt-5 divide-gray-200 dark:divide-gray-600 overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow pb-6">
-                <div class="py-6 px-4 sm:p6 lg:pb-8">
-                    <div>
-                        <h2 class="text-lg font-medium dark:text-gray-400 leading-6 text-gray-900">
-                            {{ update ? __("Update Social Media") : __("Create Documentation") }}
-                        </h2>
-                    </div>
-                    <!-- Add Documentation -->
-                    <div class="w-full bg-white rounded-lg dark:bg-gray-800 dark:border-gray-700">
+    </div>
+    <div>
+        <div class="divide-y mt-5 divide-gray-200 dark:divide-gray-600 overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow pb-6">
+            <div class="py-6 px-4 sm:p-6 lg:pb-8">
+                <div>
+                    <h2 class="text-lg font-medium dark:text-gray-400 leading-6 text-gray-900">
+                        {{ update ? __("Update Social Media") : __("Create Documentation") }}
+                    </h2>
+                </div>
+                <!-- Add Documentation -->
+<div class="w-full bg-white rounded-lg dark:bg-gray-800 dark:border-gray-700">
     <form class="mt-2" @submit.prevent="saveDocumentation">
         <div class="mb-3">
             <global-label for="title" value="Title" :required="true" />
             <global-input type="text" id="title" name="title" v-model="form.title" class="mt-1 block w-full dark:bg-gray-700" />
-            <input-error :error="$page.props.errors.title" />
+            <input-error :error="errorTitle" />
         </div>
         <div class="mb-3">
             <global-label for="description" value="Description" :required="true" />
             <global-input type="text" id="description" name="description" v-model="form.description" class="mt-1 block w-full dark:bg-gray-700" />
-            <input-error :error="$page.props.errors.description" />
+            <input-error :error="errorDescription" />
         </div>
         <div class="mb-3">
             <global-label for="youtubelink" value="YouTube Link" :required="true" />
             <global-input type="text" id="youtubelink" name="youtubelink" v-model="form.youtubelink" class="mt-1 block w-full dark:bg-gray-700" />
-            <input-error :error="$page.props.errors.youtubelink" />
+            <input-error :error="errorYoutubeLink" />
         </div>
         <div class="mb-3">
-            <global-label for="thumbnail" value="Thumbnail" :required="true" />
-            <global-input type="file" id="thumbnail" name="thumbnail" class="mt-1 block w-full dark:bg-gray-700" @change="onFileChange" ref="thumbnail" />
-            <!-- Notification for error -->
             <div v-if="errorMessage" class="text-red-500 mt-2">{{ errorMessage }}</div>
-            <input-error :error="$page.props.errors.thumbnail" />
         </div>
         <global-button :loading="form.processing" type="submit" cssClass="mt-3" theme="primary">
             {{ __('Add video') }}
         </global-button>
     </form>
 </div>
-                </div>
             </div>
         </div>
     </div>
-
+</div>
 
                 <!-- Social Media  -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-2">
@@ -315,11 +306,14 @@ export default {
                 youtubelink: "",
                 title: "",
                 description: "",
-                thumbnail: "",
+                thumbnail: null,
+                processing: false,
             }),
             update: false,
             socialLink: "",
-            errorMessage: '',
+            errorTitle: '', // Error message for title
+            errorDescription: '', // Error message for description
+            errorYoutubeLink: '', // Error message for YouTube link
         };
     },
     components: {
@@ -335,24 +329,15 @@ export default {
     methods: {
         onFileChange(event) {
             const file = event.target.files[0];
-            const validFormats = ['image/png', 'image/jpg', 'image/jpeg'];
+            const validFormats = ['image/png', 'image/jpeg'];
 
             if (file && !validFormats.includes(file.type)) {
-                this.errorMessage = 'Gambar harus berformat png, jpg, atau jpeg.';
-                if (event.target.id === 'image') {
-                    this.form.image = null;
-                    this.$refs.image.value = '';
-                } else if (event.target.id === 'thumbnail') {
-                    this.form.thumbnail = null;
-                    this.$refs.thumbnail.value = '';
-                }
+                this.errorMessage = 'Gambar harus berformat png atau jpeg.';
+                this.form.image = null;
+                this.$refs.image.value = '';
             } else {
                 this.errorMessage = '';
-                if (event.target.id === 'image') {
-                    this.form.image = file;
-                } else if (event.target.id === 'thumbnail') {
-                    this.form.thumbnail = file;
-                }
+                this.form.image = file || null;
             }
         },
         deleteImage(id) {
@@ -362,7 +347,7 @@ export default {
         },
         saveSlideImage() {
             if (!this.form.image) {
-                this.errorMessage = 'Harap unggah gambar berformat png, jpg, atau jpeg.';
+                this.errorMessage = 'Harap unggah gambar berformat png atau jpeg.';
                 return;
             }
 
@@ -390,8 +375,21 @@ export default {
             }
         },
         saveLandingContent() {
-            if (!this.form.thumbnail) {
-                this.errorMessage = 'Harap unggah gambar berformat png, jpg, atau jpeg.';
+            // Reset error messages
+            this.errorTitle = '';
+            this.errorDescription = '';
+            this.errorYoutubeLink = '';
+
+            if (!this.form.title) {
+                this.errorTitle = 'Harap masukkan judul.';
+                return;
+            }
+            if (!this.form.description) {
+                this.errorDescription = 'Harap masukkan deskripsi.';
+                return;
+            }
+            if (!this.form.youtubelink) {
+                this.errorYoutubeLink = 'Harap masukkan tautan YouTube.';
                 return;
             }
 
@@ -402,8 +400,9 @@ export default {
                     this.form.description = "";
                     this.form.youtubelink = "";
                     this.form.thumbnail = null;
-                    this.$refs.thumbnail.value = '';
-                    this.errorMessage = '';
+                    this.errorTitle = '';
+                    this.errorDescription = '';
+                    this.errorYoutubeLink = '';
                 },
             });
         },
@@ -413,8 +412,21 @@ export default {
             }
         },
         saveDocumentation() {
-            if (!this.form.thumbnail) {
-                this.errorMessage = 'Harap unggah gambar berformat png, jpg, atau jpeg.';
+            // Reset error messages
+            this.errorTitle = '';
+            this.errorDescription = '';
+            this.errorYoutubeLink = '';
+
+            if (!this.form.title) {
+                this.errorTitle = 'Harap masukkan judul.';
+                return;
+            }
+            if (!this.form.description) {
+                this.errorDescription = 'Harap masukkan deskripsi.';
+                return;
+            }
+            if (!this.form.youtubelink) {
+                this.errorYoutubeLink = 'Harap masukkan tautan YouTube.';
                 return;
             }
 
@@ -426,7 +438,9 @@ export default {
                     this.form.youtubelink = "";
                     this.form.thumbnail = null;
                     this.$refs.thumbnail.value = '';
-                    this.errorMessage = '';
+                    this.errorTitle = '';
+                    this.errorDescription = '';
+                    this.errorYoutubeLink = '';
                 },
             });
         },
@@ -441,5 +455,8 @@ export default {
     },
 };
 </script>
+
+
+
 
 

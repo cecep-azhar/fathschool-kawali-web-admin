@@ -11,7 +11,7 @@ use App\Models\Api\ClassAttendance;
 use App\Models\Quote;
 use App\Models\Rating;
 use App\Models\ClassRoutine;
-use App\Models\Setting;
+use Illuminatuse\App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
@@ -220,7 +220,6 @@ class DisplayDashboardController extends Controller
             'quote_of_the_day' => $quote,
             // Guru dengan rating tertinggi bulan ini
             'highest_rating_teacher' => $teacherWithHighestRatingMonthly->name ?? '',
-
             'lowest_rating_teacher' => $teacherWithLowestRatingMonthly->name ?? '',
             // Guru teladan
             'teacher_of_the_month' => $exemplaryTeacher,
@@ -241,3 +240,4 @@ class DisplayDashboardController extends Controller
         return response()->json($response);
     }
 }
+

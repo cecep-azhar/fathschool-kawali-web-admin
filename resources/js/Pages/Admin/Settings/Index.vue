@@ -293,6 +293,41 @@
                         <form class="mt-2" @submit.prevent="submitMobileSettings()" enctype="multipart/form-data">
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                 <div class="mb-3">
+                                    <global-label for="radius" :value="__('Radius')" :required="true" />
+                                    <global-input type="text" v-model="form.radius" id="radius" name="radius"
+                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                                :placeholder="__('Enter Radius')" :error="$page.props.errors.radius" />
+                                    <input-error :error="$page.props.errors.radius" />
+                                </div>
+                                <div class="mb-3">
+                                    <global-label for="latitude" :value="__('Latitude')" :required="true" />
+                                    <global-input type="text" v-model="form.latitude" id="latitude" name="latitude"
+                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                                :placeholder="__('Enter Latitude')" :error="$page.props.errors.latitude" />
+                                    <input-error :error="$page.props.errors.latitude" />
+                                </div>
+                                <div class="mb-3">
+                                    <global-label for="longtitude" :value="__('Longtitude')" :required="true" />
+                                    <global-input type="text" v-model="form.longtitude" id="longtitude" name="longtitude"
+                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                                :placeholder="__('Enter Longtitude')" :error="$page.props.errors.longtitude" />
+                                    <input-error :error="$page.props.errors.longtitude" />
+                                </div>
+                                <div class="mb-3">
+                                    <global-label for="time_in" :value="__('Time In')" :required="true" />
+                                    <global-input type="time" v-model="form.time_in" id="time_in" name="time_in"
+                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                                :placeholder="__('Enter Time In')" :error="$page.props.errors.time_in" />
+                                    <input-error :error="$page.props.errors.time_in" />
+                                </div>
+                                <div class="mb-3">
+                                    <global-label for="time_out" :value="__('Time out')" :required="true" />
+                                    <global-input type="time" v-model="form.time_out" id="time_out" name="time_out"
+                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                                :placeholder="__('Enter Time Out')" :error="$page.props.errors.time_out" />
+                                    <input-error :error="$page.props.errors.time_out" />
+                                </div>
+                                <div class="mb-3">
                                     <global-label for="production_status" :value="__('Production Status')" :required="true" />
                                     <select v-model="form.production_status" id="production_status" name="production_status"
                                             class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400">
@@ -419,6 +454,11 @@ export default {
                 principal_name: this.setting.principal_name,
                 app_address: this.setting.app_address,
                 app_description: this.setting.app_description,
+                radius: this.setting.radius,
+                latitude: this.setting.latitude,
+                longtitude: this.setting.longtitude,
+                time_in: this.setting.time_in,
+                time_out: this.setting.time_out,
                 production_status: this.setting.production_status,
                 mobile_version: this.setting.mobile_version,
                 link_google_play: this.setting.link_google_play,

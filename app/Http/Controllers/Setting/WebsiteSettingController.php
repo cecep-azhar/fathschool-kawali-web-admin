@@ -795,13 +795,23 @@ public function store(Request $request)
         $request->validate([
             'production_status' => 'required',
             'mobile_version' => 'required',
-            'link_google_play' => 'required'
+            'link_google_play' => 'required',
+            'radius' => 'required',
+            'latitude' => 'required',
+            'longtitude' => 'required',
+            'time_in' => 'required',
+            'time_out' => 'required',
         ]);
 
         Setting::first()->update([
             'production_status' => $request->production_status,
             'mobile_version' => $request->mobile_version,
             'link_google_play' => $request->link_google_play,
+            'radius' => $request->radius,
+            'latitude' => $request->latitude,
+            'longtitude' => $request->longtitude,
+            'time_in' => $request->time_in,
+            'time_out' => $request->time_out,
         ]);
 
         return back()->with('success', 'Mobile settings updated successfully.');

@@ -16,7 +16,8 @@ class MobileNotificationController extends Controller
     public function index()
     {
         //mengambil data notifikasi mobile sesuai dengan user yang login dan mengurutkanya berdasarkan waktu terbaru
-        $mobile_notifications = MobileNotification::where('token', auth()->user()->token)->orderBy('created_at', 'desc')->get();
+        // $mobile_notifications = MobileNotification::where('token', auth()->user()->token)->orderBy('created_at', 'desc')->get();
+        $mobile_notifications = MobileNotification::all();
         return response()->json([
             'status' => 'success',
             'data' => $mobile_notifications

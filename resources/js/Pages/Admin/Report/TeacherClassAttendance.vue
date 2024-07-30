@@ -21,10 +21,10 @@
         <form @submit.prevent="filterData">
           <div class="flex items-center">
             <input type="text" v-model="filter.name" id="name" placeholder="Name" class="p-2 border rounded">
-            
+
             <label for="month" class="ml-4 mr-2">{{ __('Month') }}:</label>
             <input type="month" v-model="filter.month" id="month" class="p-2 border rounded">
-            
+
             <button type="submit" class="ml-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
               {{ __('Filter') }}
             </button>

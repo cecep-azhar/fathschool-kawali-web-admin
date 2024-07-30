@@ -25,20 +25,6 @@
                 <home-slider :sliders="sliders" />
             </section>
         </div>
-        <!-- landing video Section -->
-        <!-- <div class="flex flex-col lg:flex-row items-start mt-8">
-        
-        <div class="video-container lg:w-1/2 w-full lg:mr-8 mb-8 lg:mb-0" v-if="landing">
-            <iframe :src="formattedYouTubeUrl" class="video-frame" frameborder="0" allowfullscreen></iframe>
-        </div>
-
-        
-        <div class="lg:w-1/2 w-full" v-if="landing">
-            <h2 class="text-2xl font-semibold mb-4">{{ landing.title }}</h2>
-            <p class="text-gray-700">{{ landing.description }}</p>
-        </div>
-    </div> -->
-    <!-- end landing video Section -->
     </FrontendLayout>
 </template>
 

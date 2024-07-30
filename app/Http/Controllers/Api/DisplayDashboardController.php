@@ -11,7 +11,7 @@ use App\Models\Api\ClassAttendance;
 use App\Models\Quote;
 use App\Models\Rating;
 use App\Models\ClassRoutine;
-use Illuminatuse\App\Models\Setting;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
@@ -51,42 +51,30 @@ class DisplayDashboardController extends Controller
         $activeStatus = Setting::pluck('status')->toArray();
 
         $lessons = ClassRoutine::with(['subject', 'course'])
-        ->where('weekday', $weekRoutines)
-        ->where('start_time', '<=', $end_time)
-        ->where('end_time', '>=', $start_time)
-        ->where('activation', $activeStatus)
-        ->get();
+            ->where('weekday', $weekRoutines)
+            ->where('start_time', '<=', $end_time)
+            ->where('end_time', '>=', $start_time)
+            ->where('activation', $activeStatus)
+            ->get();
+
         $courses = Course::count();
-        // $classWithAttendance = ClassAttendance::where('time_in', '<=', $now)
-        //     ->where('date', $today)
-        //     ->where('user_id', $lesson->user_id)
-        //     ->where('course_id', $lesson->course_id)
-        //     ->distinct('course_id')
-        //     ->count('course_id');
 
-            $attendanceData = $lessons->map(function ($lesson) use ($now, $today) {
-                return [
-                    'lesson_id' => $lesson->id,
-                    'course_id' => $lesson->course_id,
-                    'attendance_count' => ClassAttendance::where('date', $today)
-                        ->where('user_id', $lesson->teacher_id)
-                        ->where('course_id', $lesson->course_id)
-                        ->count(),
-                ];
-            });
+        $attendanceData = $lessons->map(function ($lesson) use ($now, $today) {
+            return [
+                'lesson_id' => $lesson->id,
+                'course_id' => $lesson->course_id,
+                'attendance_count' => ClassAttendance::where('date', $today)
+                    ->where('user_id', $lesson->teacher_id)
+                    ->where('course_id', $lesson->course_id)
+                    ->count(),
+            ];
+        });
 
-            // dd($lessons);
-
-            $attendanceCount = $attendanceData->count();
-
-
-
-            $totalEmptyClass = $courses - $attendanceCount;
-
+        $attendanceCount = $attendanceData->count();
+        $totalEmptyClass = $courses - $attendanceCount;
         $classAttendancePercentage = $courses > 0 ? number_format(($attendanceCount / $courses) * 100) . '%' : '0%';
 
         $courseName = Course::orderBy('id')->pluck('name');
-
         $coursePhotos = Course::orderBy('id')->pluck('photo');
 
         // Jadwal guru di kelas berdasarkan jam sekarang
@@ -115,12 +103,18 @@ class DisplayDashboardController extends Controller
         $startOfWeek = now()->startOfWeek()->format('Y-m-d');
         $endOfWeek = now()->endOfWeek()->format('Y-m-d');
 
-        $classWithLeastSessions = DB::table('class_attendances')
-        ->select('course_id', DB::raw('COUNT(*) as session_count'))
-        ->whereBetween('date', [$startOfWeek, $endOfWeek])
-        ->groupBy('course_id')
-        ->orderBy('session_count', 'asc') // Urutkan berdasarkan jumlah sesi dari yang paling sedikit
-        ->first();
+        // Menghitung jumlah check-in (kehadiran) per kelas dalam satu minggu
+        $classWithLeastCheckins = DB::table('class_attendances')
+            ->select('course_id', DB::raw('COUNT(*) as checkin_count'))
+            ->whereBetween('date', [$startOfWeek, $endOfWeek])
+            ->groupBy('course_id')
+            ->orderBy('checkin_count', 'asc')
+            ->first();
+
+        $courseWithMostEmptySlots = null;
+        if ($classWithLeastCheckins) {
+            $courseWithMostEmptySlots = Course::find($classWithLeastCheckins->course_id);
+        }
 
         // Quotes
         $quote = Quote::pluck('quote');
@@ -129,25 +123,22 @@ class DisplayDashboardController extends Controller
         $startOfMonth = now()->startOfMonth()->format('Y-m-d');
         $endOfMonth = now()->endOfMonth()->format('Y-m-d');
 
-        // Guru favorit bulan ini (dengan rating tertinggi)
         $teacherWithHighestRatingMonthly = User::where('role', 'teacher')
-        ->join('ratings', 'users.id', '=', 'ratings.teacher_id')
-        ->select('users.id', 'users.name', DB::raw('SUM(ratings.rating) as avg_rating, SUM(ratings.rating) as total_rating'))
-        ->whereBetween('ratings.created_at', [$startOfMonth, $endOfMonth])
-        ->groupBy('users.id', 'users.name')
-        ->orderByDesc('avg_rating')
-        ->first();
+            ->join('ratings', 'users.id', '=', 'ratings.teacher_id')
+            ->select('users.id', 'users.name', DB::raw('SUM(ratings.rating) as avg_rating, SUM(ratings.rating) as total_rating'))
+            ->whereBetween('ratings.created_at', [$startOfMonth, $endOfMonth])
+            ->groupBy('users.id', 'users.name')
+            ->orderByDesc('avg_rating')
+            ->first();
 
-        // Guru non-favorit bulan ini (dengan rating terendah)
         $teacherWithLowestRatingMonthly = User::where('role', 'teacher')
-        ->join('ratings', 'users.id', '=', 'ratings.teacher_id')
-        ->select('users.id', 'users.name', DB::raw('SUM(ratings.rating) as avg_rating, SUM(ratings.rating) as total_rating'))
-        ->whereBetween('ratings.created_at', [$startOfMonth, $endOfMonth])
-        ->groupBy('users.id', 'users.name')
-        ->orderBy('avg_rating')
-        ->first();
+            ->join('ratings', 'users.id', '=', 'ratings.teacher_id')
+            ->select('users.id', 'users.name', DB::raw('SUM(ratings.rating) as avg_rating, SUM(ratings.rating) as total_rating'))
+            ->whereBetween('ratings.created_at', [$startOfMonth, $endOfMonth])
+            ->groupBy('users.id', 'users.name')
+            ->orderBy('avg_rating')
+            ->first();
 
-        // Guru teladan
         $teachersWithBestPunctuality = User::where('role', 'teacher')
             ->join('attendances', 'users.id', '=', 'attendances.user_id')
             ->select('users.id', 'users.name', DB::raw('SUM(CASE WHEN attendances.time_in <= "08:00:00" THEN 1 ELSE 0 END) AS punctuality_score'))
@@ -160,45 +151,21 @@ class DisplayDashboardController extends Controller
             ? $teachersWithBestPunctuality->name
             : 'Belum ada data guru teladan bulan ini';
 
-        //Kelas dengan murid kosong terbanyak
         $coursesWithAttendanceCount = Course::withCount(['courseAttendance' => function($query) use ($startOfWeek, $endOfWeek) {
             $query->whereBetween('date', [$startOfWeek, $endOfWeek]);
         }])->get();
 
-        // Temukan jumlah kehadiran terendah
         $minAttendanceCount = $coursesWithAttendanceCount->min('course_attendance_count');
 
-        // Ambil semua kursus dengan jumlah kehadiran terendah
         $coursesWithLeastAttendanceThisWeek = $coursesWithAttendanceCount->filter(function ($course) use ($minAttendanceCount) {
             return $course->course_attendance_count === $minAttendanceCount;
         });
 
-        // $coursesNamesWithLeastAttendanceThisWeek = $coursesWithLeastAttendanceThisWeek->pluck('name')->implode(', ');
-        // Ambil maksimal 3 kursus dengan jumlah kehadiran terendah
         $coursesNamesWithLeastAttendanceThisWeek = $coursesWithLeastAttendanceThisWeek->pluck('name')->take(3)->implode(', ');
 
-        // Tambahkan pesan "dan beberapa lainnya" jika ada lebih dari 3 kursus
         if ($coursesWithLeastAttendanceThisWeek->count() > 3) {
             $coursesNamesWithLeastAttendanceThisWeek .= ' dan beberapa lainnya';
         }
-
-
-        // Kelas dengan murid kosong terbanyak hari ini
-        $totalStudents = User::where('role', 'student')->count();
-        $studentsAbsentPerClass = Course::withCount(['courseAttendance' => function($query) use ($today) {
-            $query->where('date', $today);
-        }])->get();
-
-        $studentsAbsentPerClass = $studentsAbsentPerClass->map(function ($course) use ($totalStudents) {
-            $studentsPresent = $course->course_attendance_count;
-            $studentsAbsent = $totalStudents - $studentsPresent;
-            return [
-                'course_name' => $course->name,
-                'students_absent' => $studentsAbsent
-            ];
-        });
-
-        $maxAbsentClass = $studentsAbsentPerClass->sortByDesc('students_absent')->first();
 
         $response = [
             // Kehadiran
@@ -223,21 +190,17 @@ class DisplayDashboardController extends Controller
             'lowest_rating_teacher' => $teacherWithLowestRatingMonthly->name ?? '',
             // Guru teladan
             'teacher_of_the_month' => $exemplaryTeacher,
-
             'course' => [
-                        'course_photo' => $coursePhotos,
-                        'course_name' => $courseName,
-                        'teacher_names' => $teacherNames,
-                        'lesson_name' => $subjectNames
+                'course_photo' => $coursePhotos,
+                'course_name' => $courseName,
+                'teacher_names' => $teacherNames,
+                'lesson_name' => $subjectNames
             ],
-            // Kelas dengan jamkos terbanyak minggu ini
-            'most_empty_session_class' => $coursesNamesWithLeastAttendanceThisWeek,
-
-            // Kelas dengan murid kosong terbanyak hari ini
-            'class_with_most_absent_students_today' => $maxAbsentClass ? $maxAbsentClass['course_name'] : 'Tidak ada data',
+            // Kelas dengan jamkos terbanyak
+            'courses_with_least_attendance_this_week' => $coursesNamesWithLeastAttendanceThisWeek,
+            'class_with_most_empty_slots' => $courseWithMostEmptySlots ? $courseWithMostEmptySlots->name : '',
         ];
 
         return response()->json($response);
     }
 }
-

@@ -47,10 +47,10 @@ class Controller extends BaseController
         $messaging = app('firebase.messaging');
         $notification = Notification::create($title, $message);
 
-        $message = CloudMessage::withTarget('token', $token)
+        $notif = CloudMessage::withTarget('token', $token)
             ->withNotification($notification);
 
-        $messaging->send($message);
+        $messaging->send($notif);
         $mobile_notification = new MobileNotification();
         $mobile_notification->title = $message;
         $mobile_notification->message = $content;

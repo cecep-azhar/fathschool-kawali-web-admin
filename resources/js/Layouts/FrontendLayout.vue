@@ -29,7 +29,7 @@
     <div class="bg-white">
         <header class="relative bg-blue-gray-800">
             <div class="absolute inset-0">
-                <img class="h-full w-full object-cover" src="/images/hero-banner.webp" :alt="setting.text_logo_name" />
+                <img class="h-full w-full object-cover" src="/images/bg-smkkawali.jpg" :alt="setting.text_logo_name" />
                 <div class="absolute inset-0 bg-blue-gray-500 mix-blend-multiply" aria-hidden="true" />
             </div>
             <Popover as="div" class="relative z-10">
@@ -187,7 +187,7 @@ export default {
             navigation: [
                 { name: 'Tentang', href: '/aboutschool' },
                 { name: 'Fitur', href: '/feature' },
-                { name: 'Kontak', href: '/contact' },
+                // { name: 'Kontak', href: '/contact' },
                 { name: 'Dokumentasi Program', href: '/documentation' },
             ],
             showAnnouncement: true,

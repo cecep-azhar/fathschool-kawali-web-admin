@@ -30,7 +30,6 @@ class ClassListController extends Controller
                 'total_users' => $userCount,
             ];
         });
-
         // Kembalikan sebagai respons JSON
         return response()->json($result);
     }

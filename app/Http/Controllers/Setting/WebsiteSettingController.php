@@ -165,7 +165,7 @@ class WebsiteSettingController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'required|string|max:500',
+            'description' => 'required|string|max:100',
             'youtubelink' => 'required|string|max:255',
             'thumbnail' => 'nullable|file|mimes:png,jpg,jpeg|max:5120'
         ]);
@@ -186,7 +186,7 @@ class WebsiteSettingController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'youtube_link' => $request->youtubelink,
-            'thumbnail' => $url
+            // 'thumbnail' => $url
         ]);
 
         return redirect()->route('settings.website')->with('success', 'Landing video created successfully.');
@@ -213,7 +213,7 @@ class WebsiteSettingController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'video_link' => $request->youtubelink,
-            'thumbnail' => $url
+            // 'thumbnail' => $url
         ]);
     
         return back()->with('success', 'Documentation Added Successfully');

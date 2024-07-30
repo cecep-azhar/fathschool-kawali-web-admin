@@ -16,6 +16,8 @@ use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Support\Facades\Storage;
 use Ramsey\Uuid\Uuid;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+
 
 
 class CourseController extends Controller
@@ -166,9 +168,10 @@ class CourseController extends Controller
 
     //     return back();
     // }
-   public function update(Request $request, $id, SubjectChatGroupService $subjectChatGroupService)
+//    
+public function update(Request $request, $id, SubjectChatGroupService $subjectChatGroupService)
 {
-    abort_if(! userCan('academic.management'), 403);
+    abort_if(!userCan('academic.management'), 403);
 
     $course = Course::findOrFail($id);
 
@@ -184,14 +187,28 @@ class CourseController extends Controller
     $url = $course->photo;
 
     if ($request->hasFile('file')) {
+        // Debug: Cek apakah file ada
+        Log::info('File ditemukan dalam request.');
+
+        // Upload gambar baru
         $url = FileUpload::uploadImage($request->file('file'), 'course');
+
+        // Debug: Cek hasil upload
+        Log::info('URL gambar setelah upload: ' . $url);
+
         if ($url) {
-            // Hanya hapus gambar lama jika upload berhasil
-            FileDelete::deleteImage($course->photo);
+            // Hapus gambar lama jika upload berhasil
+            if ($course->photo) {
+                FileDelete::deleteImage($course->photo);
+            }
         } else {
             // Jika upload gagal, kembalikan dengan pesan error
+            Log::error('Gagal mengunggah gambar.');
             return back()->withErrors(['file' => 'Failed to upload image.']);
         }
+    } else {
+        // Debug: Cek apakah file tidak ada dalam request
+        Log::info('Tidak ada file dalam request.');
     }
 
     // Update data course
@@ -200,6 +217,9 @@ class CourseController extends Controller
         'photo' => $url,
         'has_multiple_subject' => $request->has_multiple_subject ?? 0,
     ]);
+
+    // Debug: Cek data yang diperbarui
+    Log::info('Data course setelah update: ', $course->toArray());
 
     if ($request->has_multiple_subject) {
         $course->subjects()->delete();
@@ -226,6 +246,8 @@ class CourseController extends Controller
 
     return back();
 }
+
+
 
 
 

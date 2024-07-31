@@ -72,9 +72,11 @@ class ClassAttendanceController extends Controller
             ->useLog('default')
             ->causedBy(auth()->user())
             ->event('Qrin')
-            ->withProperties(['ip' => $request->ip(),
-                              'user' => $user->username,
-                              'time' => date('H:i')])
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user' => $user->username,
+                'time' => date('H:i')
+            ])
             ->log('User Qrin');
 
         return response([
@@ -124,9 +126,11 @@ class ClassAttendanceController extends Controller
             ->useLog('default')
             ->causedBy(auth()->user())
             ->event('Qrout')
-            ->withProperties(['ip' => $request->ip(),
-                              'user' => $user->username,
-                              'time' => date('H:i')])
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user' => $user->username,
+                'time' => date('H:i')
+            ])
             ->log('User Qrout');
 
         return response([
@@ -152,7 +156,7 @@ class ClassAttendanceController extends Controller
             ->where('activation', $activeStatus)
             ->first();
 
-            // dd($lesson);
+        // dd($lesson);
 
         // Get today's attendance
         $attendance = ClassAttendance::where('user_id', $request->user()->id)
@@ -192,7 +196,7 @@ class ClassAttendanceController extends Controller
 
         // Periksa apakah attendance tidak ditemukan
         if (!$attendance) {
-            return response(['message' => 'You cannot rate no teacher has entered today'], 400);
+            return response(['message' => 'Anda tidak dapat menilai, tidak ada guru yang masuk hari ini'], 400);
         }
 
         // Periksa apakah waktu sudah lebih dari 30 menit setelah time_out
@@ -201,7 +205,7 @@ class ClassAttendanceController extends Controller
         $minutesSinceQrout = $now->diffInMinutes($timeOut);
 
         if ($minutesSinceQrout > 30) {
-            return response(['message' => 'You cannot rate the teacher after 30 minutes of Qrout'], 400);
+            return response(['message' => 'Anda tidak dapat menilai guru setelah 30 menit Qrout'], 400);
         }
 
         // Dapatkan teacher_id dari attendance
@@ -215,7 +219,7 @@ class ClassAttendanceController extends Controller
             ->exists();
 
         if ($existingRating) {
-            return response(['message' => 'You have already rated this teacher today'], 400);
+            return response(['message' => 'Anda telah memberi nilai pada guru ini hari ini'], 400);
         }
 
         // Simpan rating baru
@@ -239,6 +243,60 @@ class ClassAttendanceController extends Controller
                 'comment' => $rating->comment,
                 'created_at' => $rating->created_at->format('Y-m-d H:i:s'),
             ]
+        ], 200);
+    }
+
+    public function isRating(Request $request)
+    {
+
+        // Dapatkan pengguna saat ini
+        $user = $request->user();
+
+        // Dapatkan daftar course_id yang diikuti oleh student
+        $courseIds = $user->courses()->pluck('course_id');
+
+        $now = Carbon::now();
+
+        // Memformat tanggal menjadi YYYY-MM-DD
+        $formattedDate = $now->format('Y-m-d');
+
+        // Dapatkan attendance terbaru yang telah dilakukan qrout oleh teacher dengan course_id yang sama
+        $attendance = ClassAttendance::whereIn('course_id', $courseIds)
+            ->whereNotNull('time_out')
+            ->where('date', $formattedDate)
+            ->first();
+
+        // Periksa apakah attendance tidak ditemukan
+        if (!$attendance) {
+            return response(['message' => 'Anda tidak dapat menilai, tidak ada guru yang masuk hari ini',  'status' => 'true'], 400);
+        }
+
+        // Periksa apakah waktu sudah lebih dari 30 menit setelah time_out
+        $timeOut = Carbon::parse($attendance->time_out);
+        $now = Carbon::now();
+        $minutesSinceQrout = $now->diffInMinutes($timeOut);
+
+        if ($minutesSinceQrout > 30) {
+            return response(['message' => 'Anda tidak dapat menilai guru setelah 30 menit Qrout',  'status' => 'true'], 400);
+        }
+
+        // Dapatkan teacher_id dari attendance
+        $teacherId = $attendance->user_id;
+
+        // Periksa apakah rating sudah diberikan untuk teacher_id dan course_id yang sama pada hari yang sama
+        $existingRating = Rating::where('student_id', $user->id)
+            ->where('teacher_id', $teacherId)
+            ->where('course_id', $attendance->course_id)
+            ->whereDate('created_at', Carbon::today())
+            ->exists();
+
+        if ($existingRating) {
+            return response(['message' => 'Anda telah memberi nilai pada guru ini hari ini',  'status' => 'true'], 400);
+        }
+
+        return response([
+            'message' => 'Anda bisa menilai guru sekarang',
+            'status' => 'false'
         ], 200);
     }
 }

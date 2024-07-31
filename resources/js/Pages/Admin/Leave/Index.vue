@@ -25,7 +25,7 @@
                     <form class="items-center grid grid-cols-1 xl:grid-cols-7 gap-6" @submit.prevent="filterData()">
                         <div class="flex xl:col-span-2">
                             <div class="relative w-full">
-                                <global-input v-model="filter.keyword" type="text"
+                                <global-input v-model="searchQuery" type="text"
                                     class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
                                     :placeholder="__('Keyword')" />
                                 <button type="submit"
@@ -195,11 +195,11 @@
 <script>
 import AppLayout from "@/Layouts/AppLayout.vue";
 import Pagination from "@/Shared/Admin/Pagination.vue";
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, EyeIcon, CheckIcon, XMarkIcon, PencilIcon } from '@heroicons/vue/24/outline'
+import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, EyeIcon, CheckIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import EditForm from "./Form.vue";
 import ToolTip from '@/Shared/ToolTip.vue';
-import ShowModal from './Show.vue'
-import RejectModal from '@/Shared/Modal.vue'
+import ShowModal from './Show.vue';
+import RejectModal from '@/Shared/Modal.vue';
 import FullCalendar from '@/Shared/Components/FullCalendar.vue';
 import TdUserShow from "@/Shared/TdUserShow.vue";
 import { useForm } from "@inertiajs/inertia-vue3";
@@ -220,13 +220,14 @@ export default {
                 status: this.filter_data.status ?? "",
                 role: this.filter_data.role ?? "",
             },
+            searchQuery: this.filter_data.keyword ?? "", // Sinkronisasi keyword pencarian
             leave: "",
             visible: false,
             show_leave: '',
             reject: useForm({
                 id: '',
                 cause_description: ''
-            })
+            }),
         };
     },
     components: {
@@ -246,8 +247,15 @@ export default {
         FullCalendar,
         NothingFound
     },
+    watch: {
+        searchQuery(newQuery) {
+            this.filter.keyword = newQuery; // Update filter keyword dengan nilai baru dari searchQuery
+            this.filterData();
+        },
+    },
     methods: {
         filterData() {
+            this.loading = true;
             this.$inertia.get(this.route("manage-leave.index"), this.filter, {
                 preserveScroll: true,
                 onFinish: visit => { this.loading = false },
@@ -255,7 +263,6 @@ export default {
         },
         statusChange(id, status) {
             this.loading = true;
-
             this.$inertia.post(
                 this.route("leave.status.change", id), {
                 status: status,
@@ -297,12 +304,12 @@ export default {
         hide() {
             this.visible = false
         },
-        setTabValue(arg){
+        setTabValue(arg) {
             let column = arg['filter_column_data'] ?? '';
             let value = arg['value'] ?? '';
-
-            this.filter[column] =  value;
+            this.filter[column] = value;
         },
     },
 };
 </script>
+

@@ -88,27 +88,39 @@
                                 <input-error :error="form.errors.email" />
                             </div>
                             <div v-if="field.name == 'profile_photo'">
-                                <global-label for="dropzone-file" value="Avatar" :required="false" />
-                                <a-upload accept="image/*" :max-count="1" v-model:file-list="avatar_value" action=""
-                                    list-type="picture">
-                                    <a-button>
-                                        <upload-outlined></upload-outlined>
-                                        {{ __('Select Avatar') }}
-                                    </a-button>
-                                </a-upload>
-                                <input-error :error="form.errors.avatar" />
-                            </div>
-                            <div v-if="field.name == 'guardian_photo'">
-                                <global-label for="dropzone-file" value="Guardian Avatar" :required="false" />
-                                <a-upload :max-count="1" accept="image/*" v-model:file-list="parent_avatar_value" action=""
-                                    list-type="picture">
-                                    <a-button>
-                                        <upload-outlined></upload-outlined>
-                                        {{ __('Select Guardian Avatar') }}
-                                    </a-button>
-                                </a-upload>
-                                <input-error :error="form.errors.parent_avatar" />
-                            </div>
+    <global-label for="dropzone-file" value="Avatar" :required="false" />
+    <a-upload
+        accept="image/*"
+        :max-count="1"
+        v-model:file-list="avatar_value"
+        action=""
+        list-type="picture"
+        :before-upload="beforeUploadAvatar"
+    >
+        <a-button>
+            <upload-outlined></upload-outlined>
+            {{ __('Select Avatar') }}
+        </a-button>
+    </a-upload>
+    <input-error :error="form.errors.avatar" />
+</div>
+<div v-if="field.name == 'guardian_photo'">
+    <global-label for="dropzone-file" value="Guardian Avatar" :required="false" />
+    <a-upload
+        :max-count="1"
+        accept="image/*"
+        v-model:file-list="parent_avatar_value"
+        action=""
+        list-type="picture"
+        :before-upload="beforeUploadGuardian"
+    >
+        <a-button>
+            <upload-outlined></upload-outlined>
+            {{ __('Select Guardian Avatar') }}
+        </a-button>
+    </a-upload>
+    <input-error :error="form.errors.parent_avatar" />
+</div>
                             <div v-if="field.name == 'date_of_birth'">
                                 <global-label for="date_of_birth" value="Date Of Birth" :required="true" />
                                 <global-input type="date" v-model="form.date_of_birth" id="date_of_birth"

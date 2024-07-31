@@ -59,7 +59,7 @@
         <div class="extra-info">
           <h3>Bagaimana Aplikasi Pembelajaran dan Absensi Guru dan Murid Kami Mengubah Pengalaman Pendidikan?</h3>
           <p>
-            Dengan aplikasi sekolah yang Anda kembangkan, kami menciptakan kemudahan bagi murid untuk melakukan absensi secara digital, 
+            Dengan aplikasi sekolah yang dikembangkan, kami menciptakan kemudahan bagi murid untuk melakukan absensi secara digital, 
             sementara guru dapat melakukan check-in dan check-out selama sesi pembelajaran. Selain itu, terdapat fitur display board yang
              memungkinkan petinggi sekolah untuk memantau kegiatan secara langsung, memberikan transparansi dan efisiensi dalam manajemen sekolah.
           </p>

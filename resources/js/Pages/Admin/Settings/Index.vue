@@ -479,72 +479,66 @@ export default {
         ExclamationTriangleIcon
     },
     methods: {
-        change(e, arg) {
-            if (arg == 'dark') {
-                this.form.dark_logo = e.target.files[0];
-            }
-            if (arg == 'light') {
-                this.form.light_logo = e.target.files[0];
-            }
-            if (arg == 'favicon') {
-                this.form.favicon = e.target.files[0];
-            }
+    change(e, arg) {
+        let selectedFile = e.target.files[0];
+        const maxSize = 1 * 1024 * 1024; // 1 MB in bytes
 
-            let reader = new FileReader();
-
-            if (arg == 'dark') {
-                reader.readAsDataURL(this.form.dark_logo);
-            }
-            if (arg == 'light') {
-                reader.readAsDataURL(this.form.light_logo);
-            }
-            if (arg == 'favicon') {
-                reader.readAsDataURL(this.form.favicon);
-            }
-
-            if (arg == 'dark') {
-                reader.onload = (e) => {
-                    this.dark_logo_preview = e.target.result;
-                };
-            }
-            if (arg == 'light') {
-                reader.onload = (e) => {
-                    this.light_logo_preview = e.target.result;
-                };
-            }
-            if (arg == 'favicon') {
-                reader.onload = (e) => {
-                    this.favicon_preview = e.target.result;
-                };
-            }
-
-        },
-        removeImage(arg) {
-            if (arg == 'dark_logo_preview') {
-                this.dark_logo_preview = ''
-            }
-            if (arg == 'light_logo_preview') {
-                this.light_logo_preview = ''
-            }
-            if (arg == 'favicon_preview') {
-                this.favicon_preview = ''
-            }
-        },
-        submit() {
-            this.form.post(this.route('settings.update'), {
-                preserveScroll: true,
-            })
-        },
-        submitMobileSettings() {
-            this.form.post(this.route('settings.updateMobile'), {
-                preserveScroll: true,
-            })
-        },
-        submitWeekdaySettings() {
-            this.form.post(this.route('settings.updateWeekday'), {
-                preserveScroll: true,
-            })
+        if (selectedFile.size > maxSize) {
+            alert('Ukuran gambar maksimal 1 MB.');
+            e.target.value = null; // Menghapus file yang dipilih
+            return;
         }
+
+        if (arg == 'dark') {
+            this.form.dark_logo = selectedFile;
+        } else if (arg == 'light') {
+            this.form.light_logo = selectedFile;
+        } else if (arg == 'favicon') {
+            this.form.favicon = selectedFile;
+        }
+
+        let reader = new FileReader();
+
+        reader.onload = (event) => {
+            if (arg == 'dark') {
+                this.dark_logo_preview = event.target.result;
+            } else if (arg == 'light') {
+                this.light_logo_preview = event.target.result;
+            } else if (arg == 'favicon') {
+                this.favicon_preview = event.target.result;
+            }
+        };
+
+        reader.readAsDataURL(selectedFile);
+    },
+    removeImage(arg) {
+        if (arg == 'dark_logo_preview') {
+            this.dark_logo_preview = '';
+            this.form.dark_logo = null;
+        } else if (arg == 'light_logo_preview') {
+            this.light_logo_preview = '';
+            this.form.light_logo = null;
+        } else if (arg == 'favicon_preview') {
+            this.favicon_preview = '';
+            this.form.favicon = null;
+        }
+    },
+    submit() {
+        this.form.post(this.route('settings.update'), {
+            preserveScroll: true,
+        });
+    },
+    submitMobileSettings() {
+        this.form.post(this.route('settings.updateMobile'), {
+            preserveScroll: true,
+        });
+    },
+    submitWeekdaySettings() {
+        this.form.post(this.route('settings.updateWeekday'), {
+            preserveScroll: true,
+        });
     }
+}
+
 }
 </script>

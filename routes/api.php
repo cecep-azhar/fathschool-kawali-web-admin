@@ -135,10 +135,10 @@ Route::post('forgot-password', [App\Http\Controllers\Api\AuthController::class, 
 Route::get('/activity-logs/{causer_id}', function ($causer_id) {
     $threeDaysAgo = Carbon::now()->subDays(3);
     $logs = Activity::where('causer_id', $causer_id)
-                    ->where('created_at', '>=', $threeDaysAgo)
-                    ->select('id', 'causer_id', 'properties', 'description', 'created_at')
-                    ->orderBy('created_at', 'DESC')
-                    ->get();
+        ->where('created_at', '>=', $threeDaysAgo)
+        ->select('id', 'causer_id', 'properties', 'description', 'created_at')
+        ->orderBy('created_at', 'DESC')
+        ->get();
     return response($logs);
 });
 
@@ -156,6 +156,8 @@ Route::post('/add-quote', [QuotesController::class, 'addQuote']);
 
 //rating
 Route::middleware('auth:sanctum')->post('/rate-teacher', [ClassAttendanceController::class, 'rating']);
+
+Route::get('/is-rate-teacher', [ClassAttendanceController::class, 'isRating'])->middleware('auth:sanctum');
 
 //announcement
 Route::middleware('auth:sanctum')->get('/notices', [NoticeController::class, 'index']);

@@ -8,7 +8,7 @@ use App\Models\Course;
 use App\Http\Controllers\Controller;
 use App\Models\AttendanceStudent;
 use App\Models\Leave;
-use App\Models\LeaveType; // Tambahkan model LeaveType
+use App\Models\LeaveType;
 use App\Models\Setting;
 use Carbon\Carbon;
 use App\Models\User;

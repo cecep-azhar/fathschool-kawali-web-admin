@@ -142,7 +142,6 @@ Route::get('/activity-logs/{causer_id}', function ($causer_id) {
     return response($logs);
 });
 
-
 Route::get('/userid', [ApiUserIdController::class, 'show'])->middleware('auth:sanctum');
 
 Route::get('/classes/qr-codes', [CourseController::class, 'getAllClassesWithQrCodes']);

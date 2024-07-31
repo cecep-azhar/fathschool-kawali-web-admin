@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Attendance;
+use App\Models\AttendanceStudent;
 use App\Models\Course;
 use App\Models\Api\ClassAttendance;
+use App\Models\Leave;
 use App\Models\Quote;
 use App\Models\Rating;
 use App\Models\ClassRoutine;
@@ -31,11 +33,12 @@ class DisplayDashboardController extends Controller
         $start_time = date('H:i:s');
         $end_time = date('H:i:s');
 
-        $totalStudentAttendance = Attendance::where('date', $today)
+        $totalStudentAttendance = AttendanceStudent::where('date', $today)
             ->whereHas('user', function($query) {
                 $query->where('role', 'student');
             })->count();
 
+            
         $totalTeacherAttendance = Attendance::where('date', $today)
             ->whereHas('user', function($query) {
                 $query->where('role', 'teacher');
@@ -44,8 +47,9 @@ class DisplayDashboardController extends Controller
         $totalStudentAbsent = $totalStudent - $totalStudentAttendance;
         $totalTeacherAbsent = $totalTeacher - $totalTeacherAttendance;
 
-        $studentAttendancePercentage = $totalStudent > 0 ? number_format(($totalStudentAttendance / $totalStudent) * 100) . '%' : '0%';
-        $teacherAttendancePercentage = $totalTeacher > 0 ? number_format(($totalTeacherAttendance / $totalTeacher) * 100) . '%' : '0%';
+        $studentAttendancePercentage = $totalStudent > 0 ? number_format(($totalStudentAttendance / $totalStudent) * 100, 2) . '%' : '0%';
+
+        $teacherAttendancePercentage = $totalTeacher > 0 ? number_format(($totalTeacherAttendance / $totalTeacher) * 100, 2) . '%' : '0%';
 
         // Kelas
         $activeStatus = Setting::pluck('status')->toArray();
@@ -72,7 +76,7 @@ class DisplayDashboardController extends Controller
 
         $attendanceCount = $attendanceData->count();
         $totalEmptyClass = $courses - $attendanceCount;
-        $classAttendancePercentage = $courses > 0 ? number_format(($attendanceCount / $courses) * 100) . '%' : '0%';
+        $classAttendancePercentage = $courses > 0 ? number_format(($attendanceCount / $courses) * 100, 2) . '%' : '0%';
 
         $courseName = Course::orderBy('id')->pluck('name');
         $coursePhotos = Course::orderBy('id')->pluck('photo');
@@ -99,22 +103,44 @@ class DisplayDashboardController extends Controller
             ->get()
             ->pluck('subject.name');
 
+        $teacherIds = ClassRoutine::with('teacher')
+            ->where('start_time', '<=', $now)
+            ->where('end_time', '>=', $now)
+            ->where('activation', $activeStatus)
+            ->get()
+            ->pluck('teacher.id');
+
+        $courseStatus = ClassAttendance::whereIn('user_id', $teacherIds)->exists();
+      
+        $statusObject = [$courseStatus ? "true" : "false"];
+      
+        // dd($statusObject); 
+
         // Kelas dengan jam kosong terbanyak minggu ini
         $startOfWeek = now()->startOfWeek()->format('Y-m-d');
         $endOfWeek = now()->endOfWeek()->format('Y-m-d');
 
         // Menghitung jumlah check-in (kehadiran) per kelas dalam satu minggu
-        $classWithLeastCheckins = DB::table('class_attendances')
-            ->select('course_id', DB::raw('COUNT(*) as checkin_count'))
-            ->whereBetween('date', [$startOfWeek, $endOfWeek])
-            ->groupBy('course_id')
-            ->orderBy('checkin_count', 'asc')
-            ->first();
+        // $classWithLeastCheckins = DB::table('class_attendances')
+        //     ->select('course_id', DB::raw('COUNT(*) as checkin_count'))
+        //     ->whereBetween('date', [$startOfWeek, $endOfWeek])
+        //     ->groupBy('course_id')
+        //     ->orderBy('checkin_count', 'asc')
+        //     ->first();
 
-        $courseWithMostEmptySlots = null;
-        if ($classWithLeastCheckins) {
-            $courseWithMostEmptySlots = Course::find($classWithLeastCheckins->course_id);
-        }
+        // $courseWithMostEmptySlots = null;
+        // if ($classWithLeastCheckins) {
+        //     $courseWithMostEmptySlots = Course::find($classWithLeastCheckins->course_id);
+        // }
+// Menghitung jumlah kehadiran per kelas
+$classesWithAttendanceCount = DB::table('courses')
+    ->leftJoin('class_attendances', 'courses.id', '=', 'class_attendances.course_id')
+    ->select('courses.id', 'courses.name', DB::raw('COUNT(class_attendances.id) as attendance_count'))
+    ->groupBy('courses.id', 'courses.name')
+    ->get();
+
+// Mengambil kelas dengan jumlah kehadiran paling sedikit
+$classWithLeastAttendance = $classesWithAttendanceCount->sortBy('attendance_count')->first();
 
         // Quotes
         $quote = Quote::pluck('quote');
@@ -167,6 +193,8 @@ class DisplayDashboardController extends Controller
             $coursesNamesWithLeastAttendanceThisWeek .= ' dan beberapa lainnya';
         }
 
+        // $leaveData = Leave::whereDate('leave_date', $now)->get();
+
         $response = [
             // Kehadiran
             'total_student' => $totalStudent,
@@ -194,11 +222,14 @@ class DisplayDashboardController extends Controller
                 'course_photo' => $coursePhotos,
                 'course_name' => $courseName,
                 'teacher_names' => $teacherNames,
-                'lesson_name' => $subjectNames
+                'lesson_name' => $subjectNames,
+                'status' =>  $statusObject,
             ],
             // Kelas dengan jamkos terbanyak
             'courses_with_least_attendance_this_week' => $coursesNamesWithLeastAttendanceThisWeek,
-            'class_with_most_empty_slots' => $courseWithMostEmptySlots ? $courseWithMostEmptySlots->name : '',
+            // 'class_with_most_empty_slots' => $courseWithMostEmptySlots ? $courseWithMostEmptySlots->name : '',
+            'class_with_least_attendance' => $classWithLeastAttendance ? $classWithLeastAttendance->name : '',
+            // 'studetn_status' => $leaveData,
         ];
 
         return response()->json($response);

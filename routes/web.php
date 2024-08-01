@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Academic\CourseController;
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AuthDashboardController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\FrontendController;
@@ -146,6 +147,9 @@ Route::get('teacher-class/attendance', [AttendanceController::class, 'getTeacher
 Route::get('courses/{id}/print-qr-code', [CourseController::class, 'printQrCode'])->name('courses.printQrCode');
 // web.php atau routes file yang relevan
 Route::put('/course/{id}', [CourseController::class, 'update'])->name('course.update');
+Route::post('/forgot-password-admin', [ActivityLogController::class, 'passwordadmin'])->name('password.admin');
+
+
 
 
 

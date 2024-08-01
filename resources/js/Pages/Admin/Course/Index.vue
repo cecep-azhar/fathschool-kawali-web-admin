@@ -431,14 +431,24 @@ export default {
     },
     methods: {
         picFile() {
-            this.$refs.assignment_file.click();
-        },
-        change(e) {
-            this.form.file = e.target.files[0];
+        this.$refs.assignment_file.click();
+    },
+    change(e) {
+        const file = e.target.files[0];
+        const maxSizeMB = 1; // Batas ukuran maksimum dalam MB
 
-            let selectedFiles = e.target.files[0];
-            this.file_name = selectedFiles.name;
-        },
+        if (file) {
+            if (file.size / 1024 / 1024 > maxSizeMB) {
+                alert(`File terlalu besar. Ukuran maksimum adalah ${maxSizeMB} MB.`);
+                this.file_name = "";
+                this.form.file = "";
+            } else {
+                // Kompres gambar atau langsung masukkan file
+                this.form.file = file;
+                this.file_name = file.name;
+            }
+        }
+    },
         storeData() {
             this.loading = true;
 

@@ -216,14 +216,24 @@ export default {
     },
     methods: {
         picFile() {
-            this.$refs.assignment_file.click();
-        },
-        change(e) {
-            this.form.file = e.target.files[0];
+        this.$refs.assignment_file.click();
+    },
+    change(e) {
+        const file = e.target.files[0];
+        const maxSizeMB = 1; // Batas ukuran maksimum dalam MB
 
-            let selectedFiles = e.target.files[0];
-            this.file_name = selectedFiles.name;
-        },
+        // Cek ukuran file
+        if (file.size / 1024 / 1024 > maxSizeMB) {
+            alert(`Ukuran file terlalu besar. Ukuran maksimum adalah ${maxSizeMB} MB.`);
+            // Reset input file
+            this.$refs.assignment_file.value = '';
+            this.file_name = '';
+            this.form.file = null;
+        } else {
+            this.file_name = file.name;
+            this.form.file = file;
+        }
+    },
         submit() {
             if (this.update) {
                 this.form.post(this.route('notice-board.update', this.form.id), {

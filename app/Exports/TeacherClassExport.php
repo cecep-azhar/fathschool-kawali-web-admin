@@ -46,8 +46,7 @@ class TeacherClassExport implements FromCollection, WithHeadings, WithMapping
             ->select('class_attendances.*')
             ->join('class_routines', function ($join) {
                 $join->on('class_attendances.user_id', '=', 'class_routines.teacher_id')
-                     ->on('class_attendances.course_id', '=', 'class_routines.course_id')
-                     ->on('class_attendances.date', '=', 'class_routines.start_date');
+                     ->on('class_attendances.course_id', '=', 'class_routines.course_id');
             })
             ->get();
 
@@ -55,7 +54,6 @@ class TeacherClassExport implements FromCollection, WithHeadings, WithMapping
         foreach ($teacherAttendances as $attendance) {
             $classRoutine = ClassRoutine::where('teacher_id', $attendance->user_id)
                 ->where('course_id', $attendance->course_id)
-                ->where('start_date', $attendance->date)
                 ->first();
 
             if ($classRoutine) {

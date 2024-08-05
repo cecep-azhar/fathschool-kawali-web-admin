@@ -8,6 +8,7 @@ use App\Exports\TeacherClassExport;
 use App\Exports\TeacherExport;
 use App\Exports\TeacherRateExport;
 use App\Exports\StudentAttendanceExport;
+use App\Exports\StudentLeaveExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UserRequest;
 use App\Models\Course;
@@ -351,6 +352,15 @@ class UserController extends Controller
 
         // Download file Excel sesuai dengan filter
         return Excel::download($export, 'students.xlsx');
+    }
+
+    public function exportStudentLeave(Request $request)
+    {
+        $name = $request->input('name');
+        $month = $request->input('month');
+        $courseId = $request->input('course_id');
+
+        return Excel::download(new StudentLeaveExport($name, $month, $courseId), 'student-leave-report.xlsx');
     }
 
 

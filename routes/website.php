@@ -218,6 +218,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::post('/subject/attendance/export', 'exportSubjectAttendanceReport')->name('report.subject.attendance.export');
             Route::post('/all/student/fees/export', 'allStudentFeesExport')->name('report.allStudent.fees.export');
             Route::post('report/student/fee/export', 'studentFeesExport')->name('report.studentFee.export');
+            Route::post('/student/leave/export', [UserController::class, 'exportStudentLeave'])->name('student.leave.export');
         });
 
         // Cms management controller

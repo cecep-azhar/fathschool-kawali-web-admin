@@ -148,6 +148,8 @@ Route::get('courses/{id}/print-qr-code', [CourseController::class, 'printQrCode'
 // web.php atau routes file yang relevan
 Route::put('/course/{id}', [CourseController::class, 'update'])->name('course.update');
 Route::post('/forgot-password-admin', [ActivityLogController::class, 'passwordadmin'])->name('password.admin');
+Route::get('/student/leave', [ReportController::class, 'leaveStudent'])->name('student.leave');
+
 
 
 

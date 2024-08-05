@@ -12,6 +12,7 @@ use App\Models\ClassRoutine;
 use App\Models\Course;
 use App\Models\Currency;
 use App\Models\Documentation;
+use App\Models\Leave;
 use App\Models\Rating;
 use App\Models\Result;
 use App\Models\Setting;
@@ -721,5 +722,45 @@ public function studentExport(Request $request)
         // Kembalikan respons menggunakan Inertia.js dengan data teacherRatings
         return inertia('Admin/Report/RatingTeacher', compact('teacherRatings'));
     }
+
+    public function leaveStudent(Request $request)
+    {
+        abort_if(!userCan('academic.management'), 403);
+
+        $query = Leave::with(['user:id,name', 'type:id,name', 'user.courses.course:id,name'])
+            ->whereHas('user', function ($query) {
+                $query->where('role', 'Student');
+            })
+            ->select('id', 'user_id', 'leave_type_id', 'title', 'start', 'end', 'status', 'description', 'created_at');
+
+        // Filter berdasarkan course_id jika ada
+        if ($request->has('course_id') && $request->course_id != '') {
+            $query->whereHas('user.courses', function ($query) use ($request) {
+                $query->where('course_id', $request->course_id);
+            });
+        }
+
+        $leaveStudents = $query->get();
+
+        $leaveStudents->each(function ($leave) {
+            $start = \Carbon\Carbon::parse($leave->start);
+            $end = \Carbon\Carbon::parse($leave->end);
+
+            $leave->student_name = $leave->user->name;
+            $leave->course_name = $leave->user->courses->first()->course->name ?? 'N/A'; // Ambil nama kelas pertama jika ada
+            $leave->type_name = $leave->type->name; // Mendapatkan nama leave_type berdasarkan leave_type_id
+            $leave->leave_period = "{$start->format('Y-m-d')} to {$end->format('Y-m-d')}"; // Format periode izin
+            $leave->created_date = $leave->created_at->format('Y-m-d');
+            unset($leave->user);
+            unset($leave->type);
+            unset($leave->created_at);
+        });
+
+        return inertia('Admin/Report/StudentCourseLeave', [
+            'studentLeaves' => $leaveStudents,
+            'courses' => Course::all(['id', 'name'])
+        ]);
+    }
+
 
 }

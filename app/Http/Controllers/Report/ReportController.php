@@ -731,7 +731,7 @@ public function studentExport(Request $request)
             ->whereHas('user', function ($query) {
                 $query->where('role', 'Student');
             })
-            ->select('id', 'user_id', 'leave_type_id', 'title', 'start', 'end', 'status', 'description', 'created_at');
+        ->select('id', 'user_id', 'leave_type_id', 'title', 'start', 'end', 'status', 'description', 'created_at');
 
         // Filter berdasarkan course_id jika ada
         if ($request->has('course_id') && $request->course_id != '') {

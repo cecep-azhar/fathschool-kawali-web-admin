@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Setting;
 
+use App\Actions\File\FileDelete;
 use App\Actions\File\FileUpload;
 use App\Actions\Setting\Currency\CreateCurrency;
 use App\Actions\Setting\Currency\UpdateCurrency;
@@ -22,6 +23,7 @@ use App\Models\Documentation;
 use App\Models\GallerySlider;
 use App\Models\LandingVideo;
 use App\Models\Language;
+use App\Models\MobileSetting;
 use App\Models\Setting;
 use App\Models\SocialLink;
 use App\Models\Timezone;
@@ -67,6 +69,8 @@ class WebsiteSettingController extends Controller
         ];
         $data['working_days'] = WorkingDays::first();
         $data['setting'] = Setting::first();
+        $data['mobile_setting'] = MobileSetting::first();
+
 
         return Inertia::render('Admin/Settings/Index', $data);
     }
@@ -177,7 +181,7 @@ class WebsiteSettingController extends Controller
         if ($request->hasFile('thumbnail')) {
             $url = FileUpload::uploadImage($request->thumbnail, 'landingvideo');
         }
-    
+
         if (empty($request->youtubelink)) {
             return redirect()->back()->with('error', 'YouTube link is required.');
         }
@@ -203,22 +207,22 @@ class WebsiteSettingController extends Controller
             'youtubelink' => 'required|url',
             'thumbnail' => 'nullable|file|mimes:png,jpg,jpeg|max:5120'
         ]);
-    
+
         $url = null;
         if ($request->hasFile('thumbnail')) {
             $url = FileUpload::uploadImage($request->thumbnail, 'images');
         }
-    
+
         Documentation::create([
             'title' => $request->title,
             'description' => $request->description,
             'video_link' => $request->youtubelink,
             // 'thumbnail' => $url
         ]);
-    
+
         return back()->with('success', 'Documentation Added Successfully');
     }
-    
+
 public function store(Request $request)
 {
     $validated = $request->validate([
@@ -801,29 +805,75 @@ public function store(Request $request)
     public function updateMobile(Request $request)
     {
         $request->validate([
-            'production_status' => 'required',
-            'mobile_version' => 'required',
-            'link_google_play' => 'required',
-            'radius' => 'required',
-            'latitude' => 'required',
-            'longtitude' => 'required',
-            'time_in' => 'required',
-            'time_out' => 'required',
+            'description_apps' => 'nullable|string',
+            'features_apps' => 'nullable|string',
+            'advantages_apps' => 'nullable|string',
+            'conclusion_apps' => 'nullable|string',
+            'fathforce_phone_number' => 'nullable|string',
+            'fathforce_browser_link' => 'nullable|string',
+            'fathforce_email' => 'nullable|email',
+            'google_play_link_student' => 'nullable|url',
+            'google_play_link_teacher' => 'nullable|url',
+            'production_version_teacher' => 'nullable|string',
+            'production_version_student' => 'nullable|string',
+            'logo_fathschool' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:512000',
+            'logo_fathforce' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:512000',
+            'logo_school' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:512000',
+            'app_version_student' => 'nullable|string',
+            'app_version_teacher' => 'nullable|string',
         ]);
 
-        Setting::first()->update([
-            'production_status' => $request->production_status,
-            'mobile_version' => $request->mobile_version,
-            'link_google_play' => $request->link_google_play,
-            'radius' => $request->radius,
-            'latitude' => $request->latitude,
-            'longtitude' => $request->longtitude,
-            'time_in' => $request->time_in,
-            'time_out' => $request->time_out,
+        $mobileSetting = MobileSetting::first(); // Retrieve the first record
+
+        // Update the model attributes with the request data
+        $mobileSetting->update([
+            'description_apps' => $request->description_apps,
+            'features_apps' => $request->features_apps,
+            'advantages_apps' => $request->advantages_apps,
+            'conclusion_apps' => $request->conclusion_apps,
+            'fathforce_phone_number' => $request->fathforce_phone_number,
+            'fathforce_browser_link' => $request->fathforce_browser_link,
+            'fathforce_email' => $request->fathforce_email,
+            'google_play_link_student' => $request->google_play_link_student,
+            'google_play_link_teacher' => $request->google_play_link_teacher,
+            'production_version_teacher' => $request->production_version_teacher,
+            'production_version_student' => $request->production_version_student,
+            'logo_fathschool' => $request->file('logo_fathschool') ? $request->file('logo_fathschool')->store('logos') : $mobileSetting->logo_fathschool,
+            'logo_fathforce' => $request->file('logo_fathforce') ? $request->file('logo_fathforce')->store('logos') : $mobileSetting->logo_fathforce,
+            'logo_school' => $request->file('logo_school') ? $request->file('logo_school')->store('logos') : $mobileSetting->logo_school,
+            'app_version_student' => $request->app_version_student,
+            'app_version_teacher' => $request->app_version_teacher,
         ]);
+
+         // Update logo jika ada file yang di-upload
+         if ($request->hasFile('logo_fathschool')) {
+            if ($mobileSetting->logo_fathschool != 'images/logo_fathschool.png') {
+                FileDelete::deleteImage($mobileSetting->logo_fathschool);
+            }
+            $url = FileUpload::uploadImage($request->logo_fathschool, 'images');
+            $mobileSetting->update(['logo_fathschool' => $url]);
+        }
+
+        if ($request->hasFile('logo_fathforce')) {
+            if ($mobileSetting->logo_fathforce != 'images/logo_fathforce.png') {
+                FileDelete::deleteImage($mobileSetting->logo_fathforce);
+            }
+            $url = FileUpload::uploadImage($request->logo_fathforce, 'images');
+            $mobileSetting->update(['logo_fathforce' => $url]);
+        }
+
+        if ($request->hasFile('logo_school')) {
+            if ($mobileSetting->logo_school != 'images/logo_school.png') {
+                FileDelete::deleteImage($mobileSetting->logo_school);
+            }
+            $url = FileUpload::uploadImage($request->logo_school, 'images');
+            $mobileSetting->update(['logo_school' => $url]);
+        }
+
 
         return back()->with('success', 'Mobile settings updated successfully.');
     }
+
 
     // SettingController.php
     public function updateWeekday(Request $request)
@@ -834,6 +884,27 @@ public function store(Request $request)
 
         Setting::first()->update([
             'status' => $request->status,
+        ]);
+
+        return back()->with('success', 'Weekday settings updated successfully.');
+    }
+
+    public function updateLocationTime(Request $request)
+    {
+        $request->validate([
+            'radius' => 'required',
+            'latitude' => 'required',
+            'longtitude' => 'required',
+            'time_in' => 'required',
+            'time_out' => 'required',
+        ]);
+
+        Setting::first()->update([
+            'radius' => $request->radius,
+            'latitude' => $request->latitude,
+            'longtitude' => $request->longtitude,
+            'time_in' => $request->time_in,
+            'time_out' => $request->time_out,
         ]);
 
         return back()->with('success', 'Weekday settings updated successfully.');

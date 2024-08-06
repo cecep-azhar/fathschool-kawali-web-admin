@@ -356,11 +356,16 @@ class UserController extends Controller
 
     public function exportStudentLeave(Request $request)
     {
-        $name = $request->input('name');
-        $month = $request->input('month');
-        $courseId = $request->input('course_id');
+        $name = $request->name;
+        $month = $request->month;
+        $courseId = $request->course_id;
 
-        return Excel::download(new StudentLeaveExport($name, $month, $courseId), 'student-leave-report.xlsx');
+
+        // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
+        $export = new StudentLeaveExport($name, $month, $courseId);
+
+        // Download file Excel sesuai dengan filter
+        return Excel::download($export, 'students-leave.xlsx');
     }
 
 

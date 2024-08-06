@@ -285,81 +285,282 @@
                 </div>
                 <div class="divide-y divide-gray-200 dark:divide-gray-600 overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow pb-6 mt-6">
                     <div class="py-6 px-4 sm:p-6 lg:pb-8">
+                    <div>
+                        <h2 class="text-lg font-medium dark:text-gray-400 leading-6 text-gray-900">
+                        {{ __('Location & Time Settings') }}
+                        </h2>
+                    </div>
+                    <form class="mt-2" @submit.prevent="submitLocationSettings()" enctype="multipart/form-data">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div class="mb-3">
+                            <global-label for="radius" :value="__('Radius')" :required="true" />
+                            <global-input type="text" v-model="form.radius" id="radius" name="radius"
+                                        class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                        :placeholder="__('Enter Radius')" :error="$page.props.errors.radius" />
+                            <input-error :error="$page.props.errors.radius" />
+                        </div>
+                        <div class="mb-3">
+                            <global-label for="latitude" :value="__('Latitude')" :required="true" />
+                            <global-input type="text" v-model="form.latitude" id="latitude" name="latitude"
+                                        class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                        :placeholder="__('Enter Latitude')" :error="$page.props.errors.latitude" />
+                            <input-error :error="$page.props.errors.latitude" />
+                        </div>
+                        <div class="mb-3">
+                            <global-label for="longtitude" :value="__('longtitude')" :required="true" />
+                            <global-input type="text" v-model="form.longtitude" id="longtitude" name="longtitude"
+                                        class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                        :placeholder="__('Enter longtitude')" :error="$page.props.errors.longtitude" />
+                            <input-error :error="$page.props.errors.longtitude" />
+                        </div>
+                        <div class="mb-3">
+                            <global-label for="time_in" :value="__('Time In')" :required="true" />
+                            <global-input type="time" v-model="form.time_in" id="time_in" name="time_in"
+                                        class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                        :placeholder="__('Enter Time In')" :error="$page.props.errors.time_in" />
+                            <input-error :error="$page.props.errors.time_in" />
+                        </div>
+                        <div class="mb-3">
+                            <global-label for="time_out" :value="__('Time Out')" :required="true" />
+                            <global-input type="time" v-model="form.time_out" id="time_out" name="time_out"
+                                        class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                        :placeholder="__('Enter Time Out')" :error="$page.props.errors.time_out" />
+                            <input-error :error="$page.props.errors.time_out" />
+                        </div>
+                        </div>
+                        <div class="border-gray-700 mb-1">
+                            <div class="flex justify-end py-4 gap-4 px-4 sm:px-6">
+                                    <global-button :loading="form.processing" @click="submitLocationSettings()" type="button" cssClass="w-full mt-3"
+                                        theme="primary">
+                                        {{ __('Save Changes') }}
+                                    </global-button>
+                            </div>
+                        </div>
+                    </form>
+                    </div>
+                </div>
+                <!--Mobile Setting-->
+                <div class="divide-y divide-gray-200 dark:divide-gray-600 overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow pb-6 mt-6">
+                    <div class="py-6 px-4 sm:p-6 lg:pb-8">
                         <div>
                             <h2 class="text-lg font-medium dark:text-gray-400 leading-6 text-gray-900">
-                                {{ __('Mobile Settings') }}
+                                {{ __('Mobile Setting') }}
                             </h2>
                         </div>
                         <form class="mt-2" @submit.prevent="submitMobileSettings()" enctype="multipart/form-data">
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                <div class="mb-3">
-                                    <global-label for="radius" :value="__('Radius')" :required="true" />
-                                    <global-input type="text" v-model="form.radius" id="radius" name="radius"
-                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
-                                                :placeholder="__('Enter Radius')" :error="$page.props.errors.radius" />
-                                    <input-error :error="$page.props.errors.radius" />
+                                <div>
+                                    <div class="mb-3">
+                                        <global-label for="description_apps" :value="__('Description Apps')" :required="false" />
+                                        <global-textarea type="text" v-model="form.description_apps" id="description_apps"
+                                            class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                            :placeholder="__('Enter Description Apps')" :error="$page.props.errors.description_apps" />
+                                        <input-error :error="$page.props.errors.description_apps" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <global-label for="features_apps" :value="__('Features Apps')" :required="false" />
+                                        <global-textarea type="text" v-model="form.features_apps" id="features_apps"
+                                            class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                            :placeholder="__('Enter Features Apps')" :error="$page.props.errors.features_apps" />
+                                        <input-error :error="$page.props.errors.features_apps" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <global-label for="advantages_apps" :value="__('Advantages Apps')" :required="false" />
+                                        <global-textarea type="text" v-model="form.advantages_apps" id="advantages_apps"
+                                            class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                            :placeholder="__('Enter Advantages Apps')" :error="$page.props.errors.advantages_apps" />
+                                        <input-error :error="$page.props.errors.advantages_apps" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <global-label for="conclusion_apps" :value="__('Conclusion Apps')" :required="false" />
+                                        <global-textarea type="text" v-model="form.conclusion_apps" id="conclusion_apps"
+                                            class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                            :placeholder="__('Enter Conclusion Apps')":error="$page.props.errors.conclusion_apps" />
+                                        <input-error :error="$page.props.errors.conclusion_apps" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <global-label for="fathforce_phone_number" :value="__('Fathforce Phone Number')" :required="false" />
+                                        <global-input type="text" v-model="form.fathforce_phone_number" id="fathforce_phone_number"
+                                            class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                            :placeholder="__('Enter Fathforce Phone Number')" :error="$page.props.errors.fathforce_phone_number" />
+                                        <input-error :error="$page.props.errors.fathforce_phone_number" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <global-label for="fathforce_browser_link" :value="__('Fathforce Browser Link')" :required="false" />
+                                        <global-input type="text" v-model="form.fathforce_browser_link" id="fathforce_browser_link"
+                                            class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                            :placeholder="__('Enter Fathforce Browser Link')" :error="$page.props.errors.fathforce_browser_link" />
+                                        <input-error :error="$page.props.errors.fathforce_browser_link" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <global-label for="fathforce_email" :value="__('Fathforce Email')" :required="false" />
+                                        <global-input type="email" v-model="form.fathforce_email" id="fathforce_email"
+                                            class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                            :placeholder="__('Enter Fathforce Email')" :error="$page.props.errors.fathforce_email" />
+                                        <input-error :error="$page.props.errors.fathforce_email" />
+                                    </div>
                                 </div>
-                                <div class="mb-3">
-                                    <global-label for="latitude" :value="__('Latitude')" :required="true" />
-                                    <global-input type="text" v-model="form.latitude" id="latitude" name="latitude"
-                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
-                                                :placeholder="__('Enter Latitude')" :error="$page.props.errors.latitude" />
-                                    <input-error :error="$page.props.errors.latitude" />
-                                </div>
-                                <div class="mb-3">
-                                    <global-label for="longtitude" :value="__('Longtitude')" :required="true" />
-                                    <global-input type="text" v-model="form.longtitude" id="longtitude" name="longtitude"
-                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
-                                                :placeholder="__('Enter Longtitude')" :error="$page.props.errors.longtitude" />
-                                    <input-error :error="$page.props.errors.longtitude" />
-                                </div>
-                                <div class="mb-3">
-                                    <global-label for="time_in" :value="__('Time In')" :required="true" />
-                                    <global-input type="time" v-model="form.time_in" id="time_in" name="time_in"
-                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
-                                                :placeholder="__('Enter Time In')" :error="$page.props.errors.time_in" />
-                                    <input-error :error="$page.props.errors.time_in" />
-                                </div>
-                                <div class="mb-3">
-                                    <global-label for="time_out" :value="__('Time out')" :required="true" />
-                                    <global-input type="time" v-model="form.time_out" id="time_out" name="time_out"
-                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
-                                                :placeholder="__('Enter Time Out')" :error="$page.props.errors.time_out" />
-                                    <input-error :error="$page.props.errors.time_out" />
-                                </div>
-                                <div class="mb-3">
-                                    <global-label for="production_status" :value="__('Production Status')" :required="true" />
-                                    <select v-model="form.production_status" id="production_status" name="production_status"
-                                            class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400">
-                                        <option value="Alpha">{{ __('Alpha') }}</option>
-                                        <option value="Beta">{{ __('Beta') }}</option>
-                                        <option value="Production">{{ __('Production') }}</option>
-                                        <option value="Maintenance">{{ __('Maintenance') }}</option>
-                                    </select>
-                                    <input-error :error="$page.props.errors.production_status" />
-                                </div>
-                                <div class="mb-3">
-                                    <global-label for="mobile_version" :value="__('Mobile Version')" :required="true" />
-                                    <global-input type="text" v-model="form.mobile_version" id="mobile_version" name="mobile_version"
-                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
-                                                :placeholder="__('Enter Mobile Version')" :error="$page.props.errors.mobile_version" />
-                                    <input-error :error="$page.props.errors.mobile_version" />
-                                </div>
-                                <div class="mb-3">
-                                    <global-label for="link_google_play" :value="__('Link Google Play')" :required="true" />
-                                    <global-input type="text" v-model="form.link_google_play" id="link_google_play" name="link_google_play"
-                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
-                                                :placeholder="__('Enter Google Play Link')" :error="$page.props.errors.link_google_play" />
-                                    <input-error :error="$page.props.errors.link_google_play" />
+                                <div>
+                                    <div class="mb-3 grid grid-cols-1 xl:grid-cols-3 gap-3">
+                                        <div>
+                                            <global-label for="logo_fathschool" class="mb-1" value="Logo Fathschool" :required="true" />
+                                            <div class="rounded-md border-2 border-dashed dark:border-gray-600">
+                                                <template v-if="logo_fathschool_preview">
+                                                    <div class="flex justify-center items-center relative">
+                                                        <div class="p-4">
+                                                            <img class="w-48 h-48 object-contain" :src="logo_fathschool_preview" alt="">
+                                                        </div>
+                                                        <button @click="removeImage('logo_fathschool_preview')" type="button" class="absolute top-2 right-2 rtl:right-auto rtl:left-2 rounded-full p-1 group">
+                                                            <trash-icon class="w-4 h-4 text-red-500 hover:text-red-400" />
+                                                            <tool-tip class="text-lg" :text="__('Remove image')" />
+                                                        </button>
+                                                    </div>
+                                                </template>
+                                                <template v-else>
+                                                    <div class="py-12 px-6  flex flex-col items-center">
+                                                        <p class="text-md dark:text-gray-400 font-bold text-center text-gray-700">
+                                                            {{ __('Click the button below to select the file') }}.
+                                                        </p>
+                                                        <p class="mb-1 animate-bounce text-gray-700 text-xl">
+                                                            ⇓
+                                                        </p>
+                                                        <label class="bg-white dark:bg-gray-400 cursor-pointer px-4 h-9 inline-flex items-center rounded border border-gray-300 shadow-sm text-sm font-medium text-gray-700 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                                            {{ __('Select files') }}
+                                                            <input type="file" accept="image/*" name="file" @change="change($event, 'logo_fathschool')" class="sr-only">
+                                                        </label>
+                                                        <p class="text-xs dark:text-gray-400 text-gray-600 mt-4">
+                                                            {{ __('Maximum upload file size') }}: 512MB.
+                                                        </p>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <input-error :error="$page.props.errors.logo_fathschool" />
+                                        </div>
+                                        <div>
+                                            <global-label for="logo_fathforce" class="mb-1" value="Logo Fathforce" :required="true" />
+                                            <div class="rounded-md border-2 border-dashed dark:border-gray-600">
+                                                <template v-if="logo_fathforce_preview">
+                                                    <div class="flex justify-center items-center relative">
+                                                        <div class="p-4">
+                                                            <img class="w-48 h-48 object-contain" :src="logo_fathforce_preview" alt="">
+                                                        </div>
+                                                        <button @click="removeImage('logo_fathforce_preview')" type="button" class="absolute top-2 right-2 rtl:right-auto rtl:left-2 rounded-full p-1 group">
+                                                            <trash-icon class="w-4 h-4 text-red-500 hover:text-red-400" />
+                                                            <tool-tip class="text-lg" :text="__('Remove image')" />
+                                                        </button>
+                                                    </div>
+                                                </template>
+                                                <template v-else>
+                                                    <div class="py-12 px-6  flex flex-col items-center ">
+                                                        <p class="text-md dark:text-gray-400 font-bold text-center text-gray-700">
+                                                            {{ __('Click the button below to select the file') }}.
+                                                        </p>
+                                                        <p class="mb-1 animate-bounce text-gray-700 text-xl">
+                                                            ⇓
+                                                        </p>
+                                                        <label class="bg-white px-4 dark:bg-gray-400 cursor-pointer h-9 inline-flex items-center rounded border border-gray-300 shadow-sm text-sm font-medium text-gray-700 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                                            {{ __('Select files') }}
+                                                            <input type="file" accept="image/*" name="file" @change="change($event, 'logo_fathforce')" class="sr-only">
+                                                        </label>
+                                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-4">
+                                                            {{ __('Maximum upload file size') }}: 512MB.
+                                                        </p>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <input-error :error="$page.props.errors.logo_fathforce" />
+                                        </div>
+                                        <div>
+                                            <global-label for="logo_school" class="mb-1" value="Logo School" :required="true" />
+                                            <div class="rounded-md border-2 border-dashed dark:border-gray-600">
+                                                <template v-if="logo_school_preview">
+                                                    <div class="flex justify-center items-center relative">
+                                                        <div class="p-4">
+                                                            <img class="w-48 h-48 object-contain" :src="logo_school_preview" alt="">
+                                                        </div>
+                                                        <button @click="removeImage('logo_school_preview')" type="button" class="absolute top-2 right-2 rtl:right-auto rtl:left-2 rounded-full p-1 group">
+                                                            <trash-icon class="w-4 h-4 text-red-500 hover:text-red-400" />
+                                                            <tool-tip class="text-lg" :text="__('Remove image')" />
+                                                        </button>
+                                                    </div>
+                                                </template>
+                                                <template v-else>
+                                                    <div class="py-12 px-6  flex flex-col items-center ">
+                                                        <p class="text-md dark:text-gray-400 font-bold text-center text-gray-700">
+                                                            {{ __('Click the button below to select the file') }}.
+                                                        </p>
+                                                        <p class="mb-1 animate-bounce text-gray-700 text-xl">
+                                                            ⇓
+                                                        </p>
+                                                        <label class="bg-white px-4 dark:bg-gray-400 cursor-pointer h-9 inline-flex items-center rounded border border-gray-300 shadow-sm text-sm font-medium text-gray-700 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                                            {{ __('Select files') }}
+                                                            <input type="file" accept="image/*" name="file" @change="change($event, 'logo_school')" class="sr-only">
+                                                        </label>
+                                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-4">
+                                                            {{ __('Maximum upload file size') }}: 512MB.
+                                                        </p>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <input-error :error="$page.props.errors.logo_school" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <global-label for="app_version_student" :value="__('Version Apps Student')" :required="false" />
+                                        <global-input type="text" v-model="form.app_version_student" id="app_version_student"
+                                            class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                            :placeholder="__('Enter Version Apps Student')" :error="$page.props.errors.app_version_student" />
+                                        <input-error :error="$page.props.errors.app_version_student" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <global-label for="app_version_teacher" :value="__('Version Apps Teacher')" :required="false" />
+                                        <global-input type="text" v-model="form.app_version_teacher" id="app_version_teacher"
+                                            class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                            :placeholder="__('Enter Version Apps Teacher')" :error="$page.props.errors.app_version_teacher" />
+                                        <input-error :error="$page.props.errors.app_version_teacher" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <global-label for="production_version_teacher" :value="__('Production Status Teacher')" :required="true" />
+                                        <select v-model="form.production_version_teacher" id="production_version_teacher" name="production_version_teacher"
+                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400">
+                                            <option value="Alpha">{{ __('Alpha') }}</option>
+                                            <option value="Beta">{{ __('Beta') }}</option>
+                                            <option value="Production">{{ __('Production') }}</option>
+                                            <option value="Maintenance">{{ __('Maintenance') }}</option>
+                                        </select>
+                                        <input-error :error="$page.props.errors.production_version_teacher" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <global-label for="production_version_student" :value="__('Production Status Student')" :required="true" />
+                                        <select v-model="form.production_version_student" id="production_version_student" name="production_version_student"
+                                                class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400">
+                                            <option value="Alpha">{{ __('Alpha') }}</option>
+                                            <option value="Beta">{{ __('Beta') }}</option>
+                                            <option value="Production">{{ __('Production') }}</option>
+                                            <option value="Maintenance">{{ __('Maintenance') }}</option>
+                                        </select>
+                                        <input-error :error="$page.props.errors.production_version_student" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <global-label for="google_play_link_student" :value="__('Link Google Play Student')" :required="true" />
+                                        <global-input type="text" v-model="form.google_play_link_student" id="google_play_link_student" name="google_play_link_student"
+                                            class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                            :placeholder="__('Enter Google Play Link Student')" :error="$page.props.errors.google_play_link_student" />
+                                        <input-error :error="$page.props.errors.google_play_link_student" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <global-label for="google_play_link_teacher" :value="__('Link Google Play Teacher')" :required="true" />
+                                        <global-input type="text" v-model="form.google_play_link_teacher" id="google_play_link_teacher" name="google_play_link_teacher"
+                                                    class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                                    :placeholder="__('Enter Google Play Link Teacher')" :error="$page.props.errors.google_play_link_teacher" />
+                                        <input-error :error="$page.props.errors.google_play_link_teacher" />
+                                    </div>
                                 </div>
                             </div>
-                            <div class="border-gray-700 mb-1">
-                                <div class="flex justify-end py-4 gap-4 px-4 sm:px-6">
-                                    <global-button :loading="form.processing" @click="submitMobileSettings()" type="button" cssClass="w-full mt-3"
-                                        theme="primary">
-                                        {{ __('Save Changes') }}
-                                    </global-button>
-                                </div>
+                            <div class="mt-5">
+                                <global-button :loading="form.processing" @click="submitMobileSettings()" type="button" cssClass="w-full mt-3" theme="primary">
+                                    {{ __('Save Changes') }}
+                                </global-button>
                             </div>
                         </form>
                     </div>
@@ -435,13 +636,21 @@ export default {
             type: Object,
             required: true
         },
+        mobile_setting: {
+            type: Object,
+            required: true
+        },
     },
     data() {
         return {
             dark_logo_preview: this.setting.dark_logo_url,
             light_logo_preview: this.setting.light_logo_url,
             favicon_preview: this.setting.favicon_icon_url,
+            logo_fathschool_preview: this.mobile_setting.logo_fathschool_url,
+            logo_fathforce_preview: this.mobile_setting.logo_fathforce_url,
+            logo_school_preview: this.mobile_setting.logo_school_url,
             form: useForm({
+                // Ambil data dari this.setting
                 logo_type: this.setting.app_logo_type,
                 app_name: this.setting.app_name,
                 school_code: this.setting.school_code,
@@ -449,11 +658,13 @@ export default {
                 dark_logo: '',
                 light_logo: '',
                 favicon: '',
+                logo_fathschool: '',
+                logo_fathforce: '',
+                logo_school: '',
                 app_email: this.setting.app_email,
                 app_phone: this.setting.app_phone,
                 principal_name: this.setting.principal_name,
                 app_address: this.setting.app_address,
-                app_description: this.setting.app_description,
                 radius: this.setting.radius,
                 latitude: this.setting.latitude,
                 longtitude: this.setting.longtitude,
@@ -463,8 +674,24 @@ export default {
                 mobile_version: this.setting.mobile_version,
                 link_google_play: this.setting.link_google_play,
                 status: this.setting.status,
+                // Ambil data dari this.mobile_setting
+                app_description: this.mobile_setting.app_description,
+                description_apps: this.mobile_setting.description_apps,
+                features_apps: this.mobile_setting.features_apps,
+                advantages_apps: this.mobile_setting.advantages_apps,
+                conclusion_apps: this.mobile_setting.conclusion_apps,
+                fathforce_phone_number: this.mobile_setting.fathforce_phone_number,
+                fathforce_browser_link: this.mobile_setting.fathforce_browser_link,
+                fathforce_email: this.mobile_setting.fathforce_email,
+                google_play_link_student: this.mobile_setting.google_play_link_student,
+                google_play_link_teacher: this.mobile_setting.google_play_link_teacher,
+                production_version_teacher: this.mobile_setting.production_version_teacher,
+                production_version_student: this.mobile_setting.production_version_student,
+                app_version_student: this.mobile_setting.app_version_student,
+                app_version_teacher: this.mobile_setting.app_version_teacher,
                 _method: 'PUT'
             })
+
         }
     },
     components: {
@@ -495,6 +722,12 @@ export default {
             this.form.light_logo = selectedFile;
         } else if (arg == 'favicon') {
             this.form.favicon = selectedFile;
+        } else if (arg == 'logo_fathforce') {
+            this.form.logo_fathforce = selectedFile;
+        } else if (arg == 'logo_fathschool') {
+            this.form.logo_fathschool = selectedFile;
+        } else if (arg == 'logo_school') {
+            this.form.logo_school = selectedFile;
         }
 
         let reader = new FileReader();
@@ -506,6 +739,12 @@ export default {
                 this.light_logo_preview = event.target.result;
             } else if (arg == 'favicon') {
                 this.favicon_preview = event.target.result;
+            } else if (arg == 'logo_fathforce') {
+                this.logo_fathforce_preview = event.target.result;
+            } else if (arg == 'logo_fathschool') {
+                this.logo_fathschool_preview = event.target.result;
+            } else if (arg == 'logo_school') {
+                this.logo_school_preview = event.target.result;
             }
         };
 
@@ -521,6 +760,16 @@ export default {
         } else if (arg == 'favicon_preview') {
             this.favicon_preview = '';
             this.form.favicon = null;
+        } else if (arg == 'logo_fathforce_preview') {
+            this.logo_fathforce_preview = '';
+            this.form.logo_fathforce = null;
+        } else if (arg == 'logo_fathschool_preview') {
+            this.logo_fathschool_preview = '';
+            this.form.logo_fathschool = null;
+        }
+        else if (arg == 'logo_school_preview') {
+            this.logo_school_preview = '';
+            this.form.logo_school = null;
         }
     },
     submit() {
@@ -535,6 +784,11 @@ export default {
     },
     submitWeekdaySettings() {
         this.form.post(this.route('settings.updateWeekday'), {
+            preserveScroll: true,
+        });
+    },
+    submitLocationSettings() {
+        this.form.post(this.route('settings.locationTime'), {
             preserveScroll: true,
         });
     }

@@ -43,6 +43,31 @@
                             <div
                                 class="relative -m-2 flex items-center gap-4 rounded-xl p-2 focus-within:ring-2 transition-all duration-300 focus-within:ring-indigo-500 hover:bg-gray-200 dark:hover:bg-gray-500">
                                 <div
+                                    class="flex-shrink-0 flex items-center justify-center h-16 w-16 rounded-lg bg-green-500">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z">
+                                        </path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-medium text-gray-900">
+                                        <Link :href="route('student.leave')" class="focus:outline-none">
+                                        <span class="absolute inset-0" aria-hidden="true"></span>
+                                        <span>
+                                            {{ __('Student Leave') }}
+                                        </span>
+                                        <span aria-hidden="true"> &rarr;</span>
+                                        </Link>
+                                    </h3>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="flow-root"  v-if="can('report.transaction')">
+                            <div
+                                class="relative -m-2 flex items-center gap-4 rounded-xl p-2 focus-within:ring-2 transition-all duration-300 focus-within:ring-indigo-500 hover:bg-gray-200 dark:hover:bg-gray-500">
+                                <div
                                     class="flex-shrink-0 flex items-center justify-center h-16 w-16 rounded-lg bg-gray-500">
                                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                         xmlns="http://www.w3.org/2000/svg">
@@ -173,7 +198,7 @@
                                 </div>
                             </div>
                         </li>
-                        
+
                         <li class="flow-root" v-if="can('report.transaction')">
                             <div
                                 class="relative -m-2 flex items-center gap-4 rounded-xl p-2 transition-all duration-300 focus-within:ring-2 focus-within:ring-indigo-500 hover:bg-gray-200 dark:hover:bg-gray-500">

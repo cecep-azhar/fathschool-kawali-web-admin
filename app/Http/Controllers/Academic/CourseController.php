@@ -168,7 +168,7 @@ class CourseController extends Controller
 
     //     return back();
     // }
-//    
+//
 public function update(Request $request, $id, SubjectChatGroupService $subjectChatGroupService)
 {
     abort_if(!userCan('academic.management'), 403);

@@ -78,7 +78,6 @@ class ClassRoutineController extends Controller
     public function create()
     {
         abort_if(!userCan('academic.management'), 403);
-
         $days = WorkingDays::first();
         $workdays = [];
         if ($days->sunday) {
@@ -103,30 +102,10 @@ class ClassRoutineController extends Controller
             $workdays[6] = 'Saturday';
         }
 
-
-        $teachers = User::active()->teacher()->latest()->get()->map(function ($teacher) {
-            $teacher->courses = $this->teacherCourses($teacher);
-            return $teacher;
-        });
-
-        $teacherSubjects = TeacherSubject::with(['subject:id,name,course_id'])->latest()->get();
-
-        $transformedSubjects = $teacherSubjects->map(function ($subject) {
-            return [
-                'id' => $subject->id,
-                'teacher_id' => $subject->teacher_id,
-                'subject_id' => $subject->subject_id,
-                'created_at' => $subject->created_at,
-                'updated_at' => $subject->updated_at,
-                'name' => $subject->subject->name,
-                'course_id' => $subject->subject->course_id,
-            ];
-        });
-
         return inertia('Admin/Routine/Form', [
-            'teachers' => $teachers,
+            'teachers' => User::active()->teacher()->latest()->get(),
             'courses' => Course::latest()->get(),
-            'subjects' => $transformedSubjects,
+            'subjects' => Subject::latest()->get(),
             'workdays' => $workdays,
         ]);
     }
@@ -152,12 +131,12 @@ class ClassRoutineController extends Controller
         isWeekend($request->weekday);
         abort_if(!userCan('academic.management'), 403);
 
-        ClassRoutine::create([
+        $ClassRoutine = ClassRoutine::create([
             'teacher_id' => $request->teacher,
             'course_id' => $request->class,
             'subject_id' => $request->subject,
-            'weekday' => $request->weekday,
             'activation' => $request->activation,
+            'weekday' => $request->weekday,
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
         ]);

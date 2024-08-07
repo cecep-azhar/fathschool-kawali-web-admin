@@ -15,7 +15,8 @@ class LearningLessonController extends Controller
         $user = $request->user();
         $today = Carbon::now()->dayOfWeek;
         $start_time = date('H:i:s');
-        $end_time = date('H:i:s');
+        $end_time = Carbon::now()->subMinutes(5)->format('H:i:s');
+
 
         // Pastikan user memiliki role teacher
         if ($user->role !== 'Teacher') {
@@ -26,15 +27,15 @@ class LearningLessonController extends Controller
 
         // Ambil data learning_lessons berdasarkan user yang sedang login
         $lesson = ClassRoutine::with(['teacher', 'subject', 'course'])
-                            ->where('teacher_id', $user->id)
-                            ->where('weekday', $today)
-                            ->where('start_time', '<=', $end_time)
-                            ->where('end_time', '>=', $start_time)
-                            ->where('activation', $activeStatus)
-                            ->first();
+            ->where('teacher_id', $user->id)
+            ->where('weekday', $today)
+            ->where('start_time', '<=', $start_time)
+            ->where('end_time', '>=', $end_time)
+            ->where('activation', $activeStatus)
+            ->first();
 
 
-            // dd($lesson);
+        // dd($lesson);
 
         if (!$lesson) {
             return response()->json(['message' => 'Anda tidak memiliki jadwal'], 400);
@@ -46,7 +47,7 @@ class LearningLessonController extends Controller
             return response()->json(['message' => 'Ini belum jam pelajaran anda'], 400);
         }
 
-        if ($currentTime > Carbon::parse($lesson->end_time)) {
+        if ($currentTime->gt(Carbon::parse($lesson->end_time)->addMinutes(5))) {
             return response()->json(['message' => 'Sudah bukan jam pembelajaran anda'], 400);
         }
 

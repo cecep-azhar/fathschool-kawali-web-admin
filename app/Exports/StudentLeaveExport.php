@@ -1,17 +1,15 @@
 <?php
-// app/Exports/StudentLeaveExport.php
 
 namespace App\Exports;
 
 use App\Models\Leave;
-use Illuminate\Contracts\View\View;
-use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Maatwebsite\Excel\Concerns\FromCollection;
 
-class StudentLeaveExport implements  WithHeadings, WithMapping
+class StudentLeaveExport implements  FromCollection, WithHeadings, WithMapping
 {
     protected $name;
     protected $month;
@@ -42,11 +40,11 @@ class StudentLeaveExport implements  WithHeadings, WithMapping
             $query->whereMonth('created_at', Carbon::parse($this->month)->month);
         }
 
-        // if ($this->courseId) {
-        //     $query->whereHas('user.courses', function ($query) {
-        //         $query->where('course_id', $this->courseId);
-        //     });
-        // }
+        if ($this->courseId) {
+            $query->whereHas('user.courses', function ($query) {
+                $query->where('course_id', $this->courseId);
+            });
+        }
 
         $leaveStudents = $query->get();
 

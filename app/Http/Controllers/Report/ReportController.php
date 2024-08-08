@@ -7,6 +7,7 @@ use App\Exports\ExportResult;
 use App\Exports\ExportTransaction;
 use App\Exports\StudentExport;
 use App\Http\Controllers\Controller;
+use App\Models\Attendance;
 use App\Models\AttendanceStudent;
 use App\Models\ClassRoutine;
 use App\Models\Course;
@@ -699,6 +700,39 @@ public function studentExport(Request $request)
         // Stream the PDF to the user's browser for download with a descriptive filename
         return $pdf->stream('School_expense_report_for' . $monthName . '_' . $year . '.pdf');
     }
+
+    public function lateReport()
+    {
+        abort_if(!userCan('academic.management'), 403);
+
+        // Ambil waktu masuk yang ditetapkan
+        $setting = Setting::first(); // Atau sesuaikan dengan cara Anda mendapatkan pengaturan
+        $timeInSetting = Carbon::parse($setting->time_in);
+
+        // Ambil seluruh data attendance
+        $attendances = Attendance::with('user')
+            ->get()
+            ->filter(function ($attendance) use ($timeInSetting) {
+                // Bandingkan waktu masuk dengan waktu yang ditetapkan
+                $timeIn = Carbon::parse($attendance->time_in);
+                return $timeIn > $timeInSetting;
+            })
+            ->map(function ($attendance) {
+                return [
+                    'name' => $attendance->user->name,
+                    'time_in' => Carbon::parse($attendance->time_in)->format('H:i:s'),
+                    'date' => Carbon::parse($attendance->date)->format('Y-m-d'),
+                ];
+            })
+            ->values(); // Pastikan untuk mereset kunci array
+
+        // Konversi koleksi menjadi array
+        $attendancesArray = $attendances->toArray();
+
+        return inertia('Admin/Report/LateReport', ['LateAttendances' => $attendancesArray]);
+    }
+
+
 
     public function rating()
     {

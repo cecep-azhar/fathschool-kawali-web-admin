@@ -143,6 +143,7 @@ Route::post('changeLang/{dir}', [LanguageController::class, 'changeLang'])->name
 Route::get('/courses/qr-codes', [CourseController::class, 'getAllClassesWithQrCodes'])->name('courses.qr-codes');
 Route::get('teacher/attendance', [AttendanceController::class, 'index'])->name('teacher.attendance');
 Route::get('teacher-rating/attendance', [ReportController::class, 'rating'])->name('teacher.rating');
+Route::get('teacher/late', [ReportController::class, 'lateReport'])->name('teacher.lateness.report');
 Route::get('teacher-class/attendance', [AttendanceController::class, 'getTeacherClassAttendance'])->name('teacher.class');
 Route::get('courses/{id}/print-qr-code', [CourseController::class, 'printQrCode'])->name('courses.printQrCode');
 // web.php atau routes file yang relevan

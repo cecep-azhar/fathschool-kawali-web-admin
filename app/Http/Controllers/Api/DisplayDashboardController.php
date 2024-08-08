@@ -14,6 +14,7 @@ use App\Models\Quote;
 use App\Models\Rating;
 use App\Models\ClassRoutine;
 use App\Models\Setting;
+use App\Models\LeaveType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
@@ -38,7 +39,6 @@ class DisplayDashboardController extends Controller
                 $query->where('role', 'student');
             })->count();
 
-            
         $totalTeacherAttendance = Attendance::where('date', $today)
             ->whereHas('user', function($query) {
                 $query->where('role', 'teacher');
@@ -83,6 +83,7 @@ class DisplayDashboardController extends Controller
 
         // Jadwal guru di kelas berdasarkan jam sekarang
         $teacherNames = ClassRoutine::with('teacher')
+            ->where('weekday', $weekRoutines)
             ->where('start_time', '<=', $now)
             ->where('end_time', '>=', $now)
             ->where('activation', $activeStatus)
@@ -90,6 +91,7 @@ class DisplayDashboardController extends Controller
             ->pluck('teacher.name');
 
         $courseNames = ClassRoutine::with('courses')
+            ->where('weekday', $weekRoutines)
             ->where('start_time', '<=', $now)
             ->where('end_time', '>=', $now)
             ->where('activation', $activeStatus)
@@ -97,6 +99,7 @@ class DisplayDashboardController extends Controller
             ->pluck('course.name');
 
         $subjectNames = ClassRoutine::with('subject')
+            ->where('weekday', $weekRoutines)
             ->where('start_time', '<=', $now)
             ->where('end_time', '>=', $now)
             ->where('activation', $activeStatus)
@@ -104,43 +107,26 @@ class DisplayDashboardController extends Controller
             ->pluck('subject.name');
 
         $teacherIds = ClassRoutine::with('teacher')
+            ->where('weekday', $weekRoutines)
             ->where('start_time', '<=', $now)
             ->where('end_time', '>=', $now)
             ->where('activation', $activeStatus)
             ->get()
-            ->pluck('teacher.id');
-
-        $courseStatus = ClassAttendance::whereIn('user_id', $teacherIds)->exists();
+            ->pluck('teacher.id')
+            ->toArray();
+        
+        $statusObject = [];
+        
+        foreach ($teacherIds as $teacherId) {
+            $courseStatus = ClassAttendance::where('user_id', $teacherId)
+                                            ->where('date', $today)
+                                            ->exists();
+            $statusObject[] = $courseStatus ? "true" : "false";
+        }
       
-        $statusObject = [$courseStatus ? "true" : "false"];
-      
-        // dd($statusObject); 
-
         // Kelas dengan jam kosong terbanyak minggu ini
         $startOfWeek = now()->startOfWeek()->format('Y-m-d');
         $endOfWeek = now()->endOfWeek()->format('Y-m-d');
-
-        // Menghitung jumlah check-in (kehadiran) per kelas dalam satu minggu
-        // $classWithLeastCheckins = DB::table('class_attendances')
-        //     ->select('course_id', DB::raw('COUNT(*) as checkin_count'))
-        //     ->whereBetween('date', [$startOfWeek, $endOfWeek])
-        //     ->groupBy('course_id')
-        //     ->orderBy('checkin_count', 'asc')
-        //     ->first();
-
-        // $courseWithMostEmptySlots = null;
-        // if ($classWithLeastCheckins) {
-        //     $courseWithMostEmptySlots = Course::find($classWithLeastCheckins->course_id);
-        // }
-// Menghitung jumlah kehadiran per kelas
-$classesWithAttendanceCount = DB::table('courses')
-    ->leftJoin('class_attendances', 'courses.id', '=', 'class_attendances.course_id')
-    ->select('courses.id', 'courses.name', DB::raw('COUNT(class_attendances.id) as attendance_count'))
-    ->groupBy('courses.id', 'courses.name')
-    ->get();
-
-// Mengambil kelas dengan jumlah kehadiran paling sedikit
-$classWithLeastAttendance = $classesWithAttendanceCount->sortBy('attendance_count')->first();
 
         // Quotes
         $quote = Quote::pluck('quote');
@@ -193,7 +179,137 @@ $classWithLeastAttendance = $classesWithAttendanceCount->sortBy('attendance_coun
             $coursesNamesWithLeastAttendanceThisWeek .= ' dan beberapa lainnya';
         }
 
-        // $leaveData = Leave::whereDate('leave_date', $now)->get();
+        $activeStatus = Setting::pluck('status')->toArray();
+
+        // Ambil semua kursus yang diikuti oleh guru pada hari tersebut
+        $classRoutines = ClassRoutine::where('weekday', $weekRoutines)
+                                     ->where('activation', $activeStatus)
+                                     ->get();
+
+        $leaveTypes = LeaveType::where('role_type', 'student')
+            ->whereIn('name', ['Sakit', 'Izin'])
+            ->pluck('id', 'name');
+
+        $coursesData = [];
+
+        foreach ($classRoutines as $classRoutine) {
+            $course = Course::find($classRoutine->course_id);
+            if (!$course) {
+                continue;
+            }
+
+            // Ambil semua siswa yang terdaftar di kursus yang ditemukan
+            $students = User::active()->student()->whereHas('courses', function($query) use ($course) {
+                $query->where('course_id', $course->id);
+            })->orderBy('name')->get();
+
+            // Inisialisasi nomor absen
+            $absenNumber = 1;
+
+            // Map hasil untuk menyesuaikan format
+            $studentsWithAbsenNumber = $students->map(function($user) use (&$absenNumber) {
+                // Increment nomor absen
+                $absen = $absenNumber;
+                $absenNumber++;
+
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'absen_number' => $absen,
+                ];
+            });
+
+            // Ambil kehadiran siswa untuk tanggal yang dipilih
+            $attendances = AttendanceStudent::whereIn('user_id', $students->pluck('id'))
+                ->whereDate('date', $today)
+                ->get();
+
+            // Ambil ID siswa yang hadir pada hari tersebut
+            $presentStudentIds = $attendances->pluck('user_id');
+
+            // Ambil ID siswa yang sakit dan izin
+            $leaves = Leave::whereIn('user_id', $students->pluck('id'))
+                ->where(function($query) use ($today) {
+                    $query->whereDate('start', '<=', $today)
+                          ->whereDate('end', '>=', $today);
+                })
+                ->whereIn('leave_type_id', $leaveTypes->values())
+                ->get();
+
+            $sickStudentIds = $leaves->where('leave_type_id', $leaveTypes['Sakit'])->pluck('user_id');
+            $permissionStudentIds = $leaves->where('leave_type_id', $leaveTypes['Izin'])->pluck('user_id');
+
+            // Ambil hanya siswa yang hadir
+            $presentStudents = $studentsWithAbsenNumber->filter(function($student) use ($presentStudentIds) {
+                return $presentStudentIds->contains($student['id']);
+            });
+
+            // Ambil hanya siswa yang sakit
+            $sickStudents = $studentsWithAbsenNumber->filter(function($student) use ($sickStudentIds) {
+                return $sickStudentIds->contains($student['id']);
+            });
+
+            // Ambil hanya siswa yang izin
+            $permissionStudents = $studentsWithAbsenNumber->filter(function($student) use ($permissionStudentIds) {
+                return $permissionStudentIds->contains($student['id']);
+            });
+
+            // $presentCount = $presentStudents->count();
+            // $sickCount = $sickStudents->count();
+            // $permissionCount = $permissionStudents->count();
+            $presentCount = AttendanceStudent::whereIn('user_id', $students->pluck('id'))
+            ->whereDate('date', $today)
+            ->count();
+
+            // Ambil jumlah siswa yang sakit untuk tanggal yang dipilih
+            $sickCount = Leave::whereIn('user_id', $students->pluck('id'))
+            ->where(function($query) use ($today, $leaveTypes) {
+                $query->where('leave_type_id', $leaveTypes['Sakit'])
+                    ->whereDate('start', '<=', $today)
+                    ->whereDate('end', '>=', $today);
+            })
+            ->count();
+
+            // Ambil jumlah siswa yang izin untuk tanggal yang dipilih
+            $permissionCount = Leave::whereIn('user_id', $students->pluck('id'))
+            ->where(function($query) use ($today, $leaveTypes) {
+                $query->where('leave_type_id', $leaveTypes['Izin'])
+                    ->whereDate('start', '<=', $today)
+                    ->whereDate('end', '>=', $today);
+            })
+            ->count();
+
+            // Hitung jumlah siswa yang tidak memiliki keterangan
+            $absentStudents = $studentsWithAbsenNumber->filter(function($student) use ($presentStudentIds, $sickStudentIds, $permissionStudentIds) {
+                return !($presentStudentIds->contains($student['id']) || $sickStudentIds->contains($student['id']) || $permissionStudentIds->contains($student['id']));
+            });
+
+            $coursesData[] = [
+                'course_name' => $course->name,
+                'total' => [
+                    'total_student' => $students->count(),
+                    'present' => $presentCount,
+                    'sick' => $sickCount,
+                    'permission' => $permissionCount,
+                    'absent' => $absentStudents->count(),
+                ],
+            ];
+        }
+
+        // Kelas dengan Jumlah Kehadiran Terendah
+        // $courseWithLowestAttendance = collect($coursesData)->sortBy(function ($course) {
+        //     return $course['total']['present'] + $course['total']['sick'] + $course['total']['permission'] + $course['total']['absent'];
+        // })->first();
+
+        // Kelas dengan Jumlah Siswa Sakit, Izin, dan Absen Terbanyak
+        $courseWithHighestAbsences = collect($coursesData)->sortByDesc(function ($course) {
+            return $course['total']['sick'] + $course['total']['permission'] + $course['total']['absent'];
+        })->first();
+
+        $courseNameWithHighestAbsences = $courseWithHighestAbsences['course_name'] ?? '';   
+                
+        // dd($coursesData);
 
         $response = [
             // Kehadiran
@@ -224,12 +340,13 @@ $classWithLeastAttendance = $classesWithAttendanceCount->sortBy('attendance_coun
                 'teacher_names' => $teacherNames,
                 'lesson_name' => $subjectNames,
                 'status' =>  $statusObject,
+                'data' => $coursesData
             ],
             // Kelas dengan jamkos terbanyak
-            'courses_with_least_attendance_this_week' => $coursesNamesWithLeastAttendanceThisWeek,
-            // 'class_with_most_empty_slots' => $courseWithMostEmptySlots ? $courseWithMostEmptySlots->name : '',
-            'class_with_least_attendance' => $classWithLeastAttendance ? $classWithLeastAttendance->name : '',
-            // 'studetn_status' => $leaveData,
+            'class_with_most_free_periods' => $coursesNamesWithLeastAttendanceThisWeek,
+            // Kelas dengan Jumlah Kehadiran Terendah
+            // 'class_with_lowest_attendance' => $courseWithLowestAttendance['course_name'] ?? '',
+            'class_with_highest_absent_percentage' => $courseNameWithHighestAbsences,
         ];
 
         return response()->json($response);

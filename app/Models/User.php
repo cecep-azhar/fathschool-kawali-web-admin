@@ -39,6 +39,7 @@ class User extends Authenticatable
         'role',
         'position',
         'department',
+        'date_of_birth',
         'face_embedding',
         'image_url',
         'fcm_token',

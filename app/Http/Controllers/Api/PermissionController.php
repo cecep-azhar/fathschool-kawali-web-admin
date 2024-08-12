@@ -28,28 +28,27 @@ class PermissionController extends Controller
     {
         // Validasi request
         $request->validate([
-            // 'leave_type_id' => [
-            //     'required',
-            //     'integer',
-            //     function ($attribute, $value, $fail) {
-            //         // Validasi leave_type_id berdasarkan role_type teacher
-            //         $leaveType = LeaveType::where('id', $value)
-            //             ->where('role_type', 'teacher')
-            //             ->first();
-
-            //         if (!$leaveType) {
-            //             $fail('The selected leave type is invalid for teachers.');
-            //         }
-            //     },
-            // ],
-            'leave_type_id' =>'required',
+            'leave_type_id' => 'required|integer',
             'title' => 'required|string|max:255',
             'start' => 'required|date',
             'end' => 'required|date',
-            // 'status' => 'required|in:pending,accepted,rejected',
             'description' => 'required|string',
             'image' => 'nullable|image|max:2048', // validasi untuk gambar, max 2MB
         ]);
+
+        // Cek apakah user sudah memiliki leave yang aktif pada hari ini
+        $today = date('Y-m-d');
+        $existingLeave = Leave::where('user_id', $request->user()->id)
+            ->where('start', '<=', $today)
+            ->where('end', '>=', $today)
+            ->where('status', '!=', 'rejected')
+            ->exists();
+
+        if ($existingLeave) {
+            return response()->json([
+                'message' => 'You already have an active leave during this period.'
+            ], 400);
+        }
 
         // Buat instance Leave baru
         $leave = new Leave();
@@ -87,6 +86,7 @@ class PermissionController extends Controller
         // Kembalikan respons
         return response()->json(['message' => 'Leave request created successfully'], 201);
     }
+
 
     public function show(Request $request, $id)
     {

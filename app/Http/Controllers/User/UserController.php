@@ -9,6 +9,7 @@ use App\Exports\TeacherExport;
 use App\Exports\TeacherRateExport;
 use App\Exports\StudentAttendanceExport;
 use App\Exports\StudentLeaveExport;
+use App\Exports\TeacherLateExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UserRequest;
 use App\Models\Course;
@@ -339,6 +340,18 @@ class UserController extends Controller
         return Excel::download($export, 'teachers.xlsx');
     }
 
+    public function teacherLateExport(Request $request)
+    {
+        $name = $request->name;
+        $month = $request->month;
+
+        // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
+        $export = new TeacherLateExport($name, $month);
+
+        // Download file Excel sesuai dengan filter
+        return Excel::download($export, 'teachers.xlsx');
+    }
+
     public function StudentAttendanceExport(Request $request)
     {
         $name = $request->name;
@@ -428,5 +441,19 @@ class UserController extends Controller
         $this->flashSuccess('User document deleted');
 
         return back();
+    }
+
+    public function getUsersByRole(Request $request)
+    {
+        $role = $request->query('role');
+
+        // Ensure role is valid
+        if (!in_array($role, ['Teacher', 'Student', 'Accountant'])) {
+            return response()->json([], 400);
+        }
+
+        $users = User::where('role', $role)->get(['id', 'name']);
+
+        return response()->json($users);
     }
 }

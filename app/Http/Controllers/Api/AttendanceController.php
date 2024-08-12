@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Attendance;
 use App\Models\ClassRoutine;
+use App\Models\Leave;
 use App\Models\Setting;
 use Carbon\Carbon;
 
@@ -35,37 +36,51 @@ class AttendanceController extends Controller
     //checkin
     public function checkin(Request $request)
     {
-        //validate lat and long
+        // Validate latitude and longitude
         $request->validate([
             'latitude' => 'required',
             'longitude' => 'required'
         ]);
 
-        //save new attendance
+        $setting = Setting::first();
+        $timeInSetting = $setting->time_in;
+
+        $currentTime = date('H:i:s');
+
+        $isLate = strtotime($currentTime) > strtotime($timeInSetting);
+
+        // Save new attendance
         $attendance = new Attendance;
         $attendance->user_id = $request->user()->id;
         $attendance->date = date('Y-m-d');
-        $attendance->time_in = date('H:i:s');
+        $attendance->time_in = $currentTime;
         $attendance->latlon_in = $request->latitude . ',' . $request->longitude;
         $attendance->save();
 
         $user = $request->user();
 
         activity()
-        ->useLog('default')
-        ->causedBy(auth()->user())
-        ->event('checkin')
-        ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username,
-                          'time' => date('H:i')])
+            ->useLog('default')
+            ->causedBy(auth()->user())
+            ->event('checkin')
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user' => $user->username,
+                'time' => date('H:i')
+            ])
+            ->log('User Check In');
 
-        ->log('User Check In');
+        $message = 'Checkin success';
+        if ($isLate) {
+            $message .= ' - Anda telat hari ini';
+        }
 
         return response([
-            'message' => 'Checkin success',
+            'message' => $message,
             'attendance' => $attendance
         ], 200);
     }
+
 
     //check is checkedin
     public function isCheckedin(Request $request)
@@ -86,43 +101,66 @@ class AttendanceController extends Controller
     //checkout
     public function checkout(Request $request)
     {
-        //validate lat and long
+        // Validate latitude and longitude
         $request->validate([
             'latitude' => 'required',
             'longitude' => 'required',
         ]);
 
-        //get today attendance
+        // Get today's attendance
         $attendance = Attendance::where('user_id', $request->user()->id)
             ->where('date', date('Y-m-d'))
             ->first();
 
-        //check if attendance not found
+        // Check if attendance not found
         if (!$attendance) {
             return response(['message' => 'Checkin first'], 400);
         }
 
-        //save checkout
-        $attendance->time_out = date('H:i:s');
+        // Get the time_out setting from the Settings model
+        $setting = Setting::first(); // Assume there's only one settings record
+        $timeOutSetting = $setting->time_out;
+
+        // Get the current time
+        $currentTime = date('H:i:s');
+
+        // Check if the user has an accepted leave that allows early checkout
+        $hasLeave = Leave::where('user_id', $request->user()->id)
+            ->where('status', 'accepted')
+            ->where('start', '<=', date('Y-m-d H:i:s'))
+            ->where('end', '>=', date('Y-m-d H:i:s'))
+            ->exists();
+
+        // Check if the user is attempting to check out before the allowed time
+        if (strtotime($currentTime) < strtotime($timeOutSetting) && !$hasLeave) {
+            return response(['message' => 'You cannot checkout before the allowed time unless you have an accepted leave.'], 400);
+        }
+
+        // Save checkout
+        $attendance->time_out = $currentTime;
         $attendance->latlon_out = $request->latitude . ',' . $request->longitude;
         $attendance->save();
 
         $user = $request->user();
 
         activity()
-        ->useLog('default')
-        ->causedBy(auth()->user())
-        ->event('checkout')
-        ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username,
-                          'time' => date('H:i')])
-        ->log('User Check Out');
+            ->useLog('default')
+            ->causedBy(auth()->user())
+            ->event('checkout')
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user' => $user->username,
+                'time' => date('H:i')
+            ])
+            ->log('User Check Out');
 
         return response([
             'message' => 'Checkout success',
             'attendance' => $attendance
         ], 200);
     }
+
+
 
     public function checkUpcomingClass(Request $request)
     {

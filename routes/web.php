@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Academic\AttendanceController as AcademicAttendanceController;
 use App\Http\Controllers\Academic\CourseController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AuthDashboardController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Setting\WebsiteSettingController;
 use App\Http\Controllers\Teacher\AttendanceController;
+use App\Http\Controllers\User\UserController;
 use App\Models\Currency;
 use App\Models\Language;
 use App\Models\User;
@@ -150,6 +152,9 @@ Route::get('courses/{id}/print-qr-code', [CourseController::class, 'printQrCode'
 Route::put('/course/{id}', [CourseController::class, 'update'])->name('course.update');
 Route::post('/forgot-password-admin', [ActivityLogController::class, 'passwordadmin'])->name('password.admin');
 Route::get('/student/leave', [ReportController::class, 'leaveStudent'])->name('student.leave');
+Route::get('/attendance/create', [AcademicAttendanceController::class, 'create'])->name('attendance.create');
+Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
+Route::get('/users/by-role', [UserController::class, 'getUsersByRole'])->name('users.byRole');
 
 
 

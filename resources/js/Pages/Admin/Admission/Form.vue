@@ -322,16 +322,16 @@
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 object-cover gap-4">
                             <label :for="'course' + index" v-for="(course, index) in courses" :key="index"
-                                :class="form.courses.includes(course.id) ? 'border-l-4 border-blue-500' : 'border-l-4 border-white'"
+                                :class="form.courses === course.id ? 'border-l-4 border-blue-500' : 'border-l-4 border-white'"
                                 class="bg-white dark:bg-gray-800 cursor-pointer shadow rounded-lg p-6 pb-4 relative z-30">
                                 <div class="flex justify-between items-center mb-4">
                                     <h5 class="text-2xl mb-0 font-medium text-gray-700 dark:text-gray-400">
                                         {{ course.name }}
                                     </h5>
                                     <div class="">
-                                        <input :checked="form.courses.includes(course.id)"
+                                        <input :checked="form.courses === course.id"
                                             @change="getPlan($event, course.id)"
-                                            class="rounded-full border border-gray-400 p-2 w-6 h-6" type="checkbox"
+                                            class="rounded-full border border-gray-400 p-2 w-6 h-6" type="radio"
                                             :id="'course' + index" name="courses" />
                                     </div>
                                 </div>
@@ -522,14 +522,14 @@ export default {
                 phone: this.admission ? this.admission.phone : '',
                 address: this.admission ? this.admission.address : '',
                 parents: this.admission_parents ?? [],
-                note: this.admission ? this.admission.profile.note : '',
-                blood_group: this.admission ? this.admission.profile.blood_group : '',
-                physical_disability: this.admission ? this.admission.profile.physical_disability : '',
-                religion: this.admission ? this.admission.profile.religion : '',
-                previous_school_name: this.admission ? this.admission.profile.previous_school_name : '',
-                previous_school_year_of_exist: this.admission ? this.admission.profile.previous_school_year_of_exist : '',
+                // note: this.admission ? this.admission.profile.note : '',
+                // blood_group: this.admission ? this.admission.profile.blood_group : '',
+                // physical_disability: this.admission ? this.admission.profile.physical_disability : '',
+                // religion: this.admission ? this.admission.profile.religion : '',
+                // previous_school_name: this.admission ? this.admission.profile.previous_school_name : '',
+                // previous_school_year_of_exist: this.admission ? this.admission.profile.previous_school_year_of_exist : '',
                 courses: this.user_courses ?? [],
-                plan: this.admission ? this.admission.profile.plan_id : '',
+                // plan: this.admission ? this.admission.profile.plan_id : '',
                 gender: this.admission ? this.admission.gender : '',
                 date_of_birth: this.admission ? this.admission.date_of_birth : '',
                 documents: [],

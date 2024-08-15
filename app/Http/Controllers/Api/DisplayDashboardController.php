@@ -61,9 +61,9 @@ class DisplayDashboardController extends Controller
             ->where('activation', $activeStatus)
             ->get();
 
-        $courses = Course::count();
+        $coursesCount = Course::count();
 
-        $attendanceData = $lessons->map(function ($lesson) use ($now, $today) {
+        $attendanceData = $lessons->map(function ($lesson) use ($today) {
             return [
                 'lesson_id' => $lesson->id,
                 'course_id' => $lesson->course_id,
@@ -73,15 +73,20 @@ class DisplayDashboardController extends Controller
                     ->count(),
             ];
         });
+        
+        $attendanceCount = $attendanceData->pluck('attendance_count');
+        
+        $attendedClassesCount = $attendanceCount->filter()->count();
 
-        $attendanceCount = $attendanceData->count();
-        $totalEmptyClass = $courses - $attendanceCount;
-        $classAttendancePercentage = $courses > 0 ? number_format(($attendanceCount / $courses) * 100, 2) . '%' : '0%';
+        $totalEmptyClass = $coursesCount - $attendedClassesCount;
+
+        $classAttendancePercentage = $coursesCount > 0 ? number_format(($attendedClassesCount / $coursesCount) * 100, 2) . '%' : '0%';
+
+        // dd($classAttendancePercentage);
 
         $courseName = Course::orderBy('id')->pluck('name');
         $coursePhotos = Course::orderBy('id')->pluck('photo');
 
-        // Jadwal guru di kelas berdasarkan jam sekarang
         $teacherNames = ClassRoutine::with('teacher')
             ->where('weekday', $weekRoutines)
             ->where('start_time', '<=', $now)
@@ -324,7 +329,7 @@ class DisplayDashboardController extends Controller
             'teacher_attendance_percentage' => $teacherAttendancePercentage,
             'class_attendance_percentage' => $classAttendancePercentage,
             // Kelas
-            'total_class' => $courses,
+            'total_class' => $coursesCount,
             'total_class_absent' => $totalEmptyClass,
             'course_name' => $courseName,
             // Quote

@@ -23,10 +23,12 @@ class SubjectController extends Controller
         abort_if(! userCan('academic.management'), 403);
 
         if ($request->has('course_id') && $request->filled('course_id')) {
-            $subjects = Subject::with('course')->where('course_id', $request->course_id)->latest()->paginate(9);
+            $query = Subject::with('course')->where('course_id', $request->course_id)->latest();
         } else {
-            $subjects = Subject::with('course')->latest()->paginate(9);
+            $query = Subject::with('course')->latest();
         }
+
+        $subjects = $query->paginate(15)->onEachSide(-1)->withQueryString();
 
         $classes = Course::latest()->get();
 

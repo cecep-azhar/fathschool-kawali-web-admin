@@ -17,7 +17,7 @@ class EventController extends Controller
     public function index()
     {
         abort_if(!userCan('event.index'), 403);
-
+        
         return inertia('Admin/Event/Index', [
             'all_events' => Event::latest()->paginate(15)->onEachSide(-1),
         ]);

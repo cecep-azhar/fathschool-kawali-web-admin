@@ -10,6 +10,7 @@ use App\Exports\TeacherRateExport;
 use App\Exports\StudentAttendanceExport;
 use App\Exports\StudentLeaveExport;
 use App\Exports\TeacherLateExport;
+use App\Exports\AllTeacherExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UserRequest;
 use App\Models\Course;
@@ -288,6 +289,7 @@ class UserController extends Controller
      */
     public function studentExport(Request $request)
     {
+        dd('doa');
         return Excel::download(new StudentExport($request->course), 'students.xlsx');
     }
 
@@ -350,6 +352,21 @@ class UserController extends Controller
 
         // Download file Excel sesuai dengan filter
         return Excel::download($export, 'teachers.xlsx');
+    }
+
+    public function AllTeacherExport(Request $request)
+    {
+        $name = $request->name;
+        $month = $request->month;
+
+        $name = $request->name;
+        $month = $request->month;
+
+        // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
+        $export = new AllTeacherExport($name, $month);
+
+        // Download file Excel sesuai dengan filter
+        return Excel::download($export, 'students.xlsx');
     }
 
     public function StudentAttendanceExport(Request $request)

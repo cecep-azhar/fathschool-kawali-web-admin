@@ -34,6 +34,9 @@
                         {{ __('All User') }}
                     </global-button>
                     </Link>
+                    <global-button :loading="false" @click="exportSubmit()" type="button" theme="sky">
+                    {{ __('Export') }}
+                    </global-button>
                     <global-button preserve-scroll :loading="false" type="link" cssClass="ml-2"
                         :url="route('users.create')" theme="primary">
                         {{ __('Create User') }}
@@ -189,6 +192,7 @@
 </template>
 
 <script>
+import { ref } from 'vue';
 import AppLayout from "@/Layouts/AppLayout.vue";
 import ToolTip from "@/Shared/ToolTip.vue";
 import { PencilSquareIcon, UsersIcon, TrashIcon, UserGroupIcon, MagnifyingGlassIcon, Square2StackIcon, EyeIcon, } from '@heroicons/vue/24/outline';
@@ -198,7 +202,9 @@ import { useForm } from '@inertiajs/inertia-vue3';
 import Multiselect from '@vueform/multiselect'
 import '@vueform/multiselect/themes/default.css';
 import TdUserShow from "@/Shared/TdUserShow.vue";
-import NothingFound from "@/Shared/NothingFound.vue"
+import NothingFound from "@/Shared/NothingFound.vue";
+import ExportModal from "@/Shared/Modal.vue";
+import axios from 'axios';
 
 export default {
     components: {
@@ -215,7 +221,8 @@ export default {
         MagnifyingGlassIcon,
         ShowModal,
         Multiselect,
-        NothingFound
+        NothingFound,
+        ExportModal
     },
     props: {
         users: Object,
@@ -230,6 +237,10 @@ export default {
         return {
             visible: false,
             show_user: "",
+            export_data: useForm({
+            type: 'Excel',
+            course: 'all'
+            }),
             filter: useForm({
                 keyword: this.query.keyword ?? '',
                 query: this.query.query ?? 'all',
@@ -260,6 +271,7 @@ export default {
                     title: "Others",
                     query: "other"
                 },
+                
             ]
         };
     },
@@ -291,7 +303,46 @@ export default {
             }, {
                 preserveScroll: true
             })
-        }
+        },
+        exportSubmit() {
+                this.loading = true;
+                let exportData = {};
+    
+                // Jika ada filter nama yang aktif
+                if (this.filter.query !== '') {
+                    exportData.query = this.filter.query;
+                }
+    
+                axios({
+                    url: this.route('all.user.export'),
+                    method: "POST",
+                    data: {
+                    ...this.export_data,
+                    ...exportData
+                    },
+                    headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    responseType: "blob",
+                }).then((response) => {
+                    console.log('asdjiwfuqhiqjdqwjdoiwqjdiow');
+                    let extension = this.export_data.type;
+                    var fileURL = window.URL.createObjectURL(new Blob([response.data]));
+                    var fileLink = document.createElement("a");
+    
+                    fileLink.href = fileURL;
+                    fileLink.setAttribute("download", "allteacher-report." + 'xlsx');
+                    document.body.appendChild(fileLink);
+    
+                    fileLink.click();
+    
+                    this.loading = false;
+                    this.visible = false;
+                }).catch((e) => {
+                    this.loading = false;
+                    this.visible = false;
+                });
+            }
     },
 };
 </script>

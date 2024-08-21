@@ -11,6 +11,7 @@ use App\Exports\StudentAttendanceExport;
 use App\Exports\StudentLeaveExport;
 use App\Exports\TeacherLateExport;
 use App\Exports\AllTeacherExport;
+use App\Exports\AllUserExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UserRequest;
 use App\Models\Course;
@@ -351,6 +352,21 @@ class UserController extends Controller
 
         // Download file Excel sesuai dengan filter
         return Excel::download($export, 'teachers.xlsx');
+    }
+
+    public function AllUserExport(Request $request)
+    {
+        $query = $request->query;
+
+        if ($query=='All') {
+            $query = '';
+        }
+
+        // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
+        $export = new AllUserExport($query);
+
+        // Download file Excel sesuai dengan filter
+        return Excel::download($export, 'students.xlsx');
     }
 
     public function AllTeacherExport(Request $request)

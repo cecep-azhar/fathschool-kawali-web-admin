@@ -11,13 +11,13 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Illuminate\Support\Facades\DB;
 
-class AllTeacherExport implements FromCollection, WithHeadings, WithMapping
+class AllUserExport implements FromCollection, WithHeadings, WithMapping
 {
-    protected $departement;
+    protected $query;
 
-    public function __construct($departement = null)
+    public function __construct($query = null)
     {
-        $this->departement = $departement;
+        $this->query = $query;
     }
 
     /**
@@ -25,15 +25,16 @@ class AllTeacherExport implements FromCollection, WithHeadings, WithMapping
      */
     public function collection()
     {
-        $query = User::query()->where('role', 'like', '%Teacher%');
+        $querys = User::query()->where('role', 'like', '%Student%');
 
-        if ($this->departement) {
-            $query->whereHas('user', function ($q) {
-                $q->where('role', 'like', '%' . $this->departement . '%');
+        if ($this->query) {
+            // Filter berdasarkan nama pengguna
+            $querys->whereHas('user', function ($q) {
+                $q->where('role', 'like', '%' . $this->query . '%');
             });
         }
 
-        return $query->get();
+        return $querys->get();
     }
 
     /**
@@ -41,15 +42,15 @@ class AllTeacherExport implements FromCollection, WithHeadings, WithMapping
      *
      * @return \Illuminate\Support\Collection
      */
-    public function map($allteacher): array
+    public function map($query): array
     {
         return [
-            $allteacher->id,
-            $allteacher->name, // assuming you have a relationship 'user' in Attendance model
-            $allteacher->username,
-            $allteacher->email,
-            $allteacher->phone,
-            $allteacher->role,
+            $query->id,
+            $query->name, // assuming you have a relationship 'user' in Attendance model
+            $query->username,
+            $query->email,
+            $query->phone,
+            $query->role,
         ];
     }
 

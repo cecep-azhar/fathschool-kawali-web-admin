@@ -11,6 +11,9 @@
                     {{ users.total }}
                 </badge>
                 <template #content>
+                    <global-button :loading="false" @click="exportSubmit()" type="button" theme="sky">
+                    {{ __('Export') }}
+                    </global-button>
                     <global-button :url="route('teachers.create')" type="link" theme="primary">
                         {{ __('Add Teachers') }}
                     </global-button>
@@ -237,6 +240,50 @@ export default {
             });
         },
     },
+    
+    exportSubmit() {
+      this.loading = true;
+      let exportData = {};
+
+      // Jika ada filter nama yang aktif
+      if (this.filter.name.trim() !== '') {
+        exportData.name = this.filter.name.trim();
+      }
+
+      // Jika ada filter bulan yang aktif
+      if (this.filter.month !== '') {
+        exportData.month = this.filter.month;
+      }
+
+      axios({
+        url: this.route('teacherattendance.export'),
+        method: "POST",
+        data: {
+          ...this.export_data,
+          ...exportData
+        },
+        headers: {
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        responseType: "blob",
+      }).then((response) => {
+        let extension = this.export_data.type;
+        var fileURL = window.URL.createObjectURL(new Blob([response.data]));
+        var fileLink = document.createElement("a");
+
+        fileLink.href = fileURL;
+        fileLink.setAttribute("download", "teacherattendance-report." + 'xlsx');
+        document.body.appendChild(fileLink);
+
+        fileLink.click();
+
+        this.loading = false;
+        this.visible = false;
+      }).catch((e) => {
+        this.loading = false;
+        this.visible = false;
+      });
+    }
 };
 </script>
 

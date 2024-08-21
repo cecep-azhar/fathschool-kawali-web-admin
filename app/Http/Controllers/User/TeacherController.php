@@ -18,7 +18,6 @@ class TeacherController extends Controller
     public function index(Request $request)
     {
         abort_if(! userCan('teacher.list'), 403);
-
         $query = User::active()->teacher()->latest()->with('department')->withCount('subjects');
 
         // filter => keyword

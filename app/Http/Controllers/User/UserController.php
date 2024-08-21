@@ -289,7 +289,6 @@ class UserController extends Controller
      */
     public function studentExport(Request $request)
     {
-        dd('doa');
         return Excel::download(new StudentExport($request->course), 'students.xlsx');
     }
 
@@ -356,14 +355,10 @@ class UserController extends Controller
 
     public function AllTeacherExport(Request $request)
     {
-        $name = $request->name;
-        $month = $request->month;
-
-        $name = $request->name;
-        $month = $request->month;
+        $departement = $request->departement;
 
         // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
-        $export = new AllTeacherExport($name, $month);
+        $export = new AllTeacherExport($departement);
 
         // Download file Excel sesuai dengan filter
         return Excel::download($export, 'students.xlsx');

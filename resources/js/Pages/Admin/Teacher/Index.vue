@@ -145,12 +145,16 @@
 </template>
 
 <script>
+import { ref } from 'vue';
 import AppLayout from "@/Layouts/AppLayout.vue";
 import ToolTip from "@/Shared/ToolTip.vue";
 import Pagination from "@/Shared/Admin/Pagination.vue";
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, EnvelopeIcon, EyeIcon, Square2StackIcon } from '@heroicons/vue/24/outline'
 import TdUserShow from "@/Shared/TdUserShow.vue";
 import NothingFound from "@/Shared/NothingFound.vue";
+import ExportModal from "@/Shared/Modal.vue";
+import { useForm } from "@inertiajs/inertia-vue3";
+import axios from 'axios';
 
 export default {
     components: {
@@ -164,7 +168,8 @@ export default {
         Square2StackIcon,
         MagnifyingGlassIcon,
         EnvelopeIcon,
-        NothingFound
+        NothingFound,
+        ExportModal
     },
     props: {
         users: Object,
@@ -183,6 +188,10 @@ export default {
                 course: this.filter_data.course ?? null,
                 department: this.filter_data.department ?? null,
             },
+            export_data: useForm({
+                type: 'Excel',
+                course: 'all'
+            }),
         };
     },
     created() {
@@ -239,51 +248,46 @@ export default {
                 user: user,
             });
         },
+        exportSubmit() {
+                
+            this.loading = true;
+            let exportData = {};
+
+            // Jika ada filter nama yang aktif
+            if (this.filter.department !== '') {
+                exportData.departement = this.filter.department;
+            }
+
+            axios({
+                url: this.route('all.teacher.export'),
+                method: "POST",
+                data: {
+                ...this.export_data,
+                ...exportData
+                },
+                headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                responseType: "blob",
+            }).then((response) => {
+                let extension = this.export_data.type;
+                var fileURL = window.URL.createObjectURL(new Blob([response.data]));
+                var fileLink = document.createElement("a");
+
+                fileLink.href = fileURL;
+                fileLink.setAttribute("download", "allteacher-report." + 'xlsx');
+                document.body.appendChild(fileLink);
+
+                fileLink.click();
+
+                this.loading = false;
+                this.visible = false;
+            }).catch((e) => {
+                this.loading = false;
+                this.visible = false;
+            });
+        }
     },
-    
-    exportSubmit() {
-      this.loading = true;
-      let exportData = {};
-
-      // Jika ada filter nama yang aktif
-      if (this.filter.name.trim() !== '') {
-        exportData.name = this.filter.name.trim();
-      }
-
-      // Jika ada filter bulan yang aktif
-      if (this.filter.month !== '') {
-        exportData.month = this.filter.month;
-      }
-
-      axios({
-        url: this.route('teacherattendance.export'),
-        method: "POST",
-        data: {
-          ...this.export_data,
-          ...exportData
-        },
-        headers: {
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        responseType: "blob",
-      }).then((response) => {
-        let extension = this.export_data.type;
-        var fileURL = window.URL.createObjectURL(new Blob([response.data]));
-        var fileLink = document.createElement("a");
-
-        fileLink.href = fileURL;
-        fileLink.setAttribute("download", "teacherattendance-report." + 'xlsx');
-        document.body.appendChild(fileLink);
-
-        fileLink.click();
-
-        this.loading = false;
-        this.visible = false;
-      }).catch((e) => {
-        this.loading = false;
-        this.visible = false;
-      });
-    }
 };
 </script>
 

@@ -116,7 +116,7 @@ class User extends Authenticatable
     public function setNameAttribute($value)
     {
         $this->attributes['name'] = $value;
-        $this->attributes['username'] = Str::slug($value).'_'.Str::random(5);
+        $this->attributes['username'] = Str::slug($value) . '_' . Str::random(5);
     }
 
     /**

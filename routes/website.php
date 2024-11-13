@@ -8,6 +8,7 @@ use App\Http\Controllers\Academic\ExamController;
 use App\Http\Controllers\Academic\ExamResultController;
 use App\Http\Controllers\Academic\GradeController;
 use App\Http\Controllers\Academic\ResultRuleController;
+use App\Http\Controllers\Academic\StudyProgramController;
 use App\Http\Controllers\Academic\SyllabusController;
 use App\Http\Controllers\AuthDashboardController;
 use App\Http\Controllers\Cms\CmsController;
@@ -29,12 +30,14 @@ use App\Http\Controllers\Sms\TemplateController;
 use App\Http\Controllers\Subject\SubjectController;
 use App\Http\Controllers\Transaction\TransactionController;
 use App\Http\Controllers\Transaction\TransactionTypeController;
+use App\Http\Controllers\User\AdministrationController;
 use App\Http\Controllers\User\AdmissionFormController;
 use App\Http\Controllers\User\SingleTeacherController;
 use App\Http\Controllers\User\StudentAttendanceController;
 use App\Http\Controllers\User\StudentController;
 use App\Http\Controllers\User\StudentDashboardController;
 use App\Http\Controllers\User\TeacherController;
+
 use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -71,6 +74,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::resource('departments', DepartmentController::class);
         // Course Routes
         Route::resource('course', CourseController::class);
+        // Study Program Routes
+        Route::resource('study_programs', StudyProgramController::class);
         Route::controller(CourseController::class)->group(function () {
             Route::post('api/class/store', 'apiClassStore')->name('api.class.store');
             Route::post('api/class/index', 'apiClassIndex')->name('api.class.index');
@@ -87,6 +92,18 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::get('teacher/details/{teacher}', 'show')->name('teacher.show');
             Route::post('teacher/class/assign', 'classAssign')->name('teacher.class.assign');
         });
+
+        Route::controller(AdministrationController::class)->group(function () {
+            Route::get('administrations', 'index')->name('administrations.index');
+            Route::get('administrations/create', 'create')->name('administrations.create');
+            Route::get('administrations/edit/{teacher}', 'edit')->name('administrations.edit');
+            Route::post('administration/send/mail', 'sendMail')->name('administration.send.mail');
+            Route::get('administration/classes/{teacher}', 'classes')->name('administration.classes');
+            Route::get('administration/details/{teacher}', 'show')->name('administration.show');
+            Route::post('administration/class/assign', 'classAssign')->name('administration.class.assign');
+        });
+
+
         // Leave Routes
         Route::resource('manage-leave', AdminLeaveController::class);
         Route::post('leave/status/change/{leave}', [AdminLeaveController::class, 'statusChange'])->name('leave.status.change');

@@ -205,6 +205,18 @@
             </Link>
         </NavLink>
     </li>
+    <li class="teachers_section">
+        <NavLink :href="route('administrations.index')" :active="route().current('administrations.*') ||
+            route().current('administration.classes')
+            " class="hover-icons">
+            <UsersIcon class="w-5 h-5" />
+            {{ __("All Administrations") }}
+            <div class="flex-grow"></div>
+            <Link :href="route('administrations.create')">
+            <PlusCircleIcon class="w-5 h-5 hoverPlus" />
+            </Link>
+        </NavLink>
+    </li>
     <li v-if="can('holiday.index')" class="holiday_section">
         <NavLink :href="route('holiday.index')" :active="route().current('holiday.*')">
             <CalendarIcon class="w-5 h-5" />

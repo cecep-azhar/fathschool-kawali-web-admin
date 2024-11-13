@@ -194,6 +194,12 @@ class User extends Authenticatable
         return $this->where('role', 'Teacher');
     }
 
+     // Scope |  user filter as Administration
+     public function scopeAdministration($query)
+     {
+         return $this->where('role', 'Administration');
+     }
+
     // Scope |  user filter as Accountant
     public function scopeAccountant($query)
     {

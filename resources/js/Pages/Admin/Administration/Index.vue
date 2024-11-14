@@ -11,9 +11,9 @@
                     {{ users.total }}
                 </badge>
                 <template #content>
-                    <global-button :loading="false" @click="exportSubmit()" type="button" theme="sky">
+                    <!-- <global-button :loading="false" @click="exportSubmit()" type="button" theme="sky">
                     {{ __('Export') }}
-                    </global-button>
+                    </global-button> -->
                     <global-button :url="route('administrations.create')" type="link" theme="primary">
                         {{ __('Add Administrations') }}
                     </global-button>
@@ -86,7 +86,7 @@
                                             <EnvelopeIcon class="text-purple-400 hover:text-purple-300" />
                                             <tool-tip :text="__('Send Mail')" />
                                         </button>
-                                        <Link preserve-scroll :href="route(
+                                        <!-- <Link preserve-scroll :href="route(
                                                     'administration.classes',
                                                     user.id
                                                 )
@@ -97,7 +97,7 @@
                                             class="inline-flex dark:text-gray-400 absolute z-10 -top-4 -right-2 justify-center items-center w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full border-2 border-white dark:border-gray-900">
                                             {{ user.subjects_count }}
                                         </div>
-                                        </Link>
+                                        </Link> -->
                                         <Link preserve-scroll :href="route('administration.show', user.id)
                                             " class="group relative">
                                         <eye-icon class="w-6 h-6 text-pink-400 hover:text-pink-300" />
@@ -232,7 +232,7 @@ export default {
         },
         filterData() {
             this.loading = true;
-            this.$inertia.get(this.route("Administrations.index"), this.filter, {
+            this.$inertia.get(this.route("administrations.index"), this.filter, {
                 preserveScroll: true,
                 onSuccess: () => { },
                 onFinish: (visit) => {
@@ -244,7 +244,7 @@ export default {
             return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0;
         },
         sendMail(user) {
-            this.$inertia.post(this.route("Administration.send.mail"), {
+            this.$inertia.post(this.route("administration.send.mail"), {
                 user: user,
             });
         },
@@ -259,7 +259,7 @@ export default {
             }
 
             axios({
-                url: this.route('all.Administration.export'),
+                url: this.route('all.administration.export'),
                 method: "POST",
                 data: {
                 ...this.export_data,

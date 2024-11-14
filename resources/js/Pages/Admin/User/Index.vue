@@ -66,6 +66,7 @@
                                 { 'label': 'Parents', 'value': 'Parent' },
                                 { 'label': 'Admission', 'value': 'Student' },
                                 { 'label': 'Teachers', 'value': 'Teacher' },
+                                { 'label': 'Administrations', 'value': 'Administration' },
                                 { 'label': 'Accountant', 'value': 'Other' },
                             ]" autocomplete="off" />
                     </div>
@@ -230,6 +231,7 @@ export default {
         parents: Number,
         students: Number,
         teachers: Number,
+        administrations: Number,
         others: Number,
         query: Object,
     },
@@ -267,11 +269,16 @@ export default {
                     query: "teacher"
                 },
                 {
+                    data: this.administrations,
+                    title: "Total Administrations",
+                    query: "administration"
+                },
+                {
                     data: this.others,
                     title: "Others",
                     query: "other"
                 },
-                
+
             ]
         };
     },
@@ -307,12 +314,12 @@ export default {
         exportSubmit() {
                 this.loading = true;
                 let exportData = {};
-    
+
                 // Jika ada filter nama yang aktif
                 if (this.filter.query !== '') {
                     exportData.query = this.filter.query;
                 }
-    
+
                 axios({
                     url: this.route('all.user.export'),
                     method: "POST",
@@ -329,13 +336,13 @@ export default {
                     let extension = this.export_data.type;
                     var fileURL = window.URL.createObjectURL(new Blob([response.data]));
                     var fileLink = document.createElement("a");
-    
+
                     fileLink.href = fileURL;
                     fileLink.setAttribute("download", "allteacher-report." + 'xlsx');
                     document.body.appendChild(fileLink);
-    
+
                     fileLink.click();
-    
+
                     this.loading = false;
                     this.visible = false;
                 }).catch((e) => {

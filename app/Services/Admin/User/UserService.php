@@ -23,7 +23,7 @@ class UserService
 
         $data['users'] = User::with('roles', 'profile')->latest()->withCount('subjects')
             ->when($term && $term != null && $term != 'All' && $term == 'Other', function ($query) {
-                $query->whereNotIn('role', ['Admin', 'Parent', 'Student', 'Teacher']);
+                $query->whereNotIn('role', ['Admin', 'Parent', 'Student', 'Teacher', 'Administration']);
             })
             ->when($term && $term != null && $term != 'All' && $term != 'Other', function ($query) use ($term) {
                 $query->where('role', $term);
@@ -44,13 +44,16 @@ class UserService
         $data['parents'] = User::latest()->parent()->count();
         $data['students'] = User::student()->count();
         $data['teachers'] = User::teacher()->count();
+        $data['administrations'] = User::administration()->count();
         $data['query'] = $request;
         $data['others'] = User::whereNotIn('role', [
             'Admin',
             'Parent',
             'Student',
             'Teacher',
+            'Administration',
         ])->count();
+
 
         return $data;
     }

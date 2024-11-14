@@ -16,29 +16,29 @@
                         <div class="w-full">
                             <div class="my-2 flex items-center">
                                 <div>
-                                    <img class="w-24 h-24 object-cover rounded-lg" :src="Administration.profile_photo_url"
+                                    <img class="w-24 h-24 object-cover rounded-lg" :src="administration.profile_photo_url"
                                         alt="" />
                                 </div>
                                 <div class="ml-3">
                                     <h2 class="dark:text-gray-400 text-lg font-bold">
-                                        {{ Administration.name }}
+                                        {{ administration.name }}
                                     </h2>
                                     <h2 class="dark:text-gray-400 text-sm text-gray-500">
                                         <span
                                             class="border-blue-100 border-2 w-full text-gray-600 px-4 text-xs font-semibold mr-2 py-0.5 rounded dark:bg-blue-200 dark:text-blue-800">
-                                            {{ Administration.role }}
+                                            {{ administration.role }}
                                         </span>
                                     </h2>
                                 </div>
                             </div>
-                            <h2 class="dark:text-gray-400" v-if="Administration.department">
-                                {{ __('Department') }}: {{ Administration.department.name }}
+                            <h2 class="dark:text-gray-400" v-if="administration.department">
+                                {{ __('Department') }}: {{ administration.department.name }}
                             </h2>
                             <h2 class="dark:text-gray-400">
-                                {{ __('Phone') }}: {{ Administration.phone }}
+                                {{ __('Phone') }}: {{ administration.phone }}
                             </h2>
                             <h2 class="dark:text-gray-400">
-                                {{ __('Address') }}: {{ Administration.address }}
+                                {{ __('Address') }}: {{ administration.address }}
                             </h2>
                         </div>
                     </div>
@@ -47,7 +47,7 @@
                             class="w-full mt-1 md:mt-0 dark:bg-gray-800 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                             <div
                                 class="p-4 text-gray-700 rounded font-bold bg-white dark:bg-gray-700 dark:text-gray-400">
-                                {{ __('Administration Documents') }}
+                                {{ __('administration Documents') }}
                             </div>
                             <global-table class="py-0 bg-white mt-1">
                                 <template #head>
@@ -59,8 +59,8 @@
                                     </th>
                                 </template>
                                 <template #body>
-                                    <template v-if="Administration.documents.length > 0">
-                                        <template v-for="document in Administration.documents" :key="document.id">
+                                    <template v-if="administration.documents.length > 0">
+                                        <template v-for="document in administration.documents" :key="document.id">
                                             <tr
                                                 class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                                                 <td class="py-4 px-6">
@@ -90,7 +90,7 @@
                             class="w-full mt-1 md:mt-0 dark:bg-gray-800 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                             <div
                                 class="p-4 text-gray-700 rounded font-bold bg-white dark:bg-gray-700 dark:text-gray-400">
-                                {{ __('Administration Academic Details') }}
+                                {{ __('administration Academic Details') }}
                             </div>
                             <div class="bg-white mt-1 p-4 rounded-lg">
                                 <div class="flex gap-2 items-center">
@@ -99,8 +99,8 @@
                                     </div>
                                     <div>
                                         {{
-                                        Administration.profile
-                                        ? Administration.profile
+                                        administration.profile
+                                        ? administration.profile
                                         .highest_degree_name
                                         : ""
                                         }}
@@ -112,8 +112,8 @@
                                     </div>
                                     <div>
                                         {{
-                                        Administration.profile
-                                        ? Administration.profile.institute_name
+                                        administration.profile
+                                        ? administration.profile.institute_name
                                         : ""
                                         }}
                                     </div>
@@ -124,8 +124,8 @@
                                     </div>
                                     <div>
                                         {{
-                                        Administration.profile
-                                        ? Administration.profile.passing_year
+                                        administration.profile
+                                        ? administration.profile.passing_year
                                         : ""
                                         }}
                                     </div>
@@ -136,8 +136,8 @@
                                     </div>
                                     <div>
                                         {{
-                                        Administration.profile
-                                        ? Administration.profile.religion
+                                        administration.profile
+                                        ? administration.profile.religion
                                         : ""
                                         }}
                                     </div>
@@ -148,8 +148,8 @@
                                     </div>
                                     <div class="capitalize">
                                         {{
-                                        Administration.profile
-                                        ? Administration.profile.nationality
+                                        administration.profile
+                                        ? administration.profile.nationality
                                         : ""
                                         }}
                                     </div>
@@ -157,9 +157,9 @@
                             </div>
                         </div>
                     </div>
-                    <template v-if="Administration.subjects.length > 0">
+                    <template v-if="administration.subjects.length > 0">
                         <div class="card bg-white dark:bg-gray-700 rounded-lg dark:text-gray-400"
-                            v-for="course in Administration.subjects" :key="course.id">
+                            v-for="course in administration.subjects" :key="course.id">
                             <div class="flex justify-between px-6 pt-6 pb-2.5">
                                 <h2 class="text-[#000] dark:text-gray-400 m-0 font-medium">
                                     {{ course.subject.name }}
@@ -247,7 +247,7 @@
 
     export default {
         props: {
-            Administration: Object,
+            administration: Object,
             courses: Object,
         },
         components: {
@@ -262,7 +262,7 @@
                 course: [],
                 form: {
                     subjects: [],
-                    Administration: this.Administration.id,
+                    administration: this.administration.id,
                     destroy: false,
                 },
             };
@@ -291,7 +291,7 @@
                 this.loading = true;
                 this.form.destroy = false;
                 this.$inertia.post(
-                    this.route("Administration.class.assign"),
+                    this.route("administration.class.assign"),
                     this.form,
                     {
                         onSuccess: (page) => {
@@ -307,7 +307,7 @@
                 if (confirm("Are you sure ?")) {
                     this.form.destroy = true;
                     this.$inertia.post(
-                        this.route("Administration.class.assign"),
+                        this.route("administration.class.assign"),
                         { class: arg, destroy: true },
                         {
                             onSuccess: (page) => {

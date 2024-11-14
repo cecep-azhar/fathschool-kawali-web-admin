@@ -76,6 +76,7 @@ class TeacherController extends Controller
         $departments = Department::latest()->get();
 
         $teacher->load('subjects', 'profile', 'documents');
+
         $subjects = $teacher->subjects->map(function ($q) {
             return $q->subject_id;
         });

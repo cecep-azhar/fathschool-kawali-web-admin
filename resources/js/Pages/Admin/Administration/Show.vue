@@ -13,31 +13,31 @@
                     <div
                         class="flex flex-wrap bg-gray-200/50 hover:bg-gray-200 rounded-lg transition py-1 px-2 dark:bg-gray-700 dark:hover:bg-gray-700/70">
 
-                        <Link :href="route('administration.show', Administration.id)"
+                        <Link :href="route('administration.show', teacher.id)"
                             :data="{ tab:'details' }"
                             :class="!request_data.tab || request_data.tab === 'details' ? 'bg-white dark:bg-gray-500': ''"
                             class=" cursor-pointer text-gray-700 whitespace-nowrap text-xs hover:text-gray-700 rounded-md py-2 px-3 dark:text-gray-400 dark:hover:text-gray-300 font-bold">
                             {{ __('Details') }}
                         </Link>
-                        <Link :href="route('administration.show', Administration.id)"
+                        <!-- <Link :href="route('administration.show', teacher.id)"
                             :data="{ tab:'subject' }"
                              :class="request_data.tab == 'subject' ? 'bg-white dark:bg-gray-500': ''"
                             class=" cursor-pointer text-gray-700 whitespace-nowrap text-xs hover:text-gray-700 rounded-md py-2 px-3 dark:text-gray-400 dark:hover:text-gray-300 font-bold">
                             {{ __('Subject') }}
-                        </Link>
-                        <Link :href="route('administration.show', Administration.id)"
+                        </Link> -->
+                        <Link :href="route('administration.show', teacher.id)"
                             :data="{ tab:'assignments' }"
                             :class="request_data.tab == 'assignments' ? 'bg-white dark:bg-gray-500': ''"
                             class=" cursor-pointer text-gray-700 whitespace-nowrap text-xs hover:text-gray-700 rounded-md py-2 px-3 dark:text-gray-400 dark:hover:text-gray-300 font-bold">
                             {{ __('Assignments') }}
                         </Link>
-                        <Link @:href="route('administration.show', Administration.id)"
+                        <!-- <Link @:href="route('administration.show', teacher.id)"
                             :data="{ tab:'online-classes' }"
                             :class="request_data.tab == 'online-classes' ? 'bg-white dark:bg-gray-500': ''"
                             class=" cursor-pointer text-gray-700 whitespace-nowrap text-xs hover:text-gray-700 rounded-md py-2 px-3 dark:text-gray-400 dark:hover:text-gray-300 font-bold">
                             {{ __('Online Classes') }}
-                        </Link>
-                        <Link :href="route('administration.show', Administration.id)"
+                        </Link> -->
+                        <Link :href="route('administration.show', teacher.id)"
                             :data="{ tab:'leave-history' }"
                             :class="request_data.tab == 'leave-history' ? 'bg-white dark:bg-gray-500': ''"
                             class=" cursor-pointer text-gray-700 whitespace-nowrap text-xs hover:text-gray-700 rounded-md py-2 px-3 dark:text-gray-400 dark:hover:text-gray-300 font-bold">
@@ -51,18 +51,18 @@
                     <div class="flex flex-col lg:flex-row gap-6">
                         <div class="bg-white dark:bg-gray-800 p-6 rounded-lg flex lg:w-2/3">
                             <div>
-                                <img width="110" height="110" class="rounded" :src="Administration.profile_photo_url" :alt="Administration.name">
+                                <img width="110" height="110" class="rounded" :src="teacher.profile_photo_url" :alt="teacher.name">
                             </div>
                             <div class="ml-8">
                                 <div class="col-span-1 md:col-span-2 dark:text-gray-400 text-2xl font-bold">
-                                    {{ Administration.name }}
+                                    {{ teacher.name }}
                                 </div>
                                 <div class="mt-2">
                                     <span class="font-semibold text-md dark:text-gray-400">
                                         {{ __('Department') }} :
                                     </span>
                                     <span class="text-sm font-normal dark:text-gray-400">
-                                        {{ Administration.department ? Administration.department.name : '-' }}
+                                        {{ teacher.department ? teacher.department.name : '-' }}
                                     </span>
                                 </div>
                                 <div>
@@ -70,7 +70,7 @@
                                         {{ __('Date Of Birth') }} :
                                     </span>
                                     <span class="text-sm font-normal dark:text-gray-400">
-                                        {{ formatTime(Administration.date_of_birth) }}
+                                        {{ formatTime(teacher.date_of_birth) }}
                                     </span>
                                 </div>
                                 <div>
@@ -78,7 +78,7 @@
                                         {{ __('Created') }} :
                                     </span>
                                     <span class="text-sm font-normal dark:text-gray-400">
-                                        {{ formatTime(Administration.create_at) }}
+                                        {{ formatTime(teacher.create_at) }}
                                     </span>
                                 </div>
                             </div>
@@ -86,20 +86,20 @@
                         <div class="bg-white rounded-lg dark:bg-gray-800 dark:text-gray-400 lg:w-1/3">
                             <div class="py-4">
                                 <div class="px-6 pb-2 flex space-x-4 space-y-2 mt-2 font-bold text-lg border-b">
-                                    {{ __('Administration Information') }}
+                                    {{ __('Teacher Information') }}
                                 </div>
                                 <div class="px-4 py-2">
                                     <div class="capitalize text-base">
-                                        {{ __('Email') }}: {{ Administration.email }}
+                                        {{ __('Email') }}: {{ teacher.email }}
                                     </div>
                                     <div class="capitalize text-base">
-                                        {{ __('Phone') }}: {{ Administration.phone }}
+                                        {{ __('Phone') }}: {{ teacher.phone }}
                                     </div>
                                     <div class="capitalize text-base">
-                                        {{ __('Address') }}: {{ Administration.address }}
+                                        {{ __('Address') }}: {{ teacher.address }}
                                     </div>
                                     <div class="capitalize text-base">
-                                        {{ __('Gender') }}: {{ Administration.gender }}
+                                        {{ __('Gender') }}: {{ teacher.gender }}
                                     </div>
                                 </div>
                             </div>
@@ -246,7 +246,7 @@ import Pagination from '@/Shared/Admin/Pagination.vue';
 import NothingFound from "@/Shared/NothingFound.vue";
 import dayjs, { Dayjs } from 'dayjs';
 import SingleAssignment from '../../Student/SingleAssignment.vue'
-import SingleOnlineClass from '../../Administration/SingleOnlineClass.vue'
+import SingleOnlineClass from '../../Teacher/SingleOnlineClass.vue'
 
 export default {
     components: {
@@ -257,7 +257,7 @@ export default {
         SingleOnlineClass
     },
     props: {
-        Administration: Object,
+        teacher: Object,
         leaves: Object,
         assignments: Object,
         subjects: Object,

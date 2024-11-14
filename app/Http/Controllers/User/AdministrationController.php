@@ -18,6 +18,8 @@ class AdministrationController extends Controller
 {
     public function index(Request $request)
     {
+        abort_if(! userCan('teacher.list'), 403);
+
         $query = User::active()->administration()->latest()->with('department')->with('subjects');
 
         // filter => keyword
@@ -45,6 +47,8 @@ class AdministrationController extends Controller
 
     public function create()
     {
+        abort_if(! userCan('teacher.list'), 403);
+
         $path = base_path('public/json/nationalities.json');
         $nationalities = json_decode(file_get_contents($path), true);
         $departments = Department::latest()->get();
@@ -56,32 +60,37 @@ class AdministrationController extends Controller
         ]);
     }
 
-    public function edit(User $administration)
+    public function edit(User $teacher)
     {
+        abort_if(! userCan('teacher.list'), 403);
+
         $path = base_path('public/json/nationalities.json');
         $nationalities = json_decode(file_get_contents($path), true);
         $departments = Department::latest()->get();
 
-        $administration->load('subjects', 'profile', 'documents');
-        $subjects = $administration->subjects->map(function ($q) {
+        $teacher->load('subjects', 'profile', 'documents');
+
+        $subjects = $teacher->subjects->map(function ($q) {
             return $q->subject_id;
         });
 
         return inertia('Admin/Administration/Form', [
             'courses' => Course::with('subjects')->get(['id', 'name', 'slug']),
             'nationalities' => $nationalities,
-            'administration' => $administration,
+            'administration' => $teacher,
             'subjects' => $subjects,
             'departments' => $departments,
         ]);
     }
 
-    public function show(Request $request, User $administration)
+    public function show(Request $request, User $teacher)
     {
-        $administration->load('department');
-        $leaves = $administration->leaves()->latest()->paginate(15)->onEachSide(-1)->withQueryString();
+        abort_if(! userCan('users.show'), 403);
 
-        $query = $administration->assignments()->with('subject', 'administration', 'class:id,name');
+        $teacher->load('department');
+        $leaves = $teacher->leaves()->latest()->paginate(15)->onEachSide(-1)->withQueryString();
+
+        $query = $teacher->assignments()->with('subject', 'administartion', 'class:id,name');
         $assignments = $query
             ->latest('end_date')
             ->paginate(15)->onEachSide(-1)->withQueryString();
@@ -89,7 +98,7 @@ class AdministrationController extends Controller
         $assignments->setCollection($assignments->groupBy('assignment_status'));
         $assignments->append(['submissions', 'students', 'total_mark', 'assignment_status']);
 
-        $subjects = $administration->subjects()->with(['subject.course'])->latest()->get()->transform(function ($data) {
+        $subjects = $teacher->subjects()->with(['subject.course'])->latest()->get()->transform(function ($data) {
             $data->total_students = $data->subject->course->students->count();
 
             return $data;
@@ -101,16 +110,16 @@ class AdministrationController extends Controller
             }]);
         });
 
-        $online_classes_query = $administration->online_classes()->with(['course:id,name', 'subject:id,name', 'administration:id,name']);
+        $online_classes_query = $teacher->online_classes()->with(['course:id,name', 'subject:id,name', 'teacher:id,name']);
         $online_classes = $online_classes_query->latest('start_time')->paginate(15)->onEachSide(-1)->withQueryString();
         // This will replace data property of the pagination
         $online_classes->setCollection($online_classes->groupBy('online_class_status'));
         $online_classes->append(['online_class_status']);
 
-        $documents = $administration->documents()->latest()->paginate(20)->onEachSide(0)->withQueryString();
+        $documents = $teacher->documents()->latest()->paginate(20)->onEachSide(0)->withQueryString();
 
         return inertia('Admin/Administration/Show', [
-            'administration' => $administration,
+            'teacher' => $teacher,
             'leaves' => $leaves,
             'assignments' => $assignments,
             'subjects' => $subjects,
@@ -120,19 +129,23 @@ class AdministrationController extends Controller
         ]);
     }
 
-    public function classes(User $administration)
+    public function classes(User $teacher)
     {
-        $administration->load('subjects.subject.course', 'department', 'profile', 'documents');
+        abort_if(! userCan('teacher.list'), 403);
+
+        $teacher->load('subjects.subject.course', 'department', 'profile', 'documents');
         $courses = Course::with('subjects')->get();
 
-        return inertia()->render('Admin/Teacher/Class/Index', [
-            'administration' => $administration,
+        return inertia()->render('Admin/Administration/Class/Index', [
+            'administration' => $teacher,
             'courses' => $courses,
         ]);
     }
 
     public function classAssign(Request $request)
     {
+        abort_if(! userCan('teacher.list'), 403);
+
         if ($request->destroy != true) {
             $request->validate([
                 'subjects' => 'required',

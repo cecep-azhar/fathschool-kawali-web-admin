@@ -8,11 +8,11 @@
             <div
                 class="rounded-lg flex justify-between items-center mb-4 py-4 px-6 text-lg font-semibold rtl:text-right text-left text-gray-900 bg-white dark:text-white dark:bg-gray-800">
                 <div class="dark:text-gray-400">
-                    {{ __('Administration Create') }}
+                    {{ __('administration Create') }}
                 </div>
                 <Link preserve-scroll :href="route('administrations.index')">
                 <global-button :loading="false" type="button" theme="primary">
-                    {{ __('All Administrations') }}
+                    {{ __('All administrations') }}
                 </global-button>
                 </Link>
             </div>
@@ -198,8 +198,8 @@
                                             </global-button>
                                         </div>
                                     </div>
-                                    <div class="flex flex-wrap gap-3 p-1" v-if="Administration && Administration.documents.length > 0">
-                                        <div class="relative mt-2" v-for="(doc, index) in Administration.documents" :key="doc.id">
+                                    <div class="flex flex-wrap gap-3 p-1" v-if="administration && administration.documents.length > 0">
+                                        <div class="relative mt-2" v-for="(doc, index) in administration.documents" :key="doc.id">
                                             <a :href="doc.file_url_format" download>
                                                 {{ __('Download Document') }} ({{ index + 1 }})
                                             </a>
@@ -302,48 +302,48 @@ export default {
     props: {
         courses: Object,
         nationalities: Array,
-        Administration: Object,
+        administration: Object,
         subjects: Array,
         departments: Object,
     },
     data() {
         return {
             wizard: 1,
-            date_of_birth_value: this.Administration ? this.Administration.date_of_birth ? dayjs(this.Administration.date_of_birth) : null : null,
-            passing_year_value: this.Administration ? this.Administration.profile ? dayjs(this.Administration.profile.passing_year) : null : null,
+            date_of_birth_value: this.administration ? this.administration.date_of_birth ? dayjs(this.administration.date_of_birth) : null : null,
+            passing_year_value: this.administration ? this.administration.profile ? dayjs(this.administration.profile.passing_year) : null : null,
             validate_errors: {},
             document_size: [1],
             form: useForm({
-                name: this.Administration ? this.Administration.name : "",
-                email: this.Administration ? this.Administration.email : "",
+                name: this.administration ? this.administration.name : "",
+                email: this.administration ? this.administration.email : "",
                 user_type: "Administration",
-                phone: this.Administration ? this.Administration.phone : "",
-                address: this.Administration ? this.Administration.address : "",
-                gender: this.Administration ? this.Administration.gender : "",
-                department: this.Administration ? this.Administration.department_id : "",
-                date_of_birth: this.Administration
-                    ? this.Administration.date_of_birth
+                phone: this.administration ? this.administration.phone : "",
+                address: this.administration ? this.administration.address : "",
+                gender: this.administration ? this.administration.gender : "",
+                department: this.administration ? this.administration.department_id : "",
+                date_of_birth: this.administration
+                    ? this.administration.date_of_birth
                     : "",
                 documents: [],
                 document_titles: [],
 
-                highest_degree_name: this.Administration
-                    ? this.Administration.profile ? this.Administration.profile.highest_degree_name : null
+                highest_degree_name: this.administration
+                    ? this.administration.profile ? this.administration.profile.highest_degree_name : null
                     : null,
-                institute_name: this.Administration
-                    ? this.Administration.profile ? this.Administration.profile.institute_name : null
+                institute_name: this.administration
+                    ? this.administration.profile ? this.administration.profile.institute_name : null
                     : null,
-                passing_year: this.Administration
-                    ? this.Administration.profile ? this.Administration.profile.passing_year : null
+                passing_year: this.administration
+                    ? this.administration.profile ? this.administration.profile.passing_year : null
                     : null,
-                religion: this.Administration
-                    ? this.Administration.profile ? this.Administration.profile.religion : null
+                religion: this.administration
+                    ? this.administration.profile ? this.administration.profile.religion : null
                     : null,
-                nationality: this.Administration
-                    ? this.Administration.profile ? this.Administration.profile.nationality : null
+                nationality: this.administration
+                    ? this.administration.profile ? this.administration.profile.nationality : null
                     : null,
                 subjects: this.subjects ? this.subjects : [],
-                _method: this.Administration ? "PUT" : "POST",
+                _method: this.administration ? "PUT" : "POST",
             }),
         };
     },
@@ -400,9 +400,9 @@ export default {
                 this.form.date_of_birth = null;
             }
 
-            if (this.Administration) {
+            if (this.administration) {
                 this.form.post(
-                    this.route("users.update", this.Administration.id),
+                    this.route("users.update", this.administration.id),
                     {
                         preserveScroll: true,
                     }

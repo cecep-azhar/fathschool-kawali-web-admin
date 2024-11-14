@@ -1,19 +1,19 @@
 <template>
     <AppLayout :title="__('Teacher / Adminstartion Leave Type')">
         <Breadcrumb>
-            <BreadcrumbLink :href="route('manage-leave.index')" title="Teacher / Adminstartion Leave" />
-            <BreadcrumbLink :title="__('Teacher / Adminstartion Leave Type')" />
+            <BreadcrumbLink :href="route('manage-leave.index')" title="Student Leave" />
+            <BreadcrumbLink :title="__('Student Leave Type')" />
         </Breadcrumb>
 
         <div class="pb-5">
             <page-header>
-                {{ __('Teacher / Adminstartion Leave Type') }}
+                {{ __('Student Leave Type') }}
                 <badge>
                     {{ leave_types.total }}
                 </badge>
                 <template #content>
-                    <global-button :loading="false" type="link" :url="route('manage-leave.index')" theme="primary">
-                        {{ __('Teacher / Adminstartion Leave Request') }}
+                    <global-button :loading="false" type="link" :url="route('leave-student.index')" theme="primary">
+                        {{ __('Leave Request') }}
                     </global-button>
                 </template>
             </page-header>

@@ -7,7 +7,7 @@ use App\Models\LeaveType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-class LeaveService
+class StudentLeaveService
 {
     public function index(object $request): array
     {
@@ -48,11 +48,11 @@ class LeaveService
 
 
         $leaves = $query->whereHas('user', function ($user) {
-            $user->whereNotIn('role', ['parent', 'student']);
+            $user->whereNotIn('role', ['parent', 'teacher', 'administration', 'accountant', 'admin']);
         })->latest()->with('user.department', 'type')->paginate(10);
         $users = User::active()->latest()->get(['id', 'name', 'email']);
 
-        $leave_types = LeaveType::whereNotIn('role_type', ['student'])
+        $leave_types = LeaveType::whereNotIn('role_type', ['teacher', 'staff'])
             ->select('name', 'slug')
             ->distinct()
             ->get();

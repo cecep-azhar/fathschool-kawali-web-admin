@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LeaveType;
 use Illuminate\Http\Request;
 
-class LeaveTypeController extends Controller
+class StudentLeaveTypeController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -17,9 +17,9 @@ class LeaveTypeController extends Controller
     {
         abort_if(! userCan('manage.leave-type'), 403);
 
-        $leave_types = LeaveType::latest()->whereNotIn('role_type', ['student'])->paginate(15)->onEachSide(-1);
+        $leave_types = LeaveType::latest()->whereNotIn('role_type', ['teacher', 'staff'])->paginate(15)->onEachSide(-1);
 
-        return inertia('Admin/LeaveType/Index', [
+        return inertia('Admin/StudentLeaveType/Index', [
             'leave_types' => $leave_types,
         ]);
     }

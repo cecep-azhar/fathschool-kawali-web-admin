@@ -85,19 +85,44 @@
             </ul>
         </Transition>
     </li>
+    <li v-if="can('event.index')" class="leave_request_section">
+    <a @click="toggleList('leaveList')"
+       class="flex justify-between gap-x-3 py-2 px-2.5 text-sm hover:bg-blue-100 text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700 rounded-lg dark:hover:text-white"
+       href="javascript:void(0)" id="leaveDropdown">
+        <div class="flex gap-x-3 items-center">
+            <QueueListIcon class="w-5 h-5" />
+            <div class="text-sm">{{ __("Leave Request") }}</div>
+        </div>
+        <div>
+            <ChevronUpIcon v-if="leaveList" class="w-5 h-5" />
+            <ChevronDownIcon v-else class="w-5 h-5" />
+        </div>
+    </a>
+    <Transition>
+        <ul class="ml-4" v-if="leaveList">
+            <li>
+                <NavLink class="mt-1" :active="route().current('manage-leave.index')" :href="route('manage-leave.index')">
+                    <list-icon />
+                    {{ __("Teacher / Administartion") }}
+                </NavLink>
+            </li>
+            <li>
+                <NavLink class="mt-1" :active="route().current('leave-student.index')" :href="route('leave-student.index')">
+                    <list-icon />
+                    {{ __("Student") }}
+                </NavLink>
+            </li>
+        </ul>
+    </Transition>
+</li>
     <!-- <li v-if="can('meeting.index')" class="meeting_section">
         <NavLink :href="route('meeting.index')" :active="route().current('meeting.*')">
             <VideoCameraIcon class="h-5 w-5" />
             {{ __("Meeting") }}
         </NavLink>
     </li> -->
-    <li v-if="can('event.index')" class="leave_request_section">
-        <NavLink :href="route('manage-leave.index')" :active="route().current('manage-leave.*')">
-            <QueueListIcon class="w-5 h-5" />
-            {{ __("Leave Request") }}
-        </NavLink>
-    </li>
-    <li v-if="can('transaction.create')" class="transaction_section">
+
+    <!-- <li v-if="can('transaction.create')" class="transaction_section">
         <NavLink :href="route('transaction.index')" class="hover-icons" :active="route().current('transaction.*')">
             <WalletIcon class="h-6 w-5" />
             {{ __("All Transaction") }}
@@ -106,24 +131,25 @@
             <PlusCircleIcon class="w-5 h-5 hoverPlus" />
             </Link>
         </NavLink>
-    </li>
+    </li> -->
 
-    <li v-if="can('transaction-type.index')">
+    <!-- <li v-if="can('transaction-type.index')">
         <NavLink :href="route('transaction-type.index')" :active="route().current('transaction-type.*')">
             <RectangleStackIcon class="h-5 w-5" />
             {{ __("Transaction Type") }}
         </NavLink>
-    </li>
-    <li v-if="can('plan.index')" class="admission_plan_section">
+    </li> -->
+    <!-- <li v-if="can('plan.index')" class="admission_plan_section">
         <NavLink :href="route('plan.index')" class="hover-icons" :active="route().current('plan.*')">
             <CurrencyDollarIcon class="h-5 w-5" />
             {{ __("Admission Plan") }}
-            <!-- <div class="flex-grow"></div> -->
+            <div class="flex-grow"></div>
             <Link :href="route('plan.create')">
             <PlusCircleIcon class="w-5 h-5 hoverPlus" />
             </Link>
         </NavLink>
-    </li>
+    </li> -->
+
     <li v-if="can('event.index')" class="event_section">
         <NavLink :href="route('event.index')" :active="route().current('event.*')">
             <CalendarIcon class="w-5 h-5" />
@@ -168,12 +194,12 @@
             </Link>
         </NavLink>
     </li>
-    <li v-if="can('student.promotion')" class="promotion_section">
+    <!-- <li v-if="can('student.promotion')" class="promotion_section">
         <NavLink :href="route('student.promotion')" :active="route().current('student.promotion')">
             <ArrowUpIcon class="h-5 w-5" />
             {{ __("Student Promotion") }}
         </NavLink>
-    </li>
+    </li> -->
     <li v-if="can('admission.form')" class="admission_form_section">
         <NavLink :href="route('form.index')" :active="route().current('form.*')">
             <NewspaperIcon class="h-5 w-5" />
@@ -285,7 +311,7 @@ export default {
     data() {
         return {
             list: false,
-            list2: false,
+            leaveList: false,
             list3: false,
             menuitems: [
                 {
@@ -801,11 +827,11 @@ export default {
                     this.list = true;
                 }
             }
-            if (arg == "list2") {
-                if (this.list2) {
-                    this.list2 = false;
+            if (arg == "leaveList") {
+                if (this.leaveList) {
+                    this.leaveList = false;
                 } else {
-                    this.list2 = true;
+                    this.leaveList = true;
                 }
             }
             if (arg == "list3") {

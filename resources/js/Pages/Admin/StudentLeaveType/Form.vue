@@ -4,30 +4,15 @@
             <div>
                 <global-label for="income" :value="__('Select Role Type')" :required="false" />
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- <div class="rounded-lg flex items-center pl-4 border border-gray-200 dark:border-gray-700">
-        <input value="student" checked id="student" v-model="form.role_type" type="radio" name="role_type"
-            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
-        <global-label for="student"
-            class="py-2 ml-2 text-sm font-medium text-gray-900 dark:text-gray-300" value="Student"
-            :required="false" />
-    </div> -->
-    <div class="rounded-lg flex items-center pl-4 border border-gray-200 dark:border-gray-700">
-        <input value="teacher" checked id="teacher" type="radio" v-model="form.role_type" name="role_type"
-            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
-        <global-label for="teacher"
-            class="py-2 ml-2 text-sm font-medium text-gray-900 dark:text-gray-300" value="Teacher"
-            :required="false" />
-    </div>
+            <div class="rounded-lg flex items-center pl-4 border border-gray-200 dark:border-gray-700">
+                <input value="student" checked id="student" v-model="form.role_type" type="radio" name="role_type"
+                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                <global-label for="student"
+                    class="py-2 ml-2 text-sm font-medium text-gray-900 dark:text-gray-300" value="Student"
+                    :required="false" />
+            </div>
 
-    <div class="rounded-lg flex items-center pl-4 border border-gray-200 dark:border-gray-700">
-        <input value="staff" id="staff" type="radio" v-model="form.role_type" name="role_type"
-            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
-        <global-label for="staff"
-            class="py-2 ml-2 text-sm font-medium text-gray-900 dark:text-gray-300" value="Staff"
-            :required="false" />
-    </div>
-
-</div>
+        </div>
 
 
                 <input-error :error="$page.props.errors.role_type" />

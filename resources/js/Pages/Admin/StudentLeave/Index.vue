@@ -1,20 +1,20 @@
 <template>
-    <Head :title="__('Teacher / Administartion Leave List')" />
+    <Head :title="__('Student Leave List')" />
     <AppLayout>
         <Breadcrumb>
-            <BreadcrumbLink :title="__('Teacher / Administartion Leave')" />
+            <BreadcrumbLink :title="__('Student Leave')" />
         </Breadcrumb>
 
         <div class="pb-12 overflow-x-auto">
             <page-header>
                 <div class="dark:text-gray-400 flex items-center">
-                    <span>{{ __('Teacher / Adminstration Leave List') }}</span>
+                    <span>{{ __('Student Leave List') }}</span>
                     <span class="bg-blue-500 text-white rounded ml-2 px-1 text-xs py-0.5">
                         {{ leaves.total }}
                     </span>
                 </div>
                 <template #content>
-                    <global-button :loading="false" type="link" :url="route('leave-type.index')" theme="primary" id="testLeaveType">
+                    <global-button :loading="false" type="link" :url="route('student-leave-type.index')" theme="primary" id="testLeaveType">
                         {{ __('Leave Type') }}
                     </global-button>
                 </template>
@@ -36,27 +36,6 @@
                                     </span>
                                 </button>
                             </div>
-                        </div>
-
-                        <div class="xl:col-span-1">
-                            <a-select
-                                class="width-100"
-                                size="large"
-                                v-model:value="filter.role"
-                                show-search
-                                :placeholder="__('Select a role')"
-                                :options="[
-                                    { title: 'All', id: 'all', value: 'all' },
-                                    { title: 'Teacher', id: 'teacher', value: 'Teacher' },
-                                    { title: 'Administration', id: 'administration', value: 'Administration' },
-                                    { title: 'Accountant', id: 'accountant', value: 'Accountant' },
-                                    { title: 'Admin', id: 'admin', value: 'Admin' }
-                                ]"
-                                :filter-option="filterOption"
-                                @focus="handleFocus"
-                                @blur="handleBlur"
-                                @change="handleChange"
-                            />
                         </div>
 
                         <div class="xl:col-span-2">
@@ -311,7 +290,7 @@ export default {
     methods: {
         filterData() {
             this.loading = true;
-            this.$inertia.get(this.route("manage-leave.index"), this.filter, {
+            this.$inertia.get(this.route("leave-student.index"), this.filter, {
                 preserveScroll: true,
                 onFinish: visit => { this.loading = false },
             });
@@ -344,7 +323,7 @@ export default {
         },
         destroy(arg) {
             if (confirm("Are you sure ?")) {
-                this.$inertia.delete(this.route("manage-leave.destroy", arg), {
+                this.$inertia.delete(this.route("leave-student.destroy", arg), {
                     preserveScroll: true,
                 });
             } else {

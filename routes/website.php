@@ -18,6 +18,8 @@ use App\Http\Controllers\Holiday\HolidayController;
 use App\Http\Controllers\Invoice\InvoiceController;
 use App\Http\Controllers\Leave\LeaveController as AdminLeaveController;
 use App\Http\Controllers\Leave\LeaveTypeController;
+use App\Http\Controllers\Leave\StudentLeaveController;
+use App\Http\Controllers\Leave\StudentLeaveTypeController;
 use App\Http\Controllers\Meeting\MeetingController;
 use App\Http\Controllers\Notice\NoticeBoardController;
 use App\Http\Controllers\Plan\PlanController;
@@ -106,9 +108,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
 
         // Leave Routes
         Route::resource('manage-leave', AdminLeaveController::class);
+        Route::resource('leave-student', StudentLeaveController::class);
         Route::post('leave/status/change/{leave}', [AdminLeaveController::class, 'statusChange'])->name('leave.status.change');
         // Leave Type Routes
         Route::resource('leave-type', LeaveTypeController::class);
+        Route::resource('student-leave-type', StudentLeaveTypeController::class);
+
         Route::get('leave/requests/list', [AdminLeaveController::class, 'requests'])->name('leave.requests');
         // Holiday Routes
         Route::resource('holiday', HolidayController::class);

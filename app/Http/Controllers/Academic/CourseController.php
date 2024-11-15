@@ -6,6 +6,7 @@ use App\Actions\File\FileDelete;
 use App\Actions\File\FileUpload;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\StudyProgram;
 use App\Models\Subject;
 use App\Services\Admin\Subject\SubjectChatGroupService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -17,8 +18,6 @@ use Illuminate\Support\Facades\Storage;
 use Ramsey\Uuid\Uuid;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
-
-
 
 class CourseController extends Controller
 {
@@ -39,7 +38,9 @@ class CourseController extends Controller
             }]);
         });
 
-        return inertia('Admin/Course/Index', compact(['courses']));
+        $study_programs = StudyProgram::get(['id', 'name', 'slug']);
+
+        return inertia('Admin/Course/Index', compact(['courses', 'study_programs']));
     }
 
     /**
@@ -58,6 +59,7 @@ class CourseController extends Controller
 
         $request->validate([
             'name' => 'required|unique:courses,name',
+            'study_program_id' => 'required',
             'qr_code_id' => 'required|unique:courses,qr_code_id|max:10',
             'file' => 'required|image',
         ]);
@@ -68,6 +70,7 @@ class CourseController extends Controller
 
         $course = Course::create([
             'name' => $request->name,
+            'study_program_id' => $request->study_program_id,
             'qr_code_id' => $request->qr_code_id,
             'photo' => $url ?? '',
             'has_multiple_subject' => $request->has_multiple_subject ?? 0,
@@ -169,91 +172,78 @@ class CourseController extends Controller
     //     return back();
     // }
 //
-public function update(Request $request, $id, SubjectChatGroupService $subjectChatGroupService)
-{
-    abort_if(!userCan('academic.management'), 403);
+    public function update(Request $request, $id, SubjectChatGroupService $subjectChatGroupService)
+    {
+        abort_if(!userCan('academic.management'), 403);
 
-    $course = Course::findOrFail($id);
+        $course = Course::findOrFail($id);
 
-    // Validasi termasuk file
-    $request->validate([
-        'name' => 'required|unique:courses,name,' . $course->id,
-        'file' => 'nullable|image',
-    ], [
-        'name.required' => 'The name field is required',
-    ]);
+        // Tambahkan validasi untuk study_program_id
+        $request->validate([
+            'name' => 'required|unique:courses,name,' . $course->id,
+            'file' => 'nullable|image',
+        ], [
+            'name.required' => 'The name field is required',
+        ]);
 
-    // Inisialisasi $url dengan nilai default
-    $url = $course->photo;
+        // Inisialisasi $url dengan nilai default
+        $url = $course->photo;
 
-    if ($request->hasFile('file')) {
-        // Debug: Cek apakah file ada
-        Log::info('File ditemukan dalam request.');
 
-        // Upload gambar baru
-        $url = FileUpload::uploadImage($request->file('file'), 'course');
+        if ($request->hasFile('file')) {
+            Log::info('File ditemukan dalam request.');
 
-        // Debug: Cek hasil upload
-        Log::info('URL gambar setelah upload: ' . $url);
+            $url = FileUpload::uploadImage($request->file('file'), 'course');
+            Log::info('URL gambar setelah upload: ' . $url);
 
-        if ($url) {
-            // Hapus gambar lama jika upload berhasil
-            if ($course->photo) {
-                FileDelete::deleteImage($course->photo);
+            if ($url) {
+                if ($course->photo) {
+                    FileDelete::deleteImage($course->photo);
+                }
+            } else {
+                Log::error('Gagal mengunggah gambar.');
+                return back()->withErrors(['file' => 'Failed to upload image.']);
             }
         } else {
-            // Jika upload gagal, kembalikan dengan pesan error
-            Log::error('Gagal mengunggah gambar.');
-            return back()->withErrors(['file' => 'Failed to upload image.']);
+            Log::info('Tidak ada file dalam request.');
         }
-    } else {
-        // Debug: Cek apakah file tidak ada dalam request
-        Log::info('Tidak ada file dalam request.');
-    }
 
-    // Update data course
-    $course->update([
-        'name' => $request->name,
-        'photo' => $url,
-        'has_multiple_subject' => $request->has_multiple_subject ?? 0,
-    ]);
+        // Update data course
+        $course->update([
+            'name' => $request->name,
+            'study_program_id' => $request->study_program_id, // Pastikan study_program_id diupdate
+            'photo' => $url,
+            'has_multiple_subject' => $request->has_multiple_subject ?? 0,
+        ]);
 
-    // Debug: Cek data yang diperbarui
-    Log::info('Data course setelah update: ', $course->toArray());
 
-    if ($request->has_multiple_subject) {
-        $course->subjects()->delete();
-        $subjects = $request->subjects;
+        Log::info('Data course setelah update: ', $course->toArray());
 
-        foreach ($subjects as $subject) {
+        if ($request->has_multiple_subject) {
+            $course->subjects()->delete();
+            $subjects = $request->subjects;
+
+            foreach ($subjects as $subject) {
+                $sub = $course->subjects()->create([
+                    'name' => $subject['name'],
+                    'color' => $subject['color'],
+                ]);
+
+                $subjectChatGroupService->subjectChatGroupStore($sub);
+            }
+        } else {
+            $course->subjects()->delete();
             $sub = $course->subjects()->create([
-                'name' => $subject['name'],
-                'color' => $subject['color'],
+                'name' => $request->name . ' Subject',
+                'color' => '#C93737',
             ]);
-
             $subjectChatGroupService->subjectChatGroupStore($sub);
         }
-    } else {
-        $course->subjects()->delete();
-        $sub = $course->subjects()->create([
-            'name' => $request->name . ' Subject',
-            'color' => '#C93737',
-        ]);
-        $subjectChatGroupService->subjectChatGroupStore($sub);
+
+        $this->flashSuccess('Course updated successfully.');
+
+        return back();
     }
-
-    $this->flashSuccess('Course updated successfully.');
-
-    return back();
-}
-
-
-
-
-
-
-
-
 
     public function getAllClassesWithQrCodes()
     {

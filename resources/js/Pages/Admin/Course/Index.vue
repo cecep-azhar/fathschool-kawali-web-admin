@@ -97,6 +97,23 @@
                             <input-error :error="$page.props.errors.name" />
                         </div>
                         <div class="mb-2">
+                            <global-label for="study_program_id" value="Select Study Program" :required="false" />
+                            <a-select
+                            :class="$page.props.errors.study_program_id ? 'border-custom ' : ''"
+                            size="large"
+                            class="width-100"
+                            v-model="form.study_program_id"
+                            show-search
+                            :placeholder="__('Select a study program')"
+                            :options="options"
+                            :filter-option="filterOption"
+                            @focus="handleFocus"
+                            @blur="handleBlur"
+                            @change="handleChange"
+                            />
+                            <input-error :error="$page.props.errors.study_program_id" />
+                        </div>
+                        <div class="mb-2">
                             <global-label for="qr_code_id" value="Unique Id" :required="false" />
                             <global-input type="text" id="qr_code_id" v-model="form.qr_code_id"
                                 class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
@@ -236,6 +253,23 @@
                             <input-error :error="$page.props.errors.name" />
                         </div>
                         <div class="mb-2">
+                            <global-label for="study_program_id" value="Select Study Program" :required="false" />
+                                <a-select
+                                :class="$page.props.errors.study_program_id ? 'border-custom ' : ''"
+                                size="large"
+                                class="width-100"
+                                v-model="courseInfo.study_program_id"
+                                show-search
+                                :placeholder="__('Select a study program')"
+                                :options="options"
+                                :filter-option="filterOption"
+                                @focus="handleFocus"
+                                @blur="handleBlur"
+                                @change="handleChange"
+                            />
+                            <input-error :error="$page.props.errors.study_program_id" />
+                        </div>
+                        <div class="mb-2">
                         <global-label for="file" class="tetx-lg" :value="__('Image')" :required="true" />
                         <button type="button" @click="picFile" class="bg-gray-100 dark:bg-gray-700 w-full py-2.5 px-3 rounded testImage">
                             <div class="flex gap-2 items-center">
@@ -371,6 +405,7 @@ import { PencilSquareIcon, TrashIcon, EyeIcon } from '@heroicons/vue/24/outline'
 export default {
     props: {
         courses: Array,
+        study_programs: Object,
         errors: Object,
     },
     components: {
@@ -389,6 +424,7 @@ export default {
             options: [],
             form: {
                 name: "",
+                study_program_id: null,
                 qr_code_id: "",
                 file: "",
                 has_multiple_subject: false,
@@ -397,6 +433,7 @@ export default {
             courseInfo: {
                 id: "",
                 name: "",
+                study_program_id: null,
                 qr_code_id: "",
                 file: "",
                 subjects: [],
@@ -429,6 +466,18 @@ export default {
             subject_name: "",
         };
     },
+
+    created() {
+         // for classes
+         for (const [key, value] of Object.entries(this.study_programs)) {
+            this.options.push({
+                value: value.id,
+                label: value.name,
+            });
+        }
+        this.study_program_id = this.options[0]?.value;
+    },
+
     methods: {
         picFile() {
         this.$refs.assignment_file.click();
@@ -475,7 +524,7 @@ export default {
                     this.courseInfo.subjects = [];
                 },
                 onFinish: (visit) => {
-                    this.loading = false;   
+                    this.loading = false;
                 },
             });
         },
@@ -492,6 +541,7 @@ export default {
             this.courseInfo.id = course.id;
             this.courseInfo.has_multiple_subject = true;
             this.courseInfo.name = course.name;
+            this.courseInfo.study_program_id = course.study_program_id;
             this.courseInfo.qr_code_id = course.qr_code_id;
             this.courseInfo.file = course.file;
 

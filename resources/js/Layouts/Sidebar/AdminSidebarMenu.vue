@@ -24,6 +24,8 @@
         <Transition>
             <ul class="ml-4" v-if="route().current('departments.*')
                 ? (list = true)
+                : list || route().current('study_programs.*')
+                ? (list = true)
                 : list || route().current('course.*')
                     ? (list = true)
                     : list || route().current('subjects.*')
@@ -38,6 +40,12 @@
                                         ? (list = true)
                                         : list
                 ">
+                 <li>
+                    <NavLink class="mt-1" :active="route().current('study_programs.index')" :href="route('study_programs.index')">
+                        <list-icon />
+                        {{ __("Study Program") }}
+                    </NavLink>
+                </li>
                 <li>
                     <NavLink class="mt-1" :active="route().current('course.index')" :href="route('course.index')">
                         <list-icon />

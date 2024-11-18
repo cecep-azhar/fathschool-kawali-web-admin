@@ -19,6 +19,8 @@ use Ramsey\Uuid\Uuid;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
+
+
 class CourseController extends Controller
 {
     /**
@@ -32,15 +34,18 @@ class CourseController extends Controller
 
         $courses = Course::withCount('students')->with(['subjects', 'plans'])->orderBy('created_at', 'desc')->get();
 
+        $study_programs = StudyProgram::latest()->get();
+
         $courses->each(function ($assignment) {
             $assignment->load(['students' => function ($q) {
                 return $q->limit(7)->with('user:id,name,username,profile_photo_path');
             }]);
         });
 
-        $study_programs = StudyProgram::get(['id', 'name', 'slug']);
-
-        return inertia('Admin/Course/Index', compact(['courses', 'study_programs']));
+        return inertia('Admin/Course/Index', compact([
+            'courses',
+            'study_programs'
+        ]));
     }
 
     /**
@@ -59,7 +64,6 @@ class CourseController extends Controller
 
         $request->validate([
             'name' => 'required|unique:courses,name',
-            'study_program_id' => 'required',
             'qr_code_id' => 'required|unique:courses,qr_code_id|max:10',
             'file' => 'required|image',
         ]);
@@ -172,78 +176,92 @@ class CourseController extends Controller
     //     return back();
     // }
 //
-    public function update(Request $request, $id, SubjectChatGroupService $subjectChatGroupService)
-    {
-        abort_if(!userCan('academic.management'), 403);
+public function update(Request $request, $id, SubjectChatGroupService $subjectChatGroupService)
+{
+    abort_if(!userCan('academic.management'), 403);
 
-        $course = Course::findOrFail($id);
+    $course = Course::findOrFail($id);
 
-        // Tambahkan validasi untuk study_program_id
-        $request->validate([
-            'name' => 'required|unique:courses,name,' . $course->id,
-            'file' => 'nullable|image',
-        ], [
-            'name.required' => 'The name field is required',
-        ]);
+    // Validasi termasuk file
+    $request->validate([
+        'name' => 'required|unique:courses,name,' . $course->id,
+        'file' => 'nullable|image',
+    ], [
+        'name.required' => 'The name field is required',
+    ]);
 
-        // Inisialisasi $url dengan nilai default
-        $url = $course->photo;
+    // Inisialisasi $url dengan nilai default
+    $url = $course->photo;
 
+    if ($request->hasFile('file')) {
+        // Debug: Cek apakah file ada
+        Log::info('File ditemukan dalam request.');
 
-        if ($request->hasFile('file')) {
-            Log::info('File ditemukan dalam request.');
+        // Upload gambar baru
+        $url = FileUpload::uploadImage($request->file('file'), 'course');
 
-            $url = FileUpload::uploadImage($request->file('file'), 'course');
-            Log::info('URL gambar setelah upload: ' . $url);
+        // Debug: Cek hasil upload
+        Log::info('URL gambar setelah upload: ' . $url);
 
-            if ($url) {
-                if ($course->photo) {
-                    FileDelete::deleteImage($course->photo);
-                }
-            } else {
-                Log::error('Gagal mengunggah gambar.');
-                return back()->withErrors(['file' => 'Failed to upload image.']);
+        if ($url) {
+            // Hapus gambar lama jika upload berhasil
+            if ($course->photo) {
+                FileDelete::deleteImage($course->photo);
             }
         } else {
-            Log::info('Tidak ada file dalam request.');
+            // Jika upload gagal, kembalikan dengan pesan error
+            Log::error('Gagal mengunggah gambar.');
+            return back()->withErrors(['file' => 'Failed to upload image.']);
         }
+    } else {
+        // Debug: Cek apakah file tidak ada dalam request
+        Log::info('Tidak ada file dalam request.');
+    }
 
-        // Update data course
-        $course->update([
-            'name' => $request->name,
-            'study_program_id' => $request->study_program_id, // Pastikan study_program_id diupdate
-            'photo' => $url,
-            'has_multiple_subject' => $request->has_multiple_subject ?? 0,
-        ]);
+    // Update data course
+    $course->update([
+        'name' => $request->name,
+        'study_program_id' => $request->study_program_id,
+        'photo' => $url,
+        'has_multiple_subject' => $request->has_multiple_subject ?? 0,
+    ]);
 
+    // Debug: Cek data yang diperbarui
+    Log::info('Data course setelah update: ', $course->toArray());
 
-        Log::info('Data course setelah update: ', $course->toArray());
+    if ($request->has_multiple_subject) {
+        $course->subjects()->delete();
+        $subjects = $request->subjects;
 
-        if ($request->has_multiple_subject) {
-            $course->subjects()->delete();
-            $subjects = $request->subjects;
-
-            foreach ($subjects as $subject) {
-                $sub = $course->subjects()->create([
-                    'name' => $subject['name'],
-                    'color' => $subject['color'],
-                ]);
-
-                $subjectChatGroupService->subjectChatGroupStore($sub);
-            }
-        } else {
-            $course->subjects()->delete();
+        foreach ($subjects as $subject) {
             $sub = $course->subjects()->create([
-                'name' => $request->name . ' Subject',
-                'color' => '#C93737',
+                'name' => $subject['name'],
+                'color' => $subject['color'],
             ]);
+
             $subjectChatGroupService->subjectChatGroupStore($sub);
         }
-
-        $this->flashSuccess('Course updated successfully.');
-
-        return back();
+    } else {
+        $course->subjects()->delete();
+        $sub = $course->subjects()->create([
+            'name' => $request->name . ' Subject',
+            'color' => '#C93737',
+        ]);
+        $subjectChatGroupService->subjectChatGroupStore($sub);
     }
+
+    $this->flashSuccess('Course updated successfully.');
+
+    return back();
+}
+
+
+
+
+
+
+
+
 
     public function getAllClassesWithQrCodes()
     {

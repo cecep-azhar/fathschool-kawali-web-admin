@@ -18,6 +18,7 @@ use App\Models\Rating;
 use App\Models\Result;
 use App\Models\Setting;
 use App\Models\StudentAttendance;
+use App\Models\StudyProgram;
 use App\Models\Subject;
 use App\Models\Transaction;
 use App\Models\TransactionType;
@@ -44,13 +45,36 @@ class ReportController extends Controller
         return inertia('Admin/Report/Index');
     }
 
-    public function attendance()
+    public function attendance(Request $request)
     {
         abort_if(! userCan('academic.management'), 403);
 
         // Ambil data kehadiran beserta nama pengguna
         // $attendancestudent =AttendanceStudent::with('user:id,name')->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
-        $attendancestudent = AttendanceStudent::with('user')->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
+
+        $attendancestudent = AttendanceStudent::with([
+            'user.courses.course:id,name,study_program_id', // Memuat relasi course dan atributnya
+            'user.courses.course.study_program:id,name'     // Memuat studyprogram melalui course
+        ])
+        ->whereHas('user.courses.course', function ($query) use ($request) {
+            if ($request->has('course') && $request->course !== null) {
+                $query->where('slug', $request->course);
+            }
+        })
+        ->whereHas('user.courses.course.study_program', function ($query) use ($request) {
+            if ($request->has('study_program') && $request->study_program !== null) {
+                $query->where('slug', $request->study_program) // Filter berdasarkan slug study_program
+                      ->orWhere('name', 'LIKE', '%' . $request->study_program . '%'); // Filter berdasarkan nama study_program
+            }
+        })
+        ->when($request->has('month') && $request->month !== null, function ($query) use ($request) {
+            // Filter berdasarkan tanggal yang diberikan di request
+            $query->whereDate('date', $request->month);
+        })
+        ->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
+
+        $classes = Course::get(['id', 'name', 'slug']);
+        $study_programs = StudyProgram::get(['id', 'name', 'slug']);
 
         // Map untuk menyertakan nama pengguna
         $attendancestudent->each(function ($attendance) {
@@ -58,11 +82,15 @@ class ReportController extends Controller
             $attendance->user_id = $attendance->user->id;
         });
 
-        // dd($attendancestudent);
+        return inertia('Admin/Report/Attendance', [
+            'attendancestudent' => $attendancestudent,
+            'filter_data' => $request,
+            'classes' => $classes,
+            'study_programs' => $study_programs,
+        ]);
+    }
 
-        return inertia('Admin/Report/Attendance', ['attendancestudent' => $attendancestudent]);
-}
-public function studentExport(Request $request)
+    public function studentExport(Request $request)
     {
         $name = $request->name;
         $month = $request->month;

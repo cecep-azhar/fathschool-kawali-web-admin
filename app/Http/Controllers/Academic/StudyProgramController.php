@@ -41,7 +41,7 @@ class StudyProgramController extends Controller
         abort_if(! userCan('academic.management'), 403);
 
         $request->validate([ // validate
-            'name' => 'required|max:191|unique:departments,name,'.$studyProgram->id,
+            'name' => 'required|max:191|unique:study_programs,name,'.$studyProgram->id,
         ]);
 
         $studyProgram->update([ // data update

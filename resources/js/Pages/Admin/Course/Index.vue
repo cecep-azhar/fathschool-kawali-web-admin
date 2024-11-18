@@ -98,19 +98,10 @@
                         </div>
                         <div class="mb-2">
                             <global-label for="study_program_id" value="Select Study Program" :required="false" />
-                            <a-select
-                            :class="$page.props.errors.study_program_id ? 'border-custom ' : ''"
-                            size="large"
-                            class="width-100"
-                            v-model="form.study_program_id"
-                            show-search
-                            :placeholder="__('Select a study program')"
-                            :options="options"
-                            :filter-option="filterOption"
-                            @focus="handleFocus"
-                            @blur="handleBlur"
-                            @change="handleChange"
-                            />
+                            <a-select :class="$page.props.errors.study_program_id ? 'border-custom ' : ''" size="large" class="width-100"
+                                v-model="form.study_program_id" show-search :placeholder="__('Select Study Program')" :options="options"
+                                :filter-option="filterOption" @focus="handleFocus" @blur="handleBlur" @change="handleChange">
+                            </a-select>
                             <input-error :error="$page.props.errors.study_program_id" />
                         </div>
                         <div class="mb-2">
@@ -253,21 +244,15 @@
                             <input-error :error="$page.props.errors.name" />
                         </div>
                         <div class="mb-2">
-                            <global-label for="study_program_id" value="Select Study Program" :required="false" />
-                                <a-select
-                                :class="$page.props.errors.study_program_id ? 'border-custom ' : ''"
-                                size="large"
-                                class="width-100"
-                                v-model="courseInfo.study_program_id"
-                                show-search
-                                :placeholder="__('Select a study program')"
-                                :options="options"
-                                :filter-option="filterOption"
-                                @focus="handleFocus"
-                                @blur="handleBlur"
-                                @change="handleChange"
-                            />
-                            <input-error :error="$page.props.errors.study_program_id" />
+                            <global-label for="study_program_id" value="Study Program" :required="false">
+                                <Multiselect id="class" :close-on-select="true" :can-clear="true" :searchable="true"
+                                    v-model="courseInfo.study_program_id" :create-option="false" :placeholder="__('Select Study Program')" :options="
+                                     study_programs.map((item) => ({
+                                    value: item.id,
+                                    label: item.name,
+                                }))
+                            " autocomplete="off"/>
+                            </global-label>
                         </div>
                         <div class="mb-2">
                         <global-label for="file" class="tetx-lg" :value="__('Image')" :required="true" />
@@ -396,7 +381,7 @@
 import AppLayout from "@/Layouts/AppLayout.vue";
 import Multiselect from "@vueform/multiselect";
 import "@vueform/multiselect/themes/default.css";
-import axios from "axios";
+import { useForm } from "@inertiajs/inertia-vue3";
 import { ColorPicker } from "vue-color-kit";
 import "vue-color-kit/dist/vue-color-kit.css";
 import NothingFound from "@/Shared/NothingFound.vue";
@@ -406,6 +391,7 @@ export default {
     props: {
         courses: Array,
         study_programs: Object,
+        query: Object,
         errors: Object,
     },
     components: {
@@ -422,10 +408,11 @@ export default {
             file_name: "",
             loading: false,
             options: [],
+            options: [],
             form: {
                 name: "",
-                study_program_id: null,
                 qr_code_id: "",
+                study_program_id: null,
                 file: "",
                 has_multiple_subject: false,
                 subjects: [],
@@ -433,7 +420,7 @@ export default {
             courseInfo: {
                 id: "",
                 name: "",
-                study_program_id: null,
+                study_program_id: "",
                 qr_code_id: "",
                 file: "",
                 subjects: [],
@@ -466,7 +453,6 @@ export default {
             subject_name: "",
         };
     },
-
     created() {
          // for classes
          for (const [key, value] of Object.entries(this.study_programs)) {
@@ -475,9 +461,8 @@ export default {
                 label: value.name,
             });
         }
-        this.study_program_id = this.options[0]?.value;
+        this.form.study_program_id = this.options[0]?.value;
     },
-
     methods: {
         picFile() {
         this.$refs.assignment_file.click();

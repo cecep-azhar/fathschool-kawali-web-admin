@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use App\Models\Api\ClassAttendance;
 use App\Models\Api\LearningLesson;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Course extends Model
 {
@@ -70,6 +71,11 @@ class Course extends Model
     public function subjects()
     {
         return $this->hasMany(Subject::class, 'course_id', 'id');
+    }
+
+    public function study_program(): BelongsTo
+    {
+        return $this->belongsTo(StudyProgram::class, 'study_program_id');
     }
 
     // One to many relation with online-class model

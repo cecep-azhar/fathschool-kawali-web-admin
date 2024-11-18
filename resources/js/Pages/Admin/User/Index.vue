@@ -34,9 +34,9 @@
                         {{ __('All User') }}
                     </global-button>
                     </Link>
-                    <global-button :loading="false" @click="exportSubmit()" type="button" theme="sky">
+                    <!-- <global-button :loading="false" @click="exportSubmit()" type="button" theme="sky">
                     {{ __('Export') }}
-                    </global-button>
+                    </global-button> -->
                     <global-button preserve-scroll :loading="false" type="link" cssClass="ml-2"
                         :url="route('users.create')" theme="primary">
                         {{ __('Create User') }}

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Academic;
 
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use App\Models\StudyProgram;
 use Illuminate\Http\Request;
 
 class DepartmentController extends Controller
@@ -19,8 +20,11 @@ class DepartmentController extends Controller
 
         $departments = Department::latest()->paginate(15)->onEachSide(-1);
 
+        $study_programs = StudyProgram::latest()->get();
+
         return inertia('Admin/Department/Index', [
             'departments' => $departments,
+            'study_programs' => $study_programs,
         ]);
     }
 
@@ -39,6 +43,7 @@ class DepartmentController extends Controller
 
         Department::create([ // data store
             'name' => $request->name,
+            'study_program_id' => $request->study_program_id,
         ]);
 
         $this->flashSuccess('Department created successfully.'); // return response
@@ -62,6 +67,7 @@ class DepartmentController extends Controller
 
         $department->update([ // data update
             'name' => $request->name,
+            'study_program_id' => $request->study_program_id,
         ]);
 
         $this->flashSuccess('Department update successfully.'); // return response

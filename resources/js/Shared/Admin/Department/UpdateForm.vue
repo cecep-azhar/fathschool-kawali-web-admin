@@ -8,6 +8,15 @@
                     :placeholder="__('Name')" :error="$page.props.errors.name" />
                 <input-error :error="$page.props.errors.name" />
             </div>
+            <div class="mt-3">
+                <global-label for="study_program_id" value="Select Study Program " :required="false" />
+                    <a-select :class="$page.props.errors.study_program_id ? 'border-custom ' : ''" size="large"
+                    class="width-100" v-model:value="form.study_program_id" show-search :placeholder="__('Select Study Program')"
+                        :options="options" :filter-option="filterOption" @focus="handleFocus" @blur="handleBlur"
+                        @change="handleChange">
+                    </a-select>
+                <input-error :error="$page.props.errors.class" />
+            </div>
         </div>
         <div class="flex gap-2 ml-5">
             <global-button :loading="loading" type="submit" theme="primary" class="mr-2">
@@ -26,15 +35,29 @@
 
 <script>
 export default {
-    props: { department: Object },
+    props: {
+        department: Object,
+        study_programs: Object,
+    },
     data() {
         return {
             loading: false,
+            options: [],
             form: {
                 name: this.department.name,
+                study_program_id: this.department.study_program_id,
                 _method: "PUT",
             },
         };
+    },
+    created() {
+        // for study programs
+        for (const [key, value] of Object.entries(this.study_programs)) {
+                this.options.push({
+                    value: value.id,
+                    label: value.name,
+                });
+            }
     },
     watch: {
         department: {

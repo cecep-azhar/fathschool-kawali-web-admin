@@ -29,8 +29,8 @@
                             </div>
                             <div v-else>{{ __('Create New') }}</div>
                         </div>
-                        <create-form v-if="!update" />
-                        <update-form :department="department" v-if="update" />
+                        <create-form :study_programs="study_programs" v-if="!update" />
+                        <update-form :department="department" v-if="update" :study_programs="study_programs" />
                     </div>
                 </div>
             </div>
@@ -55,6 +55,7 @@ export default {
     },
     props: {
         departments: Object,
+        study_programs: Object,
     },
     data() {
         return {

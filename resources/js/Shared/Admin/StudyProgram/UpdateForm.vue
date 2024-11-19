@@ -26,18 +26,18 @@
 
 <script>
 export default {
-    props: { studyProgram: Object },
+    props: { study_program: Object },
     data() {
         return {
             loading: false,
             form: {
-                name: this.studyProgram.name,
+                name: this.study_program.name,
                 _method: "PUT",
             },
         };
     },
     watch: {
-        studyProgram: {
+        study_program: {
             deep: true,
             handler(val, oldVal) {
                 this.form.name = val.name;
@@ -48,7 +48,7 @@ export default {
         submit() {
             this.loading = true;
             this.$inertia.post(
-                this.route("study_programs.update", this.studyProgram.id),
+                this.route("study_programs.update", this.study_program.id),
                 this.form,
                 {
                     onSuccess: () => {

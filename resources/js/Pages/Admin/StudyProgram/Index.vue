@@ -12,9 +12,9 @@
             </page-header>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mx-auto">
                 <div>
-                    <table-content @edit="edit" :studyPrograms="studyPrograms" />
+                    <table-content @edit="edit" :study_programs="study_programs" />
                     <div class="flex justify-center">
-                        <pagination class="mt-6" :links="studyPrograms.links" />
+                        <pagination class="mt-6" :links="study_programs.links" />
                     </div>
                 </div>
                 <div >
@@ -54,18 +54,18 @@ export default {
         UpdateForm,
     },
     props: {
-        studyPrograms: Object,
+        study_programs: Object,
     },
     data() {
         return {
             update: false,
-            studyProgram: "",
+            study_program: "",
         };
     },
     methods: {
-        edit(studyProgram) {
+        edit(study_program) {
             this.update = true;
-            this.studyProgram = studyProgram;
+            this.study_program = study_program;
         },
     },
 };

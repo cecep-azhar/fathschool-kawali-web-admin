@@ -9,6 +9,7 @@ use App\Models\Attendance;
 use App\Models\ClassRoutine;
 use App\Models\Course;
 use App\Models\Setting;
+use App\Models\StudyProgram;
 use App\Models\Subject;
 use App\Services\Admin\Subject\SubjectChatGroupService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -28,19 +29,41 @@ class AttendanceController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         abort_if(! userCan('academic.management'), 403);
 
         // Ambil data kehadiran beserta nama pengguna
-        $attendanceteacher = Attendance::with('user:id,name')->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
+        // Query awal untuk Attendance
+        $attendance_query = Attendance::with([
+            'user:id,name,department_id',
+            'user.department:id,name,study_program_id',
+            'user.department.study_program:id,name',
+        ]);
 
-        // Map untuk menyertakan nama pengguna
-        $attendanceteacher->each(function ($attendance) {
-            $attendance->user_name = $attendance->user->name;
-        });
+        // Filter berdasarkan keyword
+        if ($request->has('keyword') && $request->keyword !== null) {
+            $attendance_query->whereHas('user', function ($q) use ($request) {
+                $q->where('name', 'LIKE', '%' . $request->keyword . '%'); // Filter nama user
+            });
+        }
 
-        return inertia('Admin/TeacherAttendance/Index', ['attendanceteacher' => $attendanceteacher]);
+        // Filter berdasarkan study_program
+        if ($request->has('study_program') && $request->study_program !== null) {
+            $attendance_query->whereHas('user.department.study_program', function ($q) use ($request) {
+                $q->where('slug', 'LIKE', '%' . $request->study_program . '%'); // Filter nama study_program
+            });
+        }
+
+        // Eksekusi query
+        $attendanceteacher = $attendance_query->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
+        $study_programs = StudyProgram::get(['id', 'name', 'slug']);
+
+        return inertia('Admin/TeacherAttendance/Index', [
+            'attendanceteacher' => $attendanceteacher,
+            'filter_data' => $request,
+            'study_programs' => $study_programs
+        ]);
     }
 
     public function getTeacherClassAttendance()
@@ -50,7 +73,7 @@ class AttendanceController extends Controller
             ->select('class_attendances.*')
             ->join('class_routines', function ($join) {
                 $join->on('class_attendances.user_id', '=', 'class_routines.teacher_id')
-                     ->on('class_attendances.course_id', '=', 'class_routines.course_id');
+                    ->on('class_attendances.course_id', '=', 'class_routines.course_id');
             })
             ->get();
 

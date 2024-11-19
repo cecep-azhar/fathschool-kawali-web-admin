@@ -227,7 +227,7 @@ class User extends Authenticatable
     // One to one relation with department model
     public function department()
     {
-        return $this->belongsTo(Department::class);
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     // One to many relation with class model

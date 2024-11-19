@@ -56,22 +56,22 @@ class ReportController extends Controller
             'user.courses.course:id,name,study_program_id', // Memuat relasi course dan atributnya
             'user.courses.course.study_program:id,name'     // Memuat studyprogram melalui course
         ])
-        ->whereHas('user.courses.course', function ($query) use ($request) {
-            if ($request->has('course') && $request->course !== null) {
-                $query->where('slug', $request->course);
-            }
-        })
-        ->whereHas('user.courses.course.study_program', function ($query) use ($request) {
-            if ($request->has('study_program') && $request->study_program !== null) {
-                $query->where('slug', $request->study_program) // Filter berdasarkan slug study_program
-                      ->orWhere('name', 'LIKE', '%' . $request->study_program . '%'); // Filter berdasarkan nama study_program
-            }
-        })
-        ->when($request->has('month') && $request->month !== null, function ($query) use ($request) {
-            // Filter berdasarkan tanggal yang diberikan di request
-            $query->whereDate('date', $request->month);
-        })
-        ->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
+            ->whereHas('user.courses.course', function ($query) use ($request) {
+                if ($request->has('course') && $request->course !== null) {
+                    $query->where('slug', $request->course);
+                }
+            })
+            ->whereHas('user.courses.course.study_program', function ($query) use ($request) {
+                if ($request->has('study_program') && $request->study_program !== null) {
+                    $query->where('slug', $request->study_program) // Filter berdasarkan slug study_program
+                        ->orWhere('name', 'LIKE', '%' . $request->study_program . '%'); // Filter berdasarkan nama study_program
+                }
+            })
+            ->when($request->has('month') && $request->month !== null, function ($query) use ($request) {
+                // Filter berdasarkan tanggal yang diberikan di request
+                $query->whereDate('date', $request->month);
+            })
+            ->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
 
         $classes = Course::get(['id', 'name', 'slug']);
         $study_programs = StudyProgram::get(['id', 'name', 'slug']);
@@ -159,67 +159,67 @@ class ReportController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-//      public function getCourses(Request $request)
-// {
-//     $student_id = $request->student_id;
-//     $courses = Course::whereHas('userCourses', function($query) use ($student_id) {
-//         $query->where('user_id', $student_id);
-//     })->get();
+    //      public function getCourses(Request $request)
+    // {
+    //     $student_id = $request->student_id;
+    //     $courses = Course::whereHas('userCourses', function($query) use ($student_id) {
+    //         $query->where('user_id', $student_id);
+    //     })->get();
 
-//     return response()->json($courses);
-// }
+    //     return response()->json($courses);
+    // }
 
-// public function getSubjects(Request $request)
-// {
-//     $courseId = $request->course_id;
-//     $subjects = Subject::where('course_id', $courseId)->get();
+    // public function getSubjects(Request $request)
+    // {
+    //     $courseId = $request->course_id;
+    //     $subjects = Subject::where('course_id', $courseId)->get();
 
-//     return response()->json($subjects);
-// }
-// public function attendance(Request $request)
-// {
-//     abort_if(!userCan('report.attendance'), 403);
+    //     return response()->json($subjects);
+    // }
+    // public function attendance(Request $request)
+    // {
+    //     abort_if(!userCan('report.attendance'), 403);
 
-//     $courseId = $request->input('course_id');
+    //     $courseId = $request->input('course_id');
 
 
-//     $data['courses'] = Course::get();
-//      $data['subjects'] = Subject::get();
-//     // $data['subjects'] = Subject::byCourseId($courseId)->get();
-//     $data['students'] = User::role('student')->get(); // Assuming users have a role 'student'
+    //     $data['courses'] = Course::get();
+    //      $data['subjects'] = Subject::get();
+    //     // $data['subjects'] = Subject::byCourseId($courseId)->get();
+    //     $data['students'] = User::role('student')->get(); // Assuming users have a role 'student'
 
-// //     $courseId = 17; // Misalkan ini id course yang Anda cari
+    // //     $courseId = 17; // Misalkan ini id course yang Anda cari
 
-// //     $data['subjects'] = Subject::whereHas('course', function ($query) use ($courseId) {
-// //     $query->where('id', $courseId);
-// // })->get();
+    // //     $data['subjects'] = Subject::whereHas('course', function ($query) use ($courseId) {
+    // //     $query->where('id', $courseId);
+    // // })->get();
 
-//     if ($request->has('course_id')) {
-//         $data['subjects'] = Subject::where('course_id', $request->course_id)->get();
-//         $userCourse = UserCourse::where('course_id', $request->course_id)->pluck('user_id')->toArray();
-//         $data['students'] = User::whereIn('id', $userCourse)->get();
-//     }
+    //     if ($request->has('course_id')) {
+    //         $data['subjects'] = Subject::where('course_id', $request->course_id)->get();
+    //         $userCourse = UserCourse::where('course_id', $request->course_id)->pluck('user_id')->toArray();
+    //         $data['students'] = User::whereIn('id', $userCourse)->get();
+    //     }
 
-//     $data['filter_data'] = $request->all();
+    //     $data['filter_data'] = $request->all();
 
-//     // Attendance
-//     $data['attendances'] = [];
+    //     // Attendance
+    //     $data['attendances'] = [];
 
-//     $attendance_query = StudentAttendance::query();
+    //     $attendance_query = StudentAttendance::query();
 
-//     if ($request->has('student_id') && $request->student_id != null) {
-//         $attendance_query->where('student_id', $request->student_id);
-//     }
-//     if ($request->month && $request->year) {
-//         $attendance_query->whereMonth('date', $request->month)->whereYear('date', $request->year);
-//     }
+    //     if ($request->has('student_id') && $request->student_id != null) {
+    //         $attendance_query->where('student_id', $request->student_id);
+    //     }
+    //     if ($request->month && $request->year) {
+    //         $attendance_query->whereMonth('date', $request->month)->whereYear('date', $request->year);
+    //     }
 
-//     if ($request->has('student_id') && $request->student_id != null) {
-//         $data['attendances'] = $attendance_query->get();
-//     }
+    //     if ($request->has('student_id') && $request->student_id != null) {
+    //         $data['attendances'] = $attendance_query->get();
+    //     }
 
-//     return inertia('Admin/Report/Attendance', $data);
-// }
+    //     return inertia('Admin/Report/Attendance', $data);
+    // }
 
 
 
@@ -793,7 +793,7 @@ class ReportController extends Controller
             ->whereHas('user', function ($query) {
                 $query->where('role', 'Student');
             })
-        ->select('id', 'user_id', 'leave_type_id', 'title', 'start', 'end', 'status', 'description', 'created_at');
+            ->select('id', 'user_id', 'leave_type_id', 'title', 'start', 'end', 'status', 'description', 'created_at');
 
         // Filter berdasarkan course_id jika ada
         if ($request->has('course_id') && $request->course_id != '') {
@@ -823,6 +823,4 @@ class ReportController extends Controller
             'courses' => Course::all(['id', 'name'])
         ]);
     }
-
-
 }

@@ -52,36 +52,91 @@ class ReportController extends Controller
         // Ambil data kehadiran beserta nama pengguna
         // $attendancestudent =AttendanceStudent::with('user:id,name')->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
 
-        $attendancestudent = AttendanceStudent::with([
-            'user.courses.course:id,name,study_program_id', // Memuat relasi course dan atributnya
-            'user.courses.course.study_program:id,name'     // Memuat studyprogram melalui course
-        ])
-            ->whereHas('user.courses.course', function ($query) use ($request) {
-                if ($request->has('course') && $request->course !== null) {
-                    $query->where('slug', $request->course);
-                }
-            })
-            ->whereHas('user.courses.course.study_program', function ($query) use ($request) {
-                if ($request->has('study_program') && $request->study_program !== null) {
-                    $query->where('slug', $request->study_program) // Filter berdasarkan slug study_program
-                        ->orWhere('name', 'LIKE', '%' . $request->study_program . '%'); // Filter berdasarkan nama study_program
-                }
-            })
-            ->when($request->has('month') && $request->month !== null, function ($query) use ($request) {
-                // Filter berdasarkan tanggal yang diberikan di request
-                $query->whereDate('date', $request->month);
-            })
-            ->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
+        $attendance_query = AttendanceStudent::with([
+            'user.courses.course:id,name,study_program_id',
+            'user.courses.course.study_program:id,name'
+        ]);
 
+        // Filter berdasarkan keyword
+        if ($request->has('keyword') && $request->keyword !== null) {
+            $attendance_query->whereHas('user', function ($query) use ($request) {
+                $query->where('name', 'LIKE', '%' . $request->keyword . '%'); // Filter nama user
+            });
+        }
+
+        // Filter berdasarkan course
+        if ($request->has('course') && $request->course !== null) {
+            $attendance_query->whereHas('user.courses.course', function ($query) use ($request) {
+                $query->where('slug', 'LIKE', '%' . $request->course . '%'); // Filter slug course
+            });
+        }
+
+        // Filter berdasarkan study_program
+        if ($request->has('study_program') && $request->study_program !== null) {
+            $attendance_query->whereHas('user.courses.course.study_program', function ($query) use ($request) {
+                $query->where('slug', 'LIKE', '%' . $request->study_program . '%') // Filter slug study_program
+                    ->orWhere('name', 'LIKE', '%' . $request->study_program . '%'); // Filter nama study_program
+            });
+        }
+
+        // Filter berdasarkan bulan (jika diperlukan)
+        if ($request->has('month') && $request->month !== null) {
+            $attendance_query->whereDate('date', $request->month); // Filter berdasarkan tanggal
+        }
+
+        // Eksekusi query
+        $attendancestudent = $attendance_query->get([
+            'id',
+            'user_id',
+            'date',
+            'time_in',
+            'time_out',
+            'latlon_in',
+            'latlon_out'
+        ]);
+
+        // Ambil daftar course dan study program untuk filter dropdown
         $classes = Course::get(['id', 'name', 'slug']);
         $study_programs = StudyProgram::get(['id', 'name', 'slug']);
+        $settingTimeIn = Setting::select(['time_in'])->first();
 
-        // Map untuk menyertakan nama pengguna
+        // Cek apakah settingTimeIn ada dan time_in tidak kosong
+        if ($settingTimeIn && $settingTimeIn->time_in) {
+            // Parsing waktu dari settingTimeIn
+            $settingTime = Carbon::createFromFormat('H:i:s', $settingTimeIn->time_in);
+
+            // Loop untuk menghitung keterlambatan setiap attendance
+            $attendancestudent->map(function ($attendance) use ($settingTime) {
+                // Parsing waktu dari attendance
+                $attendanceTime = Carbon::createFromFormat('H:i:s', $attendance->time_in);
+
+                // Jika waktu attendance lebih lambat dari setting time, hitung keterlambatan
+                if ($attendanceTime->greaterThan($settingTime)) {
+                    // Hitung keterlambatan dalam menit
+                    $latenessMinutes = $attendanceTime->diffInMinutes($settingTime);
+
+                    // Setel keterlambatan dalam format teks "X minutes"
+                    $attendance->lateness = $latenessMinutes . ' minute';
+                } else {
+                    // Jika tidak terlambat, lateness 0
+                    $attendance->lateness = '0 minute'; // Bisa menggunakan format teks seperti ini
+                }
+
+                return $attendance;
+            });
+        } else {
+            // Handle jika settingTimeIn tidak ada atau time_in kosong
+            return response()->json(['error' => 'Setting time_in not found or invalid.'], 400);
+        }
+
+
+        // Map tambahan untuk menyertakan nama user
         $attendancestudent->each(function ($attendance) {
             $attendance->user_name = $attendance->user->name;
             $attendance->user_id = $attendance->user->id;
         });
 
+        // Return data ke Vue.js melalui Inertia
         return inertia('Admin/Report/Attendance', [
             'attendancestudent' => $attendancestudent,
             'filter_data' => $request,

@@ -24,24 +24,24 @@ class AdministrationController extends Controller
 
         // filter => keyword
         if ($request->has('keyword') && $request->keyword !== null) {
-              $query->where('name', $request->keyword)
-                    ->orWhere('email', $request->keyword);
-            }
+            $query->where('name', $request->keyword)
+                ->orWhere('email', $request->keyword);
+        }
         // filter => department
         if ($request->has('department') && $request->department !== null) {
             $query->whereHas('department', function ($q) use ($request) {
-                   $q->where('slug', $request->department);
-              });
-            }
+                $q->where('slug', $request->department);
+            });
+        }
 
         $users = $query->latest()->paginate(15)->onEachSide(-1);
 
         $departments = Department::get(['id', 'name', 'slug']);
 
         return inertia('Admin/Administration/Index', [
-                    'users' => $users,
-                    'filter_data' => $request,
-                    'departments' => $departments,
+            'users' => $users,
+            'filter_data' => $request,
+            'departments' => $departments,
         ]);
     }
 

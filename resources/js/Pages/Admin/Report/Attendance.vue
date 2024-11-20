@@ -94,6 +94,7 @@
                     <th class="py-4 px-5">{{ __("Date") }}</th>
                     <th class="py-4 px-5">{{ __("Time In") }}</th>
                     <th class="py-4 px-5">{{ __("Time Out") }}</th>
+                    <th class="py-4 px-5">{{ __("lateness") }}</th>
                     <th class="py-4 px-5">{{ __("Latlon In") }}</th>
                     <th class="py-4 px-5">{{ __("Latlon Out") }}</th>
                 </template>
@@ -163,6 +164,11 @@
                                 <td
                                     class="py-4 px-5 text-gray-900 dark:text-white"
                                 >
+                                    {{ attendance.lateness }}
+                                </td>
+                                <td
+                                    class="py-4 px-5 text-gray-900 dark:text-white"
+                                >
                                     {{ attendance.latlon_in }}
                                 </td>
                                 <td
@@ -215,6 +221,7 @@ export default {
         filter_data: Object,
         classes: Object,
         study_programs: Object,
+        settingTimeIn: Object,
     },
     data() {
         return {
@@ -284,7 +291,7 @@ export default {
                 if (this.filter.month !== "") {
                     let attendanceMonth = new Date(attendance.date)
                         .toISOString()
-                        .slice(0, 10);
+                        .slice(0, 7);
                     monthMatch = attendanceMonth === this.filter.month;
                 }
 
@@ -292,7 +299,19 @@ export default {
             });
 
             return result;
-        }
+        },
+        calculatedLateness() {
+        if (!this.settingTimeIn || !this.settingTimeIn.time_in) return []; // Pastikan settingTimeIn ada
+
+        const settingTime = dayjs(this.settingTimeIn.time_in, "HH:mm");
+        return this.attendancestudents.map((attendance) => {
+            const timeIn = dayjs(attendance.time_in, "HH:mm");
+            const lateness = timeIn.isAfter(settingTime)
+            ? timeIn.diff(settingTime, "minute")
+            : 0;
+            return { ...attendance, lateness };
+        });
+        },
     },
     methods: {
         // Metode untuk meng-handle submit filter

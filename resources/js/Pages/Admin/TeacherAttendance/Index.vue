@@ -37,10 +37,10 @@
                         />
 
                         <label for="month" class="ml-4 mr-2"
-                            >{{ __("Month") }}:</label
+                            >{{ __("Date") }}:</label
                         >
                         <input
-                            type="month"
+                            type="date"
                             v-model="filter.month"
                             id="month"
                             class="p-2 border rounded mr-4"
@@ -77,6 +77,7 @@
                     <th class="py-4 px-5">{{ __("Date") }}</th>
                     <th class="py-4 px-5">{{ __("Time In") }}</th>
                     <th class="py-4 px-5">{{ __("Time Out") }}</th>
+                    <th class="py-4 px-5">{{ __("lateness") }}</th>
                     <th class="py-4 px-5">{{ __("Latlon In") }}</th>
                     <th class="py-4 px-5">{{ __("Latlon Out") }}</th>
                 </template>
@@ -127,6 +128,11 @@
                                     class="py-4 px-5 text-gray-900 dark:text-white"
                                 >
                                     {{ attendance.time_out }}
+                                </td>
+                                <td
+                                    class="py-4 px-5 text-gray-900 dark:text-white"
+                                >
+                                    {{ attendance.lateness }}
                                 </td>
                                 <td
                                     class="py-4 px-5 text-gray-900 dark:text-white"

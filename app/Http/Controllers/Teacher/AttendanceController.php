@@ -13,6 +13,7 @@ use App\Models\StudyProgram;
 use App\Models\Subject;
 use App\Services\Admin\Subject\SubjectChatGroupService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Http\Request;
 use Endroid\QrCode\Builder\Builder;
@@ -55,9 +56,44 @@ class AttendanceController extends Controller
             });
         }
 
+        // Filter berdasarkan bulan (jika diperlukan)
+        if ($request->has('month') && $request->month !== null) {
+            $attendance_query->whereDate('date', $request->month); // Filter berdasarkan tanggal
+        }
+
         // Eksekusi query
         $attendanceteacher = $attendance_query->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
         $study_programs = StudyProgram::get(['id', 'name', 'slug']);
+        $settingTimeIn = Setting::select(['time_in'])->first();
+
+        // Cek apakah settingTimeIn ada dan time_in tidak kosong
+        if ($settingTimeIn && $settingTimeIn->time_in) {
+            // Parsing waktu dari settingTimeIn
+            $settingTime = Carbon::createFromFormat('H:i:s', $settingTimeIn->time_in);
+
+            // Loop untuk menghitung keterlambatan setiap attendance
+            $attendanceteacher->map(function ($attendance) use ($settingTime) {
+                // Parsing waktu dari attendance
+                $attendanceTime = Carbon::createFromFormat('H:i:s', $attendance->time_in);
+
+                // Jika waktu attendance lebih lambat dari setting time, hitung keterlambatan
+                if ($attendanceTime->greaterThan($settingTime)) {
+                    // Hitung keterlambatan dalam menit
+                    $latenessMinutes = $attendanceTime->diffInMinutes($settingTime);
+
+                    // Setel keterlambatan dalam format teks "X minutes"
+                    $attendance->lateness = $latenessMinutes . ' minute';
+                } else {
+                    // Jika tidak terlambat, lateness 0
+                    $attendance->lateness = '0 minute'; // Bisa menggunakan format teks seperti ini
+                }
+
+                return $attendance;
+            });
+        } else {
+            // Handle jika settingTimeIn tidak ada atau time_in kosong
+            return response()->json(['error' => 'Setting time_in not found or invalid.'], 400);
+        }
 
         return inertia('Admin/TeacherAttendance/Index', [
             'attendanceteacher' => $attendanceteacher,

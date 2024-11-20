@@ -28,28 +28,49 @@ class DisplayDashboardController extends Controller
         $dayOfWeek = Carbon::now()->dayOfWeekIso;
         $weekRoutines = Carbon::now()->dayOfWeek;
         $today = now()->format('Y-m-d');
+        $today2 = now();
         $totalStudent = User::where('role', 'student')->count();
         $totalTeacher = User::where('role', 'teacher')->count();
+        $totalAdministration = User::where('role', 'Administration')->count();
 
         $start_time = date('H:i:s');
         $end_time = date('H:i:s');
 
         $totalStudentAttendance = AttendanceStudent::where('date', $today)
-            ->whereHas('user', function($query) {
+            ->whereHas('user', function ($query) {
                 $query->where('role', 'student');
             })->count();
 
         $totalTeacherAttendance = Attendance::where('date', $today)
-            ->whereHas('user', function($query) {
+            ->whereHas('user', function ($query) {
                 $query->where('role', 'teacher');
+            })->count();
+
+        $totalAdministrationAttendance = Attendance::where('date', $today)
+            ->whereHas('user', function ($query) {
+                $query->where('role', 'Administration');
             })->count();
 
         $totalStudentAbsent = $totalStudent - $totalStudentAttendance;
         $totalTeacherAbsent = $totalTeacher - $totalTeacherAttendance;
+        $totalAdministrationAbsent = $totalAdministration - $totalAdministrationAttendance;
 
         $studentAttendancePercentage = $totalStudent > 0 ? number_format(($totalStudentAttendance / $totalStudent) * 100, 2) . '%' : '0%';
 
         $teacherAttendancePercentage = $totalTeacher > 0 ? number_format(($totalTeacherAttendance / $totalTeacher) * 100, 2) . '%' : '0%';
+
+        $teacherAdministrationPercentage = $totalAdministration > 0 ? number_format(($totalAdministrationAttendance / $totalAdministration) * 100, 2) . '%' : '0%';
+
+        $totalTeacherLeave = Leave::where('start', $today)
+            ->whereHas('user', function ($query) {
+                $query->where('role', 'Teacher');
+            });
+
+        $totalAdministrationLeave = Leave::where('start', $today)
+            ->whereHas('user', function ($query) {
+                $query->where('role', 'Administration');
+            })->count();
+
 
         // Kelas
         $activeStatus = Setting::pluck('status')->toArray();
@@ -73,10 +94,89 @@ class DisplayDashboardController extends Controller
                     ->count(),
             ];
         });
-        
+
         $attendanceCount = $attendanceData->pluck('attendance_count');
-        
+
         $attendedClassesCount = $attendanceCount->filter()->count();
+
+        $attendanceteachers = Attendance::with('user:id,name')
+            ->where('date', $today)
+            ->whereHas('user', function ($query) {
+                $query->where('role', 'teacher');
+            })
+            ->get(['id', 'user_id', 'date', 'time_in']);
+
+        $attendanceadministrations = Attendance::with('user:id,name')
+            ->where('date', $today)
+            ->whereHas('user', function ($query) {
+                $query->where('role', 'Administration');
+            })
+            ->get(['id', 'user_id', 'date', 'time_in']);
+
+        $settingTimeIn = Setting::select(['time_in'])->first();
+
+        if ($settingTimeIn && $settingTimeIn->time_in) {
+            // Parsing waktu dari settingTimeIn
+            $settingTime = Carbon::createFromFormat('H:i:s', $settingTimeIn->time_in);
+
+            // Loop untuk menghitung keterlambatan setiap attendance
+            $attendanceteachers->map(function ($attendance) use ($settingTime) {
+                // Parsing waktu dari attendance
+                $attendanceTime = Carbon::createFromFormat('H:i:s', $attendance->time_in);
+
+                // Jika waktu attendance lebih lambat dari setting time, hitung keterlambatan
+                if ($attendanceTime->greaterThan($settingTime)) {
+                    // Hitung keterlambatan dalam menit
+                    $latenessMinutes = $attendanceTime->diffInMinutes($settingTime);
+
+                    // Setel keterlambatan dalam format teks "X minutes"
+                    $attendance->lateness = $latenessMinutes . ' menit';
+                } else {
+                    // Jika tidak terlambat, lateness 0
+                    $attendance->lateness = '0 menit'; // Bisa menggunakan format teks seperti ini
+                }
+
+                return $attendance;
+            });
+        } else {
+            // Handle jika settingTimeIn tidak ada atau time_in kosong
+            return response()->json(['error' => 'Setting time_in not found or invalid.'], 400);
+        }
+
+        if ($settingTimeIn && $settingTimeIn->time_in) {
+            // Parsing waktu dari settingTimeIn
+            $settingTime = Carbon::createFromFormat('H:i:s', $settingTimeIn->time_in);
+
+            // Loop untuk menghitung keterlambatan setiap attendance
+            $attendanceadministrations->map(function ($attendance) use ($settingTime) {
+                // Parsing waktu dari attendance
+                $attendanceTime = Carbon::createFromFormat('H:i:s', $attendance->time_in);
+
+                // Jika waktu attendance lebih lambat dari setting time, hitung keterlambatan
+                if ($attendanceTime->greaterThan($settingTime)) {
+                    // Hitung keterlambatan dalam menit
+                    $latenessMinutes = $attendanceTime->diffInMinutes($settingTime);
+
+                    // Setel keterlambatan dalam format teks "X minutes"
+                    $attendance->lateness = $latenessMinutes . ' menit';
+                } else {
+                    // Jika tidak terlambat, lateness 0
+                    $attendance->lateness = '0 menit'; // Bisa menggunakan format teks seperti ini
+                }
+
+                return $attendance;
+            });
+        } else {
+            // Handle jika settingTimeIn tidak ada atau time_in kosong
+            return response()->json(['error' => 'Setting time_in not found or invalid.'], 400);
+        }
+
+        $leaveAdministration = Leave::with('user', 'type:id,name')
+            ->where('start', $today)
+            ->whereHas('user', function ($query) {
+                $query->where('role', 'Administration');
+            })
+            ->get(['id', 'user_id', 'title', 'leave_type_id',  'start', 'end', 'status']);
 
         $totalEmptyClass = $coursesCount - $attendedClassesCount;
 
@@ -119,16 +219,16 @@ class DisplayDashboardController extends Controller
             ->get()
             ->pluck('teacher.id')
             ->toArray();
-        
+
         $statusObject = [];
-        
+
         foreach ($teacherIds as $teacherId) {
             $courseStatus = ClassAttendance::where('user_id', $teacherId)
-                                            ->where('date', $today)
-                                            ->exists();
+                ->where('date', $today)
+                ->exists();
             $statusObject[] = $courseStatus ? "true" : "false";
         }
-      
+
         // Kelas dengan jam kosong terbanyak minggu ini
         $startOfWeek = now()->startOfWeek()->format('Y-m-d');
         $endOfWeek = now()->endOfWeek()->format('Y-m-d');
@@ -168,7 +268,7 @@ class DisplayDashboardController extends Controller
             ? $teachersWithBestPunctuality->name
             : 'Belum ada data guru teladan bulan ini';
 
-        $coursesWithAttendanceCount = Course::withCount(['courseAttendance' => function($query) use ($startOfWeek, $endOfWeek) {
+        $coursesWithAttendanceCount = Course::withCount(['courseAttendance' => function ($query) use ($startOfWeek, $endOfWeek) {
             $query->whereBetween('date', [$startOfWeek, $endOfWeek]);
         }])->get();
 
@@ -188,8 +288,8 @@ class DisplayDashboardController extends Controller
 
         // Ambil semua kursus yang diikuti oleh guru pada hari tersebut
         $classRoutines = ClassRoutine::where('weekday', $weekRoutines)
-                                     ->where('activation', $activeStatus)
-                                     ->get();
+            ->where('activation', $activeStatus)
+            ->get();
 
         $leaveTypes = LeaveType::where('role_type', 'student')
             ->whereIn('name', ['Sakit', 'Izin'])
@@ -204,7 +304,7 @@ class DisplayDashboardController extends Controller
             }
 
             // Ambil semua siswa yang terdaftar di kursus yang ditemukan
-            $students = User::active()->student()->whereHas('courses', function($query) use ($course) {
+            $students = User::active()->student()->whereHas('courses', function ($query) use ($course) {
                 $query->where('course_id', $course->id);
             })->orderBy('name')->get();
 
@@ -212,7 +312,7 @@ class DisplayDashboardController extends Controller
             $absenNumber = 1;
 
             // Map hasil untuk menyesuaikan format
-            $studentsWithAbsenNumber = $students->map(function($user) use (&$absenNumber) {
+            $studentsWithAbsenNumber = $students->map(function ($user) use (&$absenNumber) {
                 // Increment nomor absen
                 $absen = $absenNumber;
                 $absenNumber++;
@@ -235,9 +335,9 @@ class DisplayDashboardController extends Controller
 
             // Ambil ID siswa yang sakit dan izin
             $leaves = Leave::whereIn('user_id', $students->pluck('id'))
-                ->where(function($query) use ($today) {
+                ->where(function ($query) use ($today) {
                     $query->whereDate('start', '<=', $today)
-                          ->whereDate('end', '>=', $today);
+                        ->whereDate('end', '>=', $today);
                 })
                 ->whereIn('leave_type_id', $leaveTypes->values())
                 ->get();
@@ -246,17 +346,17 @@ class DisplayDashboardController extends Controller
             $permissionStudentIds = $leaves->where('leave_type_id', $leaveTypes['Izin'])->pluck('user_id');
 
             // Ambil hanya siswa yang hadir
-            $presentStudents = $studentsWithAbsenNumber->filter(function($student) use ($presentStudentIds) {
+            $presentStudents = $studentsWithAbsenNumber->filter(function ($student) use ($presentStudentIds) {
                 return $presentStudentIds->contains($student['id']);
             });
 
             // Ambil hanya siswa yang sakit
-            $sickStudents = $studentsWithAbsenNumber->filter(function($student) use ($sickStudentIds) {
+            $sickStudents = $studentsWithAbsenNumber->filter(function ($student) use ($sickStudentIds) {
                 return $sickStudentIds->contains($student['id']);
             });
 
             // Ambil hanya siswa yang izin
-            $permissionStudents = $studentsWithAbsenNumber->filter(function($student) use ($permissionStudentIds) {
+            $permissionStudents = $studentsWithAbsenNumber->filter(function ($student) use ($permissionStudentIds) {
                 return $permissionStudentIds->contains($student['id']);
             });
 
@@ -264,29 +364,29 @@ class DisplayDashboardController extends Controller
             // $sickCount = $sickStudents->count();
             // $permissionCount = $permissionStudents->count();
             $presentCount = AttendanceStudent::whereIn('user_id', $students->pluck('id'))
-            ->whereDate('date', $today)
-            ->count();
+                ->whereDate('date', $today)
+                ->count();
 
             // Ambil jumlah siswa yang sakit untuk tanggal yang dipilih
             $sickCount = Leave::whereIn('user_id', $students->pluck('id'))
-            ->where(function($query) use ($today, $leaveTypes) {
-                $query->where('leave_type_id', $leaveTypes['Sakit'])
-                    ->whereDate('start', '<=', $today)
-                    ->whereDate('end', '>=', $today);
-            })
-            ->count();
+                ->where(function ($query) use ($today, $leaveTypes) {
+                    $query->where('leave_type_id', $leaveTypes['Sakit'])
+                        ->whereDate('start', '<=', $today)
+                        ->whereDate('end', '>=', $today);
+                })
+                ->count();
 
             // Ambil jumlah siswa yang izin untuk tanggal yang dipilih
             $permissionCount = Leave::whereIn('user_id', $students->pluck('id'))
-            ->where(function($query) use ($today, $leaveTypes) {
-                $query->where('leave_type_id', $leaveTypes['Izin'])
-                    ->whereDate('start', '<=', $today)
-                    ->whereDate('end', '>=', $today);
-            })
-            ->count();
+                ->where(function ($query) use ($today, $leaveTypes) {
+                    $query->where('leave_type_id', $leaveTypes['Izin'])
+                        ->whereDate('start', '<=', $today)
+                        ->whereDate('end', '>=', $today);
+                })
+                ->count();
 
             // Hitung jumlah siswa yang tidak memiliki keterangan
-            $absentStudents = $studentsWithAbsenNumber->filter(function($student) use ($presentStudentIds, $sickStudentIds, $permissionStudentIds) {
+            $absentStudents = $studentsWithAbsenNumber->filter(function ($student) use ($presentStudentIds, $sickStudentIds, $permissionStudentIds) {
                 return !($presentStudentIds->contains($student['id']) || $sickStudentIds->contains($student['id']) || $permissionStudentIds->contains($student['id']));
             });
 
@@ -312,21 +412,29 @@ class DisplayDashboardController extends Controller
             return $course['total']['sick'] + $course['total']['permission'] + $course['total']['absent'];
         })->first();
 
-        $courseNameWithHighestAbsences = $courseWithHighestAbsences['course_name'] ?? '';   
-                
+        $courseNameWithHighestAbsences = $courseWithHighestAbsences['course_name'] ?? '';
+
         // dd($coursesData);
 
         $response = [
             // Kehadiran
             'total_student' => $totalStudent,
             'total_teacher' => $totalTeacher,
+            'total_administartion' => $totalAdministration,
             'total_teacher_attendance' => $totalTeacherAttendance,
             'total_student_attendance' => $totalStudentAttendance,
+            'total_administration_attendance' => $totalAdministrationAttendance,
             'total_teacher_absent' => $totalTeacherAbsent,
             'total_student_absent' => $totalStudentAbsent,
+            'total_administration_absent' => $totalAdministrationAbsent,
+            'attendance_teachers' => $attendanceteachers,
+            'attendance_administrations' => $attendanceadministrations,
+            'total_administration_leave' => $totalAdministrationLeave,
+            'leave_administrations' => $leaveAdministration,
             // Persentase
             'student_attendance_percentage' => $studentAttendancePercentage,
             'teacher_attendance_percentage' => $teacherAttendancePercentage,
+            'administration_attendance_percentage' => $teacherAdministrationPercentage,
             'class_attendance_percentage' => $classAttendancePercentage,
             // Kelas
             'total_class' => $coursesCount,

@@ -46,36 +46,36 @@
                             class="p-2 border rounded mr-4"
                         />
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <a-select
-                                class="width-100"
-                                size="large"
-                                v-model:value="filter.course"
-                                show-search
-                                :placeholder="__('Select a course')"
-                                :options="options"
-                                :filter-option="filterOption"
-                                @focus="handleFocus"
-                                @blur="handleBlur"
-                                @change="handleChange"
-                            />
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <a-select
+                                    class="width-100"
+                                    size="large"
+                                    v-model:value="filter.course"
+                                    show-search
+                                    :placeholder="__('Select a course')"
+                                    :options="options"
+                                    :filter-option="filterOption"
+                                    @focus="handleFocus"
+                                    @blur="handleBlur"
+                                    @change="handleChange"
+                                />
+                            </div>
+                            <div>
+                                <a-select
+                                    class="width-100"
+                                    size="large"
+                                    v-model:value="filter.study_program"
+                                    show-search
+                                    :placeholder="__('Select a study program')"
+                                    :options="options2"
+                                    :filter-option="filterOption"
+                                    @focus="handleFocus"
+                                    @blur="handleBlur"
+                                    @change="handleChange"
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <a-select
-                                class="width-100"
-                                size="large"
-                                v-model:value="filter.study_program"
-                                show-search
-                                :placeholder="__('Select a study program')"
-                                :options="options2"
-                                :filter-option="filterOption"
-                                @focus="handleFocus"
-                                @blur="handleBlur"
-                                @change="handleChange"
-                            />
-                        </div>
-                    </div>
 
                         <button
                             type="submit"
@@ -86,6 +86,215 @@
                     </div>
                 </form>
             </div>
+
+            <div class="grid grid-cols-1 gap-6 xl:grid-cols-3 items-start mb-6">
+                <!-- Chart Section (left) -->
+                <div class="xl:col-span-1 rounded-lg bg-white overflow-x-auto dark:bg-gray-800 flex flex-col items-center justify-center p-6">
+                     <canvas id="myChart" class="mb-4"></canvas> <!-- Chart -->
+                </div>
+
+                <!-- Table Section (right) -->
+                <div class="xl:col-span-2 bg-white dark:bg-gray-800 rounded-lg">
+                    <div
+                        class="flex justify-between px-6 items-center pt-6 text-gray-900 dark:text-gray-400 text-base font-bold"
+                    >
+                        <div>{{ __("Attendance List") }}</div>
+                        <!-- You can add your "Create Event" or other buttons here if needed -->
+                    </div>
+
+                    <div class="overflow-x-auto overflow-y-auto max-h-[400px]">
+                        <!-- Table -->
+                        <table
+                            class="w-full text-sm text-left text-gray-500 dark:text-gray-400"
+                        >
+                            <thead
+                                class="text-xs text-gray-700 uppercase dark:bg-gray-600 dark:text-gray-400"
+                            >
+                                <tr>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Name") }}
+                                    </th>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Class") }}
+                                    </th>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Study Program") }}
+                                    </th>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Date") }}
+                                    </th>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Time In") }}
+                                    </th>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Time Out") }}
+                                    </th>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Lateness") }}
+                                    </th>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Latlon In") }}
+                                    </th>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Latlon Out") }}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template v-if="filteredAttendance.length > 0">
+                                    <template
+                                        v-for="attendance in filteredAttendance"
+                                        :key="attendance.id"
+                                    >
+                                        <tr
+                                            class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                                        >
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                {{ attendance.user_name }}
+                                            </td>
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                <template
+                                                    v-if="
+                                                        attendance.user.courses
+                                                            .length > 0
+                                                    "
+                                                >
+                                                    <div
+                                                        class="flex flex-wrap items-center gap-0.5"
+                                                    >
+                                                        <template
+                                                            v-for="(
+                                                                course, index
+                                                            ) in attendance.user
+                                                                .courses"
+                                                            :key="course.id"
+                                                        >
+                                                            <div
+                                                                class="font-bold ml-0.5"
+                                                            >
+                                                                {{
+                                                                    course.course
+                                                                        ? course
+                                                                              .course
+                                                                              .name
+                                                                        : ""
+                                                                }}
+                                                                <template
+                                                                    v-if="
+                                                                        attendance
+                                                                            .user
+                                                                            .courses
+                                                                            .length !=
+                                                                        index +
+                                                                            1
+                                                                    "
+                                                                    >,</template
+                                                                >
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                                <template v-else> - </template>
+                                            </td>
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                <template
+                                                    v-if="
+                                                        attendance.user.courses
+                                                            .length > 0
+                                                    "
+                                                >
+                                                    <div
+                                                        class="flex flex-wrap items-center gap-0.5"
+                                                    >
+                                                        <template
+                                                            v-for="(
+                                                                course, index
+                                                            ) in attendance.user
+                                                                .courses"
+                                                            :key="course.id"
+                                                        >
+                                                            <div
+                                                                class="font-bold ml-0.5"
+                                                            >
+                                                                {{
+                                                                    course
+                                                                        .course
+                                                                        .study_program
+                                                                        ? course
+                                                                              .course
+                                                                              .study_program
+                                                                              .name
+                                                                        : "-"
+                                                                }}
+                                                                <template
+                                                                    v-if="
+                                                                        attendance
+                                                                            .user
+                                                                            .courses
+                                                                            .length !=
+                                                                        index +
+                                                                            1
+                                                                    "
+                                                                    >,</template
+                                                                >
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                                <template v-else> - </template>
+                                            </td>
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                {{ attendance.date }}
+                                            </td>
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                {{ attendance.time_in }}
+                                            </td>
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                {{ attendance.time_out }}
+                                            </td>
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                {{ attendance.lateness }}
+                                            </td>
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                {{ attendance.latlon_in }}
+                                            </td>
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                {{ attendance.latlon_out }}
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </template>
+                                <template v-else>
+                                    <tr>
+                                        <td colspan="9" class="text-center p-4">
+                                            <NothingFound asShow="div" />
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <global-table>
                 <template #head>
                     <th class="py-4 px-5">{{ __("Name") }}</th>
@@ -113,43 +322,91 @@
                                     {{ attendance.user_name }}
                                 </td>
 
-                                <td class="py-4 px-5  text-gray-900 dark:text-white">
-                                    <template v-if="attendance.user.courses.length > 0">
-                                        <div class="flex flex-wrap items-center gap-0.5">
-                                            <template v-for="(course, index) in attendance.user.courses" :key="course.id">
+                                <td
+                                    class="py-4 px-5 text-gray-900 dark:text-white"
+                                >
+                                    <template
+                                        v-if="
+                                            attendance.user.courses.length > 0
+                                        "
+                                    >
+                                        <div
+                                            class="flex flex-wrap items-center gap-0.5"
+                                        >
+                                            <template
+                                                v-for="(
+                                                    course, index
+                                                ) in attendance.user.courses"
+                                                :key="course.id"
+                                            >
                                                 <div class="font-bold ml-0.5">
-                                                    {{ course.course ? course.course.name : "" }}
-                                                    <template v-if="attendance.user.courses.length != index + 1">,</template>
+                                                    {{
+                                                        course.course
+                                                            ? course.course.name
+                                                            : ""
+                                                    }}
+                                                    <template
+                                                        v-if="
+                                                            attendance.user
+                                                                .courses
+                                                                .length !=
+                                                            index + 1
+                                                        "
+                                                        >,</template
+                                                    >
                                                 </div>
                                             </template>
                                         </div>
                                     </template>
-                                    <template v-else>
-                                        -
-                                    </template>
+                                    <template v-else> - </template>
                                 </td>
 
-                                <td class="py-4 px-5 text-gray-900 dark:text-white">
-                                <template v-if="attendance.user.courses.length > 0">
-                                    <div class="flex flex-wrap items-center gap-0.5">
-                                        <template v-for="(course, index) in attendance.user.courses" :key="course.id">
-                                            <div class="font-bold ml-0.5">
-                                                    {{ course.course.study_program ? course.course.study_program.name : "-" }}
-                                                <template v-if="attendance.user.courses.length != index + 1">,</template>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </template>
-                                <template v-else>
-                                    -
-                                </template>
-                            </td>
+                                <td
+                                    class="py-4 px-5 text-gray-900 dark:text-white"
+                                >
+                                    <template
+                                        v-if="
+                                            attendance.user.courses.length > 0
+                                        "
+                                    >
+                                        <div
+                                            class="flex flex-wrap items-center gap-0.5"
+                                        >
+                                            <template
+                                                v-for="(
+                                                    course, index
+                                                ) in attendance.user.courses"
+                                                :key="course.id"
+                                            >
+                                                <div class="font-bold ml-0.5">
+                                                    {{
+                                                        course.course
+                                                            .study_program
+                                                            ? course.course
+                                                                  .study_program
+                                                                  .name
+                                                            : "-"
+                                                    }}
+                                                    <template
+                                                        v-if="
+                                                            attendance.user
+                                                                .courses
+                                                                .length !=
+                                                            index + 1
+                                                        "
+                                                        >,</template
+                                                    >
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template v-else> - </template>
+                                </td>
                                 <td
                                     class="py-4 px-5 text-gray-900 dark:text-white"
                                 >
                                     {{ attendance.date }}
                                 </td>
-
 
                                 <td
                                     class="py-4 px-5 text-gray-900 dark:text-white"
@@ -181,7 +438,7 @@
                     </template>
                     <template v-else>
                         <tr>
-                            <td colspan="6" class="text-center p-4">
+                            <td colspan="9" class="text-center p-4">
                                 <NothingFound asShow="div" />
                             </td>
                         </tr>
@@ -196,6 +453,7 @@
 </template>
 
 <script>
+import Chart from "chart.js/auto";
 import AppLayout from "@/Layouts/AppLayout.vue";
 import Breadcrumb from "@/Shared/Breadcrumb.vue";
 import BreadcrumbLink from "@/Shared/BreadcrumbLink.vue";
@@ -204,6 +462,7 @@ import ExportModal from "@/Shared/Modal.vue";
 import { ref } from "vue";
 import { useForm } from "@inertiajs/inertia-vue3";
 import axios from "axios";
+import { data } from "autoprefixer";
 
 export default {
     components: {
@@ -222,6 +481,8 @@ export default {
         classes: Object,
         study_programs: Object,
         settingTimeIn: Object,
+        attendance_percentage: Object,
+        absence_percentage: Object,
     },
     data() {
         return {
@@ -244,6 +505,34 @@ export default {
             },
         };
     },
+    mounted() {
+        const ctx = document.getElementById("myChart");
+
+        // Data untuk chart
+        const data = {
+            labels: ["Kehadiran", "Ketidakhadiran"],
+            datasets: [
+                {
+                    label: "Attendance",
+                    data: [this.attendance_percentage, this.absence_percentage],
+                    backgroundColor: ["rgb(54, 162, 235)", "rgb(255, 99, 132)"],
+                    hoverOffset: 4,
+                },
+            ],
+        };
+
+        // Membuat chart
+        const myChart = new Chart(ctx, {
+            type: "doughnut",
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+            },
+        });
+
+
+    },
     created() {
         this.options.push({
             value: "",
@@ -254,7 +543,7 @@ export default {
                 value: value.slug,
                 label: value.name,
             });
-        };
+        }
         this.options2.push({
             value: "",
             label: "All",
@@ -264,7 +553,7 @@ export default {
                 value: value.slug,
                 label: value.name,
             });
-        };
+        }
     },
     setup(props) {
         const attendancestudent = ref(props.attendancestudent);
@@ -301,16 +590,16 @@ export default {
             return result;
         },
         calculatedLateness() {
-        if (!this.settingTimeIn || !this.settingTimeIn.time_in) return []; // Pastikan settingTimeIn ada
+            if (!this.settingTimeIn || !this.settingTimeIn.time_in) return []; // Pastikan settingTimeIn ada
 
-        const settingTime = dayjs(this.settingTimeIn.time_in, "HH:mm");
-        return this.attendancestudents.map((attendance) => {
-            const timeIn = dayjs(attendance.time_in, "HH:mm");
-            const lateness = timeIn.isAfter(settingTime)
-            ? timeIn.diff(settingTime, "minute")
-            : 0;
-            return { ...attendance, lateness };
-        });
+            const settingTime = dayjs(this.settingTimeIn.time_in, "HH:mm");
+            return this.attendancestudents.map((attendance) => {
+                const timeIn = dayjs(attendance.time_in, "HH:mm");
+                const lateness = timeIn.isAfter(settingTime)
+                    ? timeIn.diff(settingTime, "minute")
+                    : 0;
+                return { ...attendance, lateness };
+            });
         },
     },
     methods: {
@@ -318,21 +607,17 @@ export default {
         filterData() {
             this.loading = true; // Menandakan bahwa data sedang dimuat
             if (this.filter.month !== "") {
-            // Format bulan ke tanggal pertama bulan itu
-            const filterDate = this.filter.month;  // e.g. "2024-11-01"
-            this.filter.month = filterDate;
-           }
-            this.$inertia.get(
-                this.route('report.attendance'),
-                this.filter,
-                {
-                    preserveScroll: true,
-                    onFinish: (visit) => {
-                        this.loading = false;
-                        this.attendancestudent = this.filteredAttendance;
-                    }
-                }
-            )
+                // Format bulan ke tanggal pertama bulan itu
+                const filterDate = this.filter.month; // e.g. "2024-11-01"
+                this.filter.month = filterDate;
+            }
+            this.$inertia.get(this.route("report.attendance"), this.filter, {
+                preserveScroll: true,
+                onFinish: (visit) => {
+                    this.loading = false;
+                    this.attendancestudent = this.filteredAttendance;
+                },
+            });
             // Filter data berdasarkan nilai yang dimasukkan
             // Jika Anda ingin menampilkan loading indicator, Anda bisa mengatur this.loading = true; di sini
 

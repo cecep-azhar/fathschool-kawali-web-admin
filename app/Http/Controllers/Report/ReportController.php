@@ -49,51 +49,66 @@ class ReportController extends Controller
     {
         abort_if(! userCan('academic.management'), 403);
 
-        // Ambil data kehadiran beserta nama pengguna
-        // $attendancestudent =AttendanceStudent::with('user:id,name')->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
-
         $attendance_query = AttendanceStudent::with([
             'user.courses.course:id,name,study_program_id',
             'user.courses.course.study_program:id,name'
         ]);
 
-        // Filter berdasarkan keyword
-        if ($request->has('keyword') && $request->keyword !== null) {
-            $attendance_query->whereHas('user', function ($query) use ($request) {
-                $query->where('name', 'LIKE', '%' . $request->keyword . '%'); // Filter nama user
-            });
-        }
-
-        // Filter berdasarkan course
-        if ($request->has('course') && $request->course !== null) {
-            $attendance_query->whereHas('user.courses.course', function ($query) use ($request) {
-                $query->where('slug', 'LIKE', '%' . $request->course . '%'); // Filter slug course
-            });
-        }
-
-        // Filter berdasarkan study_program
-        if ($request->has('study_program') && $request->study_program !== null) {
-            $attendance_query->whereHas('user.courses.course.study_program', function ($query) use ($request) {
-                $query->where('slug', 'LIKE', '%' . $request->study_program . '%') // Filter slug study_program
-                    ->orWhere('name', 'LIKE', '%' . $request->study_program . '%'); // Filter nama study_program
-            });
-        }
-
-        // Filter berdasarkan bulan (jika diperlukan)
+        // Filter tanggal hari ini secara default
         if ($request->has('month') && $request->month !== null) {
             $attendance_query->whereDate('date', $request->month); // Filter berdasarkan tanggal
         }
 
-        // Eksekusi query
-        $attendancestudent = $attendance_query->get([
-            'id',
-            'user_id',
-            'date',
-            'time_in',
-            'time_out',
-            'latlon_in',
-            'latlon_out'
-        ]);
+        // Filter lainnya (keyword, course, study_program)
+        if ($request->has('keyword') && $request->keyword !== null) {
+            $attendance_query->whereHas('user', function ($query) use ($request) {
+                $query->where('name', 'LIKE', '%' . $request->keyword . '%');
+            });
+        }
+
+        if ($request->has('course') && $request->course !== null) {
+            $attendance_query->whereHas('user.courses.course', function ($query) use ($request) {
+                $query->where('slug', 'LIKE', '%' . $request->course . '%');
+            });
+        }
+
+        if ($request->has('study_program') && $request->study_program !== null) {
+            $attendance_query->whereHas('user.courses.course.study_program', function ($query) use ($request) {
+                $query->where('slug', 'LIKE', '%' . $request->study_program . '%');
+            });
+        }
+
+        $attendancestudent = $attendance_query->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
+
+        // Total siswa berdasarkan filter
+        $totalStudentQuery = User::where('role', 'student');
+
+        if ($request->has('keyword') && $request->keyword !== null) {
+            $attendance_query->whereDate('date', $request->month);
+        }
+        if ($request->has('course') && $request->course !== null) {
+            $totalStudentQuery->whereHas('courses.course', function ($query) use ($request) {
+                $query->where('slug', 'LIKE', '%' . $request->course . '%');
+            });
+        }
+
+        if ($request->has('study_program') && $request->study_program !== null) {
+            $totalStudentQuery->whereHas('courses.course.study_program', function ($query) use ($request) {
+                $query->where('slug', 'LIKE', '%' . $request->study_program . '%');
+            });
+        }
+
+        $totalStudent = $totalStudentQuery->count();
+
+        // Total hadir dan tidak hadir
+        $totalPresent = $attendancestudent->filter(function ($attendance) {
+            return $attendance->time_in !== null && $attendance->time_out !== null;
+        })->count();
+        $totalAbsent = $totalStudent - $totalPresent;
+
+        // Persentase
+        $attendancePercentage = $totalStudent > 0 ? round(($totalPresent / $totalStudent) * 100) : 0;
+        $absencePercentage = $totalStudent > 0 ? round(($totalAbsent / $totalStudent) * 100) : 0;
 
         // Ambil daftar course dan study program untuk filter dropdown
         $classes = Course::get(['id', 'name', 'slug']);
@@ -129,7 +144,6 @@ class ReportController extends Controller
             return response()->json(['error' => 'Setting time_in not found or invalid.'], 400);
         }
 
-
         // Map tambahan untuk menyertakan nama user
         $attendancestudent->each(function ($attendance) {
             $attendance->user_name = $attendance->user->name;
@@ -139,6 +153,8 @@ class ReportController extends Controller
         // Return data ke Vue.js melalui Inertia
         return inertia('Admin/Report/Attendance', [
             'attendancestudent' => $attendancestudent,
+            'attendance_percentage' => $attendancePercentage,
+            'absence_percentage' => $absencePercentage,
             'filter_data' => $request,
             'classes' => $classes,
             'study_programs' => $study_programs,

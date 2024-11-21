@@ -64,7 +64,7 @@ class DisplayDashboardController extends Controller
         $totalTeacherLeave = Leave::where('start', $today)
             ->whereHas('user', function ($query) {
                 $query->where('role', 'Teacher');
-            });
+            })->count();
 
         $totalAdministrationLeave = Leave::where('start', $today)
             ->whereHas('user', function ($query) {
@@ -171,12 +171,31 @@ class DisplayDashboardController extends Controller
             return response()->json(['error' => 'Setting time_in not found or invalid.'], 400);
         }
 
+        $leaveTeacher = Leave::with('user', 'type:id,name')
+            ->where('start', $today)
+            ->whereHas('user', function ($query) {
+                $query->where('role', 'Teacher');
+            })
+            ->get(['id', 'user_id', 'title', 'leave_type_id',  'start', 'end', 'status'])
+            ->map(function ($leave) {
+                $start = Carbon::parse($leave->start);
+                $end = Carbon::parse($leave->end);
+                $leave->days = $start->diffInDays($end) + 1; // Tambahkan 1 untuk inklusif
+                return $leave;
+            });
+
         $leaveAdministration = Leave::with('user', 'type:id,name')
             ->where('start', $today)
             ->whereHas('user', function ($query) {
                 $query->where('role', 'Administration');
             })
-            ->get(['id', 'user_id', 'title', 'leave_type_id',  'start', 'end', 'status']);
+            ->get(['id', 'user_id', 'title', 'leave_type_id',  'start', 'end', 'status'])
+            ->map(function ($leave) {
+                $start = Carbon::parse($leave->start);
+                $end = Carbon::parse($leave->end);
+                $leave->days = $start->diffInDays($end) + 1; // Tambahkan 1 untuk inklusif
+                return $leave;
+            });
 
         $totalEmptyClass = $coursesCount - $attendedClassesCount;
 
@@ -429,8 +448,10 @@ class DisplayDashboardController extends Controller
             'total_administration_absent' => $totalAdministrationAbsent,
             'attendance_teachers' => $attendanceteachers,
             'attendance_administrations' => $attendanceadministrations,
+            'total_teacher_leave' => $totalTeacherLeave,
             'total_administration_leave' => $totalAdministrationLeave,
             'leave_administrations' => $leaveAdministration,
+            'leave_teachers' => $leaveTeacher,
             // Persentase
             'student_attendance_percentage' => $studentAttendancePercentage,
             'teacher_attendance_percentage' => $teacherAttendancePercentage,

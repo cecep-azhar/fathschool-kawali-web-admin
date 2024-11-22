@@ -89,8 +89,11 @@
 
             <div class="grid grid-cols-1 gap-6 xl:grid-cols-3 items-start mb-6">
                 <!-- Chart Section (left) -->
-                <div class="xl:col-span-1 rounded-lg bg-white overflow-x-auto dark:bg-gray-800 flex flex-col items-center justify-center p-6">
-                     <canvas id="myChart" class="mb-4"></canvas> <!-- Chart -->
+                <div
+                    class="xl:col-span-1 rounded-lg bg-white overflow-x-auto dark:bg-gray-800 flex flex-col items-center justify-center p-6"
+                >
+                    <canvas id="myChart" class="mb-4"></canvas>
+                    <!-- Chart -->
                 </div>
 
                 <!-- Table Section (right) -->
@@ -301,17 +304,12 @@
                     <th class="py-4 px-5">{{ __("Class") }}</th>
                     <th class="py-4 px-5">{{ __("Study Program") }}</th>
                     <th class="py-4 px-5">{{ __("Date") }}</th>
-                    <th class="py-4 px-5">{{ __("Time In") }}</th>
-                    <th class="py-4 px-5">{{ __("Time Out") }}</th>
-                    <th class="py-4 px-5">{{ __("lateness") }}</th>
-                    <th class="py-4 px-5">{{ __("Latlon In") }}</th>
-                    <th class="py-4 px-5">{{ __("Latlon Out") }}</th>
                 </template>
                 <template #body>
-                    <template v-if="filteredAttendance.length > 0">
+                    <template v-if="filteredAbsent.length > 0">
                         <template
-                            v-for="attendance in filteredAttendance"
-                            :key="attendance.id"
+                            v-for="absent in filteredAbsent"
+                            :key="absent.id"
                         >
                             <tr
                                 class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
@@ -319,24 +317,19 @@
                                 <td
                                     class="py-4 px-5 text-gray-900 dark:text-white"
                                 >
-                                    {{ attendance.user_name }}
+                                    {{ absent.name }}
                                 </td>
-
                                 <td
                                     class="py-4 px-5 text-gray-900 dark:text-white"
                                 >
-                                    <template
-                                        v-if="
-                                            attendance.user.courses.length > 0
-                                        "
-                                    >
+                                    <template v-if="absent.courses.length > 0">
                                         <div
                                             class="flex flex-wrap items-center gap-0.5"
                                         >
                                             <template
                                                 v-for="(
                                                     course, index
-                                                ) in attendance.user.courses"
+                                                ) in absent.courses"
                                                 :key="course.id"
                                             >
                                                 <div class="font-bold ml-0.5">
@@ -347,8 +340,7 @@
                                                     }}
                                                     <template
                                                         v-if="
-                                                            attendance.user
-                                                                .courses
+                                                            absent.courses
                                                                 .length !=
                                                             index + 1
                                                         "
@@ -360,22 +352,17 @@
                                     </template>
                                     <template v-else> - </template>
                                 </td>
-
                                 <td
                                     class="py-4 px-5 text-gray-900 dark:text-white"
                                 >
-                                    <template
-                                        v-if="
-                                            attendance.user.courses.length > 0
-                                        "
-                                    >
+                                    <template v-if="absent.courses.length > 0">
                                         <div
                                             class="flex flex-wrap items-center gap-0.5"
                                         >
                                             <template
                                                 v-for="(
                                                     course, index
-                                                ) in attendance.user.courses"
+                                                ) in absent.courses"
                                                 :key="course.id"
                                             >
                                                 <div class="font-bold ml-0.5">
@@ -389,8 +376,7 @@
                                                     }}
                                                     <template
                                                         v-if="
-                                                            attendance.user
-                                                                .courses
+                                                            absent.courses
                                                                 .length !=
                                                             index + 1
                                                         "
@@ -405,33 +391,7 @@
                                 <td
                                     class="py-4 px-5 text-gray-900 dark:text-white"
                                 >
-                                    {{ attendance.date }}
-                                </td>
-
-                                <td
-                                    class="py-4 px-5 text-gray-900 dark:text-white"
-                                >
-                                    {{ attendance.time_in }}
-                                </td>
-                                <td
-                                    class="py-4 px-5 text-gray-900 dark:text-white"
-                                >
-                                    {{ attendance.time_out }}
-                                </td>
-                                <td
-                                    class="py-4 px-5 text-gray-900 dark:text-white"
-                                >
-                                    {{ attendance.lateness }}
-                                </td>
-                                <td
-                                    class="py-4 px-5 text-gray-900 dark:text-white"
-                                >
-                                    {{ attendance.latlon_in }}
-                                </td>
-                                <td
-                                    class="py-4 px-5 text-gray-900 dark:text-white"
-                                >
-                                    {{ attendance.latlon_out }}
+                                    {{ absent.date }}
                                 </td>
                             </tr>
                         </template>
@@ -477,6 +437,10 @@ export default {
             type: Array,
             required: true,
         },
+        absentStudents: {
+            type: Array,
+            required: true,
+        },
         filter_data: Object,
         classes: Object,
         study_programs: Object,
@@ -506,6 +470,8 @@ export default {
         };
     },
     mounted() {
+        console.log("absentStudents:", this.absentStudents);
+
         const ctx = document.getElementById("myChart");
 
         // Data untuk chart
@@ -530,8 +496,6 @@ export default {
                 maintainAspectRatio: false,
             },
         });
-
-
     },
     created() {
         this.options.push({
@@ -589,6 +553,31 @@ export default {
 
             return result;
         },
+        filteredAbsent() {
+            const result = this.absentStudents.filter((attendance) => {
+                let nameMatch = true;
+                let monthMatch = true;
+
+                // Filter berdasarkan nama
+                if (this.filter.name.trim() !== "") {
+                    nameMatch = attendance.user_name
+                        .toLowerCase()
+                        .includes(this.filter.name.trim().toLowerCase());
+                }
+
+                // Filter berdasarkan bulan
+                if (this.filter.month !== "") {
+                    let absentMonth = new Date(attendance.date)
+                        .toISOString()
+                        .slice(0, 7);
+                    monthMatch = absentMonth === this.filter.month;
+                }
+
+                return nameMatch && monthMatch;
+            });
+
+            return result;
+        },
         calculatedLateness() {
             if (!this.settingTimeIn || !this.settingTimeIn.time_in) return []; // Pastikan settingTimeIn ada
 
@@ -606,22 +595,31 @@ export default {
         // Metode untuk meng-handle submit filter
         filterData() {
             this.loading = true; // Menandakan bahwa data sedang dimuat
+
+            // Filter berdasarkan nama
+            if (this.filter.name.trim() !== "") {
+                this.filter.name = this.filter.name.trim().toLowerCase(); // Menyimpan nilai nama yang difilter dalam format lowercase
+            }
+
+            // Filter berdasarkan bulan (pastikan bulan diformat dengan benar)
             if (this.filter.month !== "") {
-                // Format bulan ke tanggal pertama bulan itu
-                const filterDate = this.filter.month; // e.g. "2024-11-01"
+                const filterDate = this.filter.month; // Misalnya "2024-11-01"
                 this.filter.month = filterDate;
             }
+
+            // Lakukan permintaan dengan Inertia
             this.$inertia.get(this.route("report.attendance"), this.filter, {
                 preserveScroll: true,
                 onFinish: (visit) => {
                     this.loading = false;
-                    this.attendancestudent = this.filteredAttendance;
+                    // Assign hasil yang diterima dari server ke variabel lokal
+                    this.attendancestudent = visit.props.attendance; // Asumsi bahwa data dikirim dalam props.attendance
+                    this.absentStudents = visit.props.absentStudents; // Asumsi bahwa data dikirim dalam props.absentStudents
                 },
             });
+
             // Filter data berdasarkan nilai yang dimasukkan
             // Jika Anda ingin menampilkan loading indicator, Anda bisa mengatur this.loading = true; di sini
-
-            // Lakukan filter berdasarkan nama dan bulan
         },
         filterOption(input, option) {
             return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0;

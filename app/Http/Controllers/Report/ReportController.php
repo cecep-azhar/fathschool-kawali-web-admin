@@ -85,13 +85,6 @@ class ReportController extends Controller
         // Total siswa berdasarkan filter
         $totalStudentQuery = User::where('role', 'student');
 
-        // Filter berdasarkan bulan
-        if ($request->has('month') && $request->month !== null) {
-            $totalStudentQuery->whereHas('attendance_student', function ($query) use ($request) {
-                $query->whereDate('date', $request->month);
-            });
-        }
-
         // Filter berdasarkan keyword, course, study_program
         if ($request->has('keyword') && $request->keyword !== null) {
             $totalStudentQuery->whereHas('attendance_student', function ($query) use ($request) {
@@ -116,50 +109,80 @@ class ReportController extends Controller
 
         // Total hadir dan tidak hadir
         $totalPresent = $attendancestudent->filter(function ($attendance) {
-            return $attendance->time_in !== null && $attendance->time_out !== null;
+            return $attendance->time_in !== null;
         })->count();
+
 
         // Total tidak hadir
         $totalAbsent = $totalStudent - $totalPresent;
 
-        // Query untuk absent students dengan filter yang sama
-        $absentStudents = User::with([
-            'attendance_student', // Ambil data attendance_student
-            'leaves', // Ambil data attendance_student
-            'courses.course:id,name,study_program_id', // Ambil data course
-            'courses.course.study_program:id,name' // Ambil data study program
-        ])
-            ->where('role', 'Student') // Hanya siswa yang diambil
-            ->whereHas('attendance_student', function ($query) use ($request) {
-                $query->whereNull('time_in'); // Mencari attendance_student yang 'time_in' null
-            })
-            ->orWhereDoesntHave('attendance_student') // Menangani jika tidak ada data attendance_student sama sekali
-            // Terapkan filter yang sama dengan attendance_query
-            ->when($request->has('month') && $request->month !== null, function ($query) use ($request) {
-                $query->whereHas('attendance_student', function ($query) use ($request) {
-                    $query->whereDate('date', $request->month);
-                });
-            })
-            ->when($request->has('keyword') && $request->keyword !== null, function ($query) use ($request) {
-                $query->whereHas('attendance_student.user', function ($query) use ($request) {
-                    $query->where('name', 'LIKE', '%' . $request->keyword . '%');
-                });
-            })
-            ->when($request->has('course') && $request->course !== null, function ($query) use ($request) {
-                $query->whereHas('courses.course', function ($query) use ($request) {
-                    $query->where('slug', 'LIKE', '%' . $request->course . '%');
-                });
-            })
-            ->when($request->has('study_program') && $request->study_program !== null, function ($query) use ($request) {
-                $query->whereHas('courses.course.study_program', function ($query) use ($request) {
-                    $query->where('slug', 'LIKE', '%' . $request->study_program . '%');
-                });
-            })
-            ->get(); // Ambil hasil query
-
         // Persentase
         $attendancePercentage = $totalStudent > 0 ? round(($totalPresent / $totalStudent) * 100) : 0;
         $absencePercentage = $totalStudent > 0 ? round(($totalAbsent / $totalStudent) * 100) : 0;
+
+        // Membuat query untuk absent students
+        $absent_query = User::with([
+            'courses.course:id,name,study_program_id',
+            'courses.course.study_program:id,name'
+        ])->where('role', 'student'); // Hanya mengambil siswa
+
+        // Filter berdasarkan bulan terlebih dahulu
+        if ($request->has('month') && $request->month !== null) {
+            // Menambahkan filter untuk siswa yang tidak hadir pada bulan tertentu (time_in null)
+            $absent_query->whereDoesntHave('attendance_student', function ($query) use ($request) {
+                $query->whereDate('date', $request->month)
+                    ->whereNotNull('time_in'); // Pastikan time_in ada (kehadiran)
+            });
+        } else {
+            // Jika tidak ada filter bulan, ambil siswa yang tidak memiliki kehadiran sama sekali
+            $absent_query->whereDoesntHave('attendance_student');
+        }
+
+        // Filter tambahan (keyword, course, study_program)
+        if ($request->has('keyword') && $request->keyword !== null) {
+            $absent_query->where('name', 'LIKE', '%' . $request->keyword . '%');
+        }
+
+        if ($request->has('course') && $request->course !== null) {
+            $absent_query->whereHas('courses.course', function ($query) use ($request) {
+                $query->where('slug', 'LIKE', '%' . $request->course . '%');
+            });
+        }
+
+        if ($request->has('study_program') && $request->study_program !== null) {
+            $absent_query->whereHas('courses.course.study_program', function ($query) use ($request) {
+                $query->where('slug', 'LIKE', '%' . $request->study_program . '%');
+            });
+        }
+
+        // Mengambil data absent students
+        $absentStudents = $absent_query->get(['id', 'name']);
+
+        // Total siswa berdasarkan filter
+        $totalStudentQuery = User::where('role', 'student');
+
+        // Filter tambahan pada total siswa
+        if ($request->has('keyword') && $request->keyword !== null) {
+            $totalStudentQuery->where('name', 'LIKE', '%' . $request->keyword . '%');
+        }
+
+        if ($request->has('course') && $request->course !== null) {
+            $totalStudentQuery->whereHas('courses.course', function ($query) use ($request) {
+                $query->where('slug', 'LIKE', '%' . $request->course . '%');
+            });
+        }
+
+        if ($request->has('study_program') && $request->study_program !== null) {
+            $totalStudentQuery->whereHas('courses.course.study_program', function ($query) use ($request) {
+                $query->where('slug', 'LIKE', '%' . $request->study_program . '%');
+            });
+        }
+
+        // Menghitung total siswa
+        $totalStudent = $totalStudentQuery->count();
+
+        // Total tidak hadir
+        $totalAbsent = $absentStudents->count();
 
         // Ambil daftar course dan study program untuk filter dropdown
         $classes = Course::get(['id', 'name', 'slug']);

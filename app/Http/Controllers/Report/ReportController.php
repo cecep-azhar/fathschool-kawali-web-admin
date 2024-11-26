@@ -57,7 +57,11 @@ class ReportController extends Controller
 
         // Filter berdasarkan bulan
         if ($request->has('month') && $request->month !== null) {
+            // Filter berdasarkan bulan yang diberikan
             $attendance_query->whereDate('date', $request->month);
+        } else {
+            // Gunakan tanggal hari ini sebagai default
+            $attendance_query->whereDate('date', Carbon::today()->toDateString());
         }
 
         // Filter lainnya (keyword, course, study_program)
@@ -87,9 +91,7 @@ class ReportController extends Controller
 
         // Filter berdasarkan keyword, course, study_program
         if ($request->has('keyword') && $request->keyword !== null) {
-            $totalStudentQuery->whereHas('attendance_student', function ($query) use ($request) {
-                $query->where('name', 'LIKE', '%' . $request->keyword . '%');
-            });
+            $totalStudentQuery->where('name', 'LIKE', '%' . $request->keyword . '%');
         }
 
         if ($request->has('course') && $request->course !== null) {
@@ -123,18 +125,17 @@ class ReportController extends Controller
         // Membuat query untuk absent students
         $absent_query = User::with([
             'courses.course:id,name,study_program_id',
-            'courses.course.study_program:id,name'
+            'courses.course.study_program:id,name',
+            'leaves.type' // Pastikan relasi ini tetap di-load
         ])->where('role', 'student'); // Hanya mengambil siswa
 
         // Filter berdasarkan bulan terlebih dahulu
         if ($request->has('month') && $request->month !== null) {
-            // Menambahkan filter untuk siswa yang tidak hadir pada bulan tertentu (time_in null)
             $absent_query->whereDoesntHave('attendance_student', function ($query) use ($request) {
                 $query->whereDate('date', $request->month)
                     ->whereNotNull('time_in'); // Pastikan time_in ada (kehadiran)
             });
         } else {
-            // Jika tidak ada filter bulan, ambil siswa yang tidak memiliki kehadiran sama sekali
             $absent_query->whereDoesntHave('attendance_student');
         }
 
@@ -155,8 +156,24 @@ class ReportController extends Controller
             });
         }
 
-        // Mengambil data absent students
+        // Mengambil data absent students tanpa kehilangan data
         $absentStudents = $absent_query->get(['id', 'name']);
+
+        // Lazy Eager Loading: Filter relasi `leaves` berdasarkan `start`
+        if ($request->has('month') && $request->month !== null) {
+            $absentStudents->load(['leaves' => function ($query) use ($request) {
+                $query->whereDate('start', $request->month)
+                    ->with('type');
+            }]);
+        } else {
+            $absentStudents->load(['leaves.type']); // Jika tidak ada filter bulan, tetap load leaves dengan relasi type
+        }
+
+        // Menambahkan properti `date` ke setiap student
+        $absentStudents = $absentStudents->map(function ($student) use ($request) {
+            $student->date = $request->month ?? Carbon::today()->toDateString(); // Menambahkan properti date
+            return $student;
+        });
 
         // Total siswa berdasarkan filter
         $totalStudentQuery = User::where('role', 'student');

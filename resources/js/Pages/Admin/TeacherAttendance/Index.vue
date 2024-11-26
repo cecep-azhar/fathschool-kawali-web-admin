@@ -70,32 +70,76 @@
                     </div>
                 </form>
             </div>
-            <global-table>
-                <template #head>
-                    <th class="py-4 px-5">{{ __("Name") }}</th>
-                    <th class="py-4 px-5">{{ __("Study Program") }}</th>
-                    <th class="py-4 px-5">{{ __("Date") }}</th>
-                    <th class="py-4 px-5">{{ __("Time In") }}</th>
-                    <th class="py-4 px-5">{{ __("Time Out") }}</th>
-                    <th class="py-4 px-5">{{ __("lateness") }}</th>
-                    <th class="py-4 px-5">{{ __("Latlon In") }}</th>
-                    <th class="py-4 px-5">{{ __("Latlon Out") }}</th>
-                </template>
-                <template #body>
-                    <template v-if="filteredAttendance.length > 0">
-                        <template
-                            v-for="attendance in filteredAttendance"
-                            :key="attendance.id"
+            <div class="grid grid-cols-1 gap-6 xl:grid-cols-3 items-start mb-6">
+                <!-- Chart Section (left) -->
+                <div
+                    class="xl:col-span-1 rounded-lg bg-white overflow-x-auto dark:bg-gray-800 flex flex-col items-center justify-center p-6"
+                >
+                    <canvas id="myChart" class="mb-4"></canvas>
+                    <!-- Chart -->
+                </div>
+
+                <!-- Table Section (right) -->
+                <div class="xl:col-span-2 bg-white dark:bg-gray-800 rounded-lg">
+                    <div
+                        class="flex justify-between px-6 items-center pt-6 text-gray-900 dark:text-gray-400 text-base font-bold"
+                    >
+                        <div>{{ __("Attendance List") }}</div>
+                        <!-- You can add your "Create Event" or other buttons here if needed -->
+                    </div>
+
+                    <div class="overflow-x-auto overflow-y-auto max-h-[400px]">
+                        <!-- Table -->
+                        <table
+                            class="w-full text-sm text-left text-gray-500 dark:text-gray-400"
                         >
-                            <tr
-                                class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                            <thead
+                                class="text-xs text-gray-700 uppercase dark:bg-gray-600 dark:text-gray-400"
                             >
-                                <td
-                                    class="py-4 px-5 text-gray-900 dark:text-white"
-                                >
-                                    {{ attendance.user.name }}
-                                </td>
-                                <td
+                                <tr>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Name") }}
+                                    </th>
+
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Study Program") }}
+                                    </th>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Date") }}
+                                    </th>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Time In") }}
+                                    </th>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Time Out") }}
+                                    </th>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Lateness") }}
+                                    </th>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Latlon In") }}
+                                    </th>
+                                    <th scope="col" class="py-3 px-6">
+                                        {{ __("Latlon Out") }}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template v-if="filteredAttendance.length > 0">
+                                    <template
+                                        v-for="attendance in filteredAttendance"
+                                        :key="attendance.id"
+                                    >
+                                        <tr
+                                            class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                                        >
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                {{ attendance.user.name }}
+                                            </td>
+
+                                            <td
                                     class="py-4 px-5 text-gray-900 dark:text-white"
                                 >
                                     <template
@@ -114,42 +158,169 @@
                                     </template>
                                     <template v-else> - </template>
                                 </td>
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                {{ attendance.date }}
+                                            </td>
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                {{ attendance.time_in }}
+                                            </td>
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                {{ attendance.time_out }}
+                                            </td>
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                {{ attendance.lateness }}
+                                            </td>
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                {{ attendance.latlon_in }}
+                                            </td>
+                                            <td
+                                                class="py-4 px-5 text-gray-900 dark:text-white"
+                                            >
+                                                {{ attendance.latlon_out }}
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </template>
+                                <template v-else>
+                                    <tr>
+                                        <td colspan="9" class="text-center p-4">
+                                            <NothingFound asShow="div" />
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+                 <global-table>
+                <template #head>
+                    <th class="py-4 px-5">{{ __("Name") }}</th>
+                    <th class="py-4 px-5">{{ __("Study Program") }}</th>
+                    <th class="py-4 px-5">{{ __("Date") }}</th>
+                    <th class="py-4 px-5">{{ __("Leave Type") }}</th>
+                    <th class="py-4 px-5">{{ __("Status") }}</th>
+                </template>
+                <template #body>
+                    <template v-if="filteredAbsent.length > 0">
+                        <template
+                            v-for="absent in filteredAbsent"
+                            :key="absent.id"
+                        >
+                            <tr
+                                class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                            >
                                 <td
                                     class="py-4 px-5 text-gray-900 dark:text-white"
                                 >
-                                    {{ attendance.date }}
+                                    {{ absent.name }}
                                 </td>
                                 <td
                                     class="py-4 px-5 text-gray-900 dark:text-white"
                                 >
-                                    {{ attendance.time_in }}
+                                    <template
+                                        v-if="
+                                            absent.department &&
+                                            absent.department
+                                                .study_program
+                                        "
+                                    >
+                                        <div class="font-bold">
+                                            {{
+                                                absent.department
+                                                    .study_program.name
+                                            }}
+                                        </div>
+                                    </template>
+                                    <template v-else> - </template>
                                 </td>
                                 <td
                                     class="py-4 px-5 text-gray-900 dark:text-white"
                                 >
-                                    {{ attendance.time_out }}
+                                    {{ absent.date }}
                                 </td>
                                 <td
                                     class="py-4 px-5 text-gray-900 dark:text-white"
                                 >
-                                    {{ attendance.lateness }}
+                                    <template v-if="absent.leaves.length > 0">
+                                        <div
+                                            class="flex flex-wrap items-center gap-0.5"
+                                        >
+                                            <template
+                                                v-for="(
+                                                    leave, index
+                                                ) in absent.leaves"
+                                                :key="leave.id"
+                                            >
+                                                <div class="font-bold ml-0.5">
+                                                    {{
+                                                        leave.type
+                                                            ? leave.type
+                                                                  .name
+                                                            : "-"
+                                                    }}
+                                                    <template
+                                                        v-if="
+                                                            absent.leaves
+                                                                .length !=
+                                                            index + 1
+                                                        "
+                                                        >,</template
+                                                    >
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template v-else> - </template>
                                 </td>
                                 <td
                                     class="py-4 px-5 text-gray-900 dark:text-white"
                                 >
-                                    {{ attendance.latlon_in }}
-                                </td>
-                                <td
-                                    class="py-4 px-5 text-gray-900 dark:text-white"
-                                >
-                                    {{ attendance.latlon_out }}
+                                    <template v-if="absent.leaves.length > 0">
+                                        <div
+                                            class="flex flex-wrap items-center gap-0.5"
+                                        >
+                                            <template
+                                                v-for="(
+                                                    leave, index
+                                                ) in absent.leaves"
+                                                :key="leave.id"
+                                            >
+                                                <div class="font-bold ml-0.5">
+                                                    {{
+                                                        leave.status ?? '-'
+                                                    }}
+                                                    <template
+                                                        v-if="
+                                                            absent.leaves
+                                                                .length !=
+                                                            index + 1
+                                                        "
+                                                        >,</template
+                                                    >
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template v-else> - </template>
                                 </td>
                             </tr>
                         </template>
                     </template>
                     <template v-else>
                         <tr>
-                            <td colspan="6" class="text-center p-4">
+                            <td colspan="9" class="text-center p-4">
                                 <NothingFound asShow="div" />
                             </td>
                         </tr>
@@ -164,6 +335,7 @@
 </template>
 
 <script>
+import Chart from "chart.js/auto";
 import AppLayout from "@/Layouts/AppLayout.vue";
 import Breadcrumb from "@/Shared/Breadcrumb.vue";
 import BreadcrumbLink from "@/Shared/BreadcrumbLink.vue";
@@ -186,8 +358,14 @@ export default {
             type: Array,
             required: true,
         },
+        absentTeachers: {
+            type: Array,
+            required: true,
+        },
         filter_data: Object,
         study_programs: Object,
+        attendance_percentage: Object,
+        absence_percentage: Object,
     },
     data() {
         return {
@@ -208,6 +386,32 @@ export default {
                 study_program: this.filter_data.study_program ?? null,
             },
         };
+    },
+    mounted() {
+        const ctx = document.getElementById("myChart");
+
+        // Data untuk chart
+        const data = {
+            labels: ["Kehadiran", "Ketidakhadiran"],
+            datasets: [
+                {
+                    label: "Attendance",
+                    data: [this.attendance_percentage, this.absence_percentage],
+                    backgroundColor: ["rgb(54, 162, 235)", "rgb(255, 99, 132)"],
+                    hoverOffset: 4,
+                },
+            ],
+        };
+
+        // Membuat chart
+        const myChart = new Chart(ctx, {
+            type: "doughnut",
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+            },
+        });
     },
     created() {
         this.options.push({
@@ -253,11 +457,41 @@ export default {
                 return nameMatch && monthMatch;
             });
         },
+        filteredAbsent() {
+            const result = this.absentTeachers.filter((attendance) => {
+                let nameMatch = true;
+                let monthMatch = true;
+
+                // Filter berdasarkan nama
+                if (this.filter.name.trim() !== "") {
+                    nameMatch = attendance.user_name
+                        .toLowerCase()
+                        .includes(this.filter.name.trim().toLowerCase());
+                }
+
+                // Filter berdasarkan bulan
+                if (this.filter.month !== "") {
+                    let absentMonth = new Date(attendance.date)
+                        .toISOString()
+                        .slice(0, 7);
+                    monthMatch = absentMonth === this.filter.month;
+                }
+
+                return nameMatch && monthMatch;
+            });
+
+            return result;
+        },
     },
     methods: {
         // Metode untuk meng-handle submit filter
         filterData() {
             this.loading = true;
+             // Filter berdasarkan nama
+             if (this.filter.name.trim() !== "") {
+                this.filter.name = this.filter.name.trim().toLowerCase(); // Menyimpan nilai nama yang difilter dalam format lowercase
+            }
+
             if (this.filter.month !== "") {
                 const filterDate = this.filter.month;
                 this.filter.month = filterDate;
@@ -266,7 +500,8 @@ export default {
                 preserveScroll: true,
                 onFinish: (visit) => {
                     this.loading = false;
-                    this.attendanceteacher = this.filteredAttendance;
+                    this.attendanceteacher = visit.props.attendance; // Asumsi bahwa data dikirim dalam props.attendance
+                    this.absentTeachers = visit.props.absentStudents; // Asumsi bahwa data dikirim dalam props.absentStudents
                 },
             });
         },

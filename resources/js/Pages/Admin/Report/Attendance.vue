@@ -304,6 +304,8 @@
                     <th class="py-4 px-5">{{ __("Class") }}</th>
                     <th class="py-4 px-5">{{ __("Study Program") }}</th>
                     <th class="py-4 px-5">{{ __("Date") }}</th>
+                    <th class="py-4 px-5">{{ __("Leave Type") }}</th>
+                    <th class="py-4 px-5">{{ __("Status") }}</th>
                 </template>
                 <template #body>
                     <template v-if="filteredAbsent.length > 0">
@@ -392,6 +394,71 @@
                                     class="py-4 px-5 text-gray-900 dark:text-white"
                                 >
                                     {{ absent.date }}
+                                </td>
+                                <td
+                                    class="py-4 px-5 text-gray-900 dark:text-white"
+                                >
+                                    <template v-if="absent.leaves.length > 0">
+                                        <div
+                                            class="flex flex-wrap items-center gap-0.5"
+                                        >
+                                            <template
+                                                v-for="(
+                                                    leave, index
+                                                ) in absent.leaves"
+                                                :key="leave.id"
+                                            >
+                                                <div class="font-bold ml-0.5">
+                                                    {{
+                                                        leave.type
+                                                            ? leave.type
+                                                                  .name
+                                                            : "-"
+                                                    }}
+                                                    <template
+                                                        v-if="
+                                                            absent.leaves
+                                                                .length !=
+                                                            index + 1
+                                                        "
+                                                        >,</template
+                                                    >
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template v-else> - </template>
+                                </td>
+                                <td
+                                    class="py-4 px-5 text-gray-900 dark:text-white"
+                                >
+                                    <template v-if="absent.leaves.length > 0">
+                                        <div
+                                            class="flex flex-wrap items-center gap-0.5"
+                                        >
+                                            <template
+                                                v-for="(
+                                                    leave, index
+                                                ) in absent.leaves"
+                                                :key="leave.id"
+                                            >
+                                                <div class="font-bold ml-0.5">
+                                                    {{
+                                                        leave.status ?? '-'
+                                                    }}
+                                                    <template
+                                                        v-if="
+                                                            absent.leaves
+                                                                .length !=
+                                                            index + 1
+                                                        "
+                                                        >,</template
+                                                    >
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template v-else> - </template>
                                 </td>
                             </tr>
                         </template>

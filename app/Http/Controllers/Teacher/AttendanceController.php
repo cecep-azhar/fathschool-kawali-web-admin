@@ -11,6 +11,7 @@ use App\Models\Course;
 use App\Models\Setting;
 use App\Models\StudyProgram;
 use App\Models\Subject;
+use App\Models\User;
 use App\Services\Admin\Subject\SubjectChatGroupService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -40,7 +41,14 @@ class AttendanceController extends Controller
             'user:id,name,department_id',
             'user.department:id,name,study_program_id',
             'user.department.study_program:id,name',
-        ]);
+        ])->whereHas('user', function ($query) {
+            $query->whereNotIn('role', ['parent', 'student', 'admin', 'accountant']);
+        });
+
+        // Filter berdasarkan bulan (jika diperlukan)
+        if ($request->has('month') && $request->month !== null) {
+            $attendance_query->whereDate('date', $request->month); // Filter berdasarkan tanggal
+        }
 
         // Filter berdasarkan keyword
         if ($request->has('keyword') && $request->keyword !== null) {
@@ -56,13 +64,81 @@ class AttendanceController extends Controller
             });
         }
 
-        // Filter berdasarkan bulan (jika diperlukan)
-        if ($request->has('month') && $request->month !== null) {
-            $attendance_query->whereDate('date', $request->month); // Filter berdasarkan tanggal
-        }
-
         // Eksekusi query
         $attendanceteacher = $attendance_query->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
+
+        // Total teacher berdasarkan filter
+        $totalTeacherQuery =  User::whereNotIn('role', ['parent', 'student', 'admin', 'accountant']);
+
+        // Filter berdasarkan keyword, course, study_program
+        if ($request->has('keyword') && $request->keyword !== null) {
+            $totalTeacherQuery->where('name', 'LIKE', '%' . $request->keyword . '%');
+        }
+
+        if ($request->has('study_program') && $request->study_program !== null) {
+            $totalTeacherQuery->whereHas('department.study_program', function ($query) use ($request) {
+                $query->where('slug', 'LIKE', '%' . $request->study_program . '%');
+            });
+        }
+
+        // Menghitung total teacher
+        $totalTeacher = $totalTeacherQuery->count();
+
+        $totalPresent = $attendanceteacher->filter(function ($attendance) {
+            return $attendance->time_in !== null;
+        })->count();
+
+        $totalAbsent = $totalTeacher - $totalPresent;
+
+        // Persentase
+        $attendancePercentage = $totalTeacher > 0 ? round(($totalPresent / $totalTeacher) * 100) : 0;
+        $absencePercentage = $totalTeacher > 0 ? round(($totalAbsent / $totalTeacher) * 100) : 0;
+
+        $absent_query = User::with([
+            'department.study_program',
+            'leaves.type'
+        ])->whereNotIn('role', ['parent', 'student', 'admin', 'accountant']);
+
+        // Filter berdasarkan bulan terlebih dahulu
+        if ($request->has('month') && $request->month !== null) {
+            $absent_query->whereDoesntHave('attendance', function ($query) use ($request) {
+                $query->whereDate('date', $request->month)
+                    ->whereNotNull('time_in'); // Pastikan time_in ada (kehadiran)
+            });
+        } else {
+            $absent_query->whereDoesntHave('attendance');
+        }
+
+        // Filter tambahan (keyword, course, study_program)
+        if ($request->has('keyword') && $request->keyword !== null) {
+            $absent_query->where('name', 'LIKE', '%' . $request->keyword . '%');
+        }
+
+        if ($request->has('study_program') && $request->study_program !== null) {
+            $absent_query->whereHas('department.study_program', function ($query) use ($request) {
+                $query->where('slug', 'LIKE', '%' . $request->study_program . '%');
+            });
+        }
+
+        // Mengambil data absent students tanpa kehilangan data
+        $absentTeachers = $absent_query->get(['id', 'name']);
+
+        // Lazy Eager Loading: Filter relasi `leaves` berdasarkan `start`
+        if ($request->has('month') && $request->month !== null) {
+            $absentTeachers->load(['leaves' => function ($query) use ($request) {
+                $query->whereDate('start', $request->month)
+                    ->with('type');
+            }]);
+        } else {
+            $absentTeachers->load(['leaves.type']); // Jika tidak ada filter bulan, tetap load leaves dengan relasi type
+        }
+
+        // Menambahkan properti `date` ke setiap student
+        $absentTeachers = $absentTeachers->map(function ($student) use ($request) {
+            $student->date = $request->month ?? Carbon::today()->toDateString(); // Menambahkan properti date
+            return $student;
+        });
+
         $study_programs = StudyProgram::get(['id', 'name', 'slug']);
         $settingTimeIn = Setting::select(['time_in'])->first();
 
@@ -97,6 +173,9 @@ class AttendanceController extends Controller
 
         return inertia('Admin/TeacherAttendance/Index', [
             'attendanceteacher' => $attendanceteacher,
+            'absentTeachers' => $absentTeachers,
+            'attendance_percentage' => $attendancePercentage,
+            'absence_percentage' => $absencePercentage,
             'filter_data' => $request,
             'study_programs' => $study_programs
         ]);

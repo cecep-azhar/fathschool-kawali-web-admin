@@ -48,6 +48,9 @@ class AttendanceController extends Controller
         // Filter berdasarkan bulan (jika diperlukan)
         if ($request->has('month') && $request->month !== null) {
             $attendance_query->whereDate('date', $request->month); // Filter berdasarkan tanggal
+        } else {
+            // Gunakan tanggal hari ini sebagai default
+            $attendance_query->whereDate('date', Carbon::today()->toDateString());
         }
 
         // Filter berdasarkan keyword

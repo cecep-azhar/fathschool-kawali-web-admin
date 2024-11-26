@@ -194,11 +194,11 @@ class User extends Authenticatable
         return $this->where('role', 'Teacher');
     }
 
-     // Scope |  user filter as Administration
-     public function scopeAdministration($query)
-     {
-         return $this->where('role', 'Administration');
-     }
+    // Scope |  user filter as Administration
+    public function scopeAdministration($query)
+    {
+        return $this->where('role', 'Administration');
+    }
 
     // Scope |  user filter as Accountant
     public function scopeAccountant($query)
@@ -375,5 +375,15 @@ class User extends Authenticatable
     public function ratingsReceived()
     {
         return $this->hasMany(Rating::class, 'teacher_id');
+    }
+
+    public function attendance_student()
+    {
+        return $this->hasMany(AttendanceStudent::class, 'user_id', 'id');
+    }
+
+    public function attendance()
+    {
+        return $this->hasMany(Attendance::class, 'user_id', 'id');
     }
 }

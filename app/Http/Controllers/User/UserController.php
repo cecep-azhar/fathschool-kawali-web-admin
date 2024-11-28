@@ -304,19 +304,25 @@ class UserController extends Controller
         $name = $request->name;
         $month = $request->month;
 
-        if ($name && $month) {
-            // Filter berdasarkan nama dan bulan
-            return Excel::download(new TeacherExport($name, $month), 'teachers.xlsx');
-        } elseif ($name) {
-            // Filter berdasarkan nama
-            return Excel::download(new TeacherExport($name), 'teachers.xlsx');
-        } elseif ($month) {
-            // Filter berdasarkan bulan
-            return Excel::download(new TeacherExport(null, $month), 'teachers.xlsx');
-        } else {
-            // Tanpa filter (semua data)
-            return Excel::download(new TeacherExport(), 'teachers.xlsx');
-        }
+        $course = $request->course;
+        $study_program = $request->study_program;
+
+        $export = new TeacherExport($name, $month, $course, $study_program);
+
+        return Excel::download($export, 'teachers.xlsx');
+        // if ($name && $month) {
+        //     // Filter berdasarkan nama dan bulan
+        //     return Excel::download(new TeacherExport($name, $month), 'teachers.xlsx');
+        // } elseif ($name) {
+        //     // Filter berdasarkan nama
+        //     return Excel::download(new TeacherExport($name), 'teachers.xlsx');
+        // } elseif ($month) {
+        //     // Filter berdasarkan bulan
+        //     return Excel::download(new TeacherExport(null, $month), 'teachers.xlsx');
+        // } else {
+        //     // Tanpa filter (semua data)
+        //     return Excel::download(new TeacherExport(), 'teachers.xlsx');
+        // }
     }
 
     public function teacherClassExport(Request $request)

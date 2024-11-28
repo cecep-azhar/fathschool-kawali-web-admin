@@ -12,6 +12,7 @@ use App\Exports\StudentLeaveExport;
 use App\Exports\TeacherLateExport;
 use App\Exports\AllTeacherExport;
 use App\Exports\AllUserExport;
+use App\Exports\StudentAbsentExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UserRequest;
 use App\Models\Course;
@@ -73,7 +74,7 @@ class UserController extends Controller
 
         $userService->store($request);
 
-        $this->flashSuccess($request->user_type.' created successfully.');
+        $this->flashSuccess($request->user_type . ' created successfully.');
 
         if ($request->has('admission')) {
             return redirect()->route('student.admission.all');
@@ -133,7 +134,7 @@ class UserController extends Controller
 
         $userService->update($request, $user);
 
-        $this->flashSuccess($request->user_type.' updated successfully.'); // return response
+        $this->flashSuccess($request->user_type . ' updated successfully.'); // return response
 
         if ($request->has('admission')) {
             return redirect()->route('student.admission.all');
@@ -244,7 +245,7 @@ class UserController extends Controller
                 }
             }
         } catch (\Throwable $th) {
-            $this->flashError('Something went wrong:'.$th->getMessage());
+            $this->flashError('Something went wrong:' . $th->getMessage());
 
             return back();
         }
@@ -358,7 +359,7 @@ class UserController extends Controller
     {
         $query = $request->query;
 
-        if ($query=='All') {
+        if ($query == 'All') {
             $query = '';
         }
 
@@ -385,13 +386,30 @@ class UserController extends Controller
         $name = $request->name;
         $month = $request->month;
 
+        // Filter tambahan
+        $course = $request->course;
+        $study_program = $request->study_program;
+
+        // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
+        $export = new StudentAttendanceExport($name, $month, $course, $study_program);
+
+        // Download file Excel sesuai dengan filter
+        return Excel::download($export, 'students.xlsx');
+    }
+
+    public function StudentAbsentExport(Request $request)
+    {
         $name = $request->name;
         $month = $request->month;
 
-        // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
-        $export = new StudentAttendanceExport($name, $month);
+        // Filter tambahan
+        $course = $request->course;
+        $study_program = $request->study_program;
 
-        // Download file Excel sesuai dengan filter
+        // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
+        $export = new StudentAbsentExport($name, $month, $course, $study_program);
+
+        // Download file excel sesuai dengan filter
         return Excel::download($export, 'students.xlsx');
     }
 

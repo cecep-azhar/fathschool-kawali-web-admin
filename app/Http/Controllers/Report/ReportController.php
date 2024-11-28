@@ -114,7 +114,6 @@ class ReportController extends Controller
             return $attendance->time_in !== null;
         })->count();
 
-
         // Total tidak hadir
         $totalAbsent = $totalStudent - $totalPresent;
 

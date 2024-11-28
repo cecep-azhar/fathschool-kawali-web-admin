@@ -4,83 +4,39 @@
             {{ __("Student Attendance") }}
         </template>
         <Breadcrumb>
-            <BreadcrumbLink
-                :title="__('Student Attendance')"
-                :href="route('student.attendance')"
-            />
+            <BreadcrumbLink :title="__('Student Attendance')" :href="route('student.attendance')" />
         </Breadcrumb>
         <div>
             <page-header class="flex-col sm:flex-row">
                 {{ __("Student Attendance") }}
-                <template #content>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <global-button
-                            :loading="false"
-                            @click="exportSubmit()"
-                            type="button"
-                            theme="sky"
-                        >
-                            {{ __("Export") }}
-                        </global-button>
-                    </div>
-                </template>
+
             </page-header>
             <div class="mb-4">
                 <form @submit.prevent="filterData">
                     <div class="flex items-center">
-                        <input
-                            type="text"
-                            v-model="filter.name"
-                            id="name"
-                            placeholder="Name"
-                            class="p-2 border rounded"
-                        />
+                        <input type="text" v-model="filter.name" id="name" placeholder="Name"
+                            class="p-2 border rounded" />
 
-                        <label for="month" class="ml-4 mr-2"
-                            >{{ __("Date") }}:</label
-                        >
-                        <input
-                            type="date"
-                            v-model="filter.month"
-                            id="month"
-                            class="p-2 border rounded mr-4"
-                        />
+                        <label for="month" class="ml-4 mr-2">{{ __("Date") }}:</label>
+                        <input type="date" v-model="filter.month" id="month" class="p-2 border rounded mr-4" />
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <a-select
-                                    class="width-100"
-                                    size="large"
-                                    v-model:value="filter.course"
-                                    show-search
-                                    :placeholder="__('Select a course')"
-                                    :options="options"
-                                    :filter-option="filterOption"
-                                    @focus="handleFocus"
-                                    @blur="handleBlur"
-                                    @change="handleChange"
-                                />
+                                <a-select class="width-100" size="large" v-model:value="filter.course" show-search
+                                    :placeholder="__('Select a course')" :options="options"
+                                    :filter-option="filterOption" @focus="handleFocus" @blur="handleBlur"
+                                    @change="handleChange" />
                             </div>
                             <div>
-                                <a-select
-                                    class="width-100"
-                                    size="large"
-                                    v-model:value="filter.study_program"
-                                    show-search
-                                    :placeholder="__('Select a study program')"
-                                    :options="options2"
-                                    :filter-option="filterOption"
-                                    @focus="handleFocus"
-                                    @blur="handleBlur"
-                                    @change="handleChange"
-                                />
+                                <a-select class="width-100" size="large" v-model:value="filter.study_program"
+                                    show-search :placeholder="__('Select a study program')" :options="options2"
+                                    :filter-option="filterOption" @focus="handleFocus" @blur="handleBlur"
+                                    @change="handleChange" />
                             </div>
                         </div>
 
-                        <button
-                            type="submit"
-                            class="ml-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                        >
+                        <button type="submit"
+                            class="ml-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             {{ __("Filter") }}
                         </button>
                     </div>
@@ -88,31 +44,42 @@
             </div>
 
             <div class="grid grid-cols-1 gap-6 xl:grid-cols-3 items-start mb-6">
-                <!-- Chart Section (left) -->
-                <div
-                    class="xl:col-span-1 rounded-lg bg-white overflow-x-auto dark:bg-gray-800 flex flex-col items-center justify-center p-6"
-                >
-                    <canvas id="myChart" class="mb-4"></canvas>
-                    <!-- Chart -->
+                <div class="flex flex-col gap-4 rounded-lg bg-white overflow-x-auto dark:bg-gray-800 p-6">
+                    <!-- Chart Kehadiran -->
+                    <div class="flex flex-col items-center justify-center w-full h-64 mb-5">
+
+                        <canvas id="attendanceChart" class="mb-4 h-full"></canvas>
+                        <div class="text-center text-lg font-bold text-sky-500">
+                            {{ attendance_percentage }}% Kehadiran
+                        </div>
+                    </div>
+
+                    <!-- Chart Ketidakhadiran -->
+                    <div class="flex flex-col items-center justify-center w-full h-64">
+                        <canvas id="absenceChart" class="mb-4 h-full"></canvas>
+                        <div class="text-center text-lg font-bold text-rose-400	">
+                            {{ absence_percentage }}% Ketidakhadiran
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Table Section (right) -->
                 <div class="xl:col-span-2 bg-white dark:bg-gray-800 rounded-lg">
                     <div
-                        class="flex justify-between px-6 items-center pt-6 text-gray-900 dark:text-gray-400 text-base font-bold"
-                    >
+                        class="flex justify-between px-6 items-center pt-6 text-gray-900 dark:text-gray-400 text-base font-bold mb-2">
                         <div>{{ __("Attendance List") }}</div>
-                        <!-- You can add your "Create Event" or other buttons here if needed -->
+                        <!-- Tombol Export di sebelah kanan -->
+                        <div class="ml-auto">
+                            <global-button :loading="false" @click="exportAttendance()" type="button" theme="sky">
+                                {{ __("Export") }}
+                            </global-button>
+                        </div>
                     </div>
 
                     <div class="overflow-x-auto overflow-y-auto max-h-[400px]">
                         <!-- Table -->
-                        <table
-                            class="w-full text-sm text-left text-gray-500 dark:text-gray-400"
-                        >
-                            <thead
-                                class="text-xs text-gray-700 uppercase dark:bg-gray-600 dark:text-gray-400"
-                            >
+                        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                            <thead class="text-xs uppercase">
                                 <tr>
                                     <th scope="col" class="py-3 px-6">
                                         {{ __("Name") }}
@@ -144,142 +111,96 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template v-if="filteredAttendance.length > 0">
-                                    <template
-                                        v-for="attendance in filteredAttendance"
-                                        :key="attendance.id"
-                                    >
+                                <template v-if="attendancestudent.length > 0">
+                                    <template v-for="attendance in attendancestudent" :key="attendance.id">
                                         <tr
-                                            class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-                                        >
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
+                                            class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                            <td class="py-4 px-5 text-gray-900 dark:text-white">
                                                 {{ attendance.user_name }}
                                             </td>
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
-                                                <template
-                                                    v-if="
-                                                        attendance.user.courses
-                                                            .length > 0
-                                                    "
-                                                >
-                                                    <div
-                                                        class="flex flex-wrap items-center gap-0.5"
-                                                    >
-                                                        <template
-                                                            v-for="(
+                                            <td class="py-4 px-5 text-gray-900 dark:text-white">
+                                                <template v-if="
+                                                    attendance.user.courses
+                                                        .length > 0
+                                                ">
+                                                    <div class="flex flex-wrap items-center gap-0.5">
+                                                        <template v-for="(
                                                                 course, index
                                                             ) in attendance.user
-                                                                .courses"
-                                                            :key="course.id"
-                                                        >
-                                                            <div
-                                                                class="font-bold ml-0.5"
-                                                            >
+                                                                        .courses" :key="course.id">
+                                                            <div class="font-bold ml-0.5">
                                                                 {{
                                                                     course.course
                                                                         ? course
-                                                                              .course
-                                                                              .name
+                                                                            .course
+                                                                            .name
                                                                         : ""
                                                                 }}
-                                                                <template
-                                                                    v-if="
-                                                                        attendance
-                                                                            .user
-                                                                            .courses
-                                                                            .length !=
-                                                                        index +
-                                                                            1
-                                                                    "
-                                                                    >,</template
-                                                                >
+                                                                <template v-if="
+                                                                    attendance
+                                                                        .user
+                                                                        .courses
+                                                                        .length !=
+                                                                    index +
+                                                                    1
+                                                                ">,</template>
                                                             </div>
                                                         </template>
                                                     </div>
                                                 </template>
                                                 <template v-else> - </template>
                                             </td>
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
-                                                <template
-                                                    v-if="
-                                                        attendance.user.courses
-                                                            .length > 0
-                                                    "
-                                                >
-                                                    <div
-                                                        class="flex flex-wrap items-center gap-0.5"
-                                                    >
-                                                        <template
-                                                            v-for="(
+                                            <td class="py-4 px-5 text-gray-900 dark:text-white">
+                                                <template v-if="
+                                                    attendance.user.courses
+                                                        .length > 0
+                                                ">
+                                                    <div class="flex flex-wrap items-center gap-0.5">
+                                                        <template v-for="(
                                                                 course, index
                                                             ) in attendance.user
-                                                                .courses"
-                                                            :key="course.id"
-                                                        >
-                                                            <div
-                                                                class="font-bold ml-0.5"
-                                                            >
+                                                                        .courses" :key="course.id">
+                                                            <div class="font-bold ml-0.5">
                                                                 {{
                                                                     course
                                                                         .course
                                                                         .study_program
                                                                         ? course
-                                                                              .course
-                                                                              .study_program
-                                                                              .name
+                                                                            .course
+                                                                            .study_program
+                                                                            .name
                                                                         : "-"
                                                                 }}
-                                                                <template
-                                                                    v-if="
-                                                                        attendance
-                                                                            .user
-                                                                            .courses
-                                                                            .length !=
-                                                                        index +
-                                                                            1
-                                                                    "
-                                                                    >,</template
-                                                                >
+                                                                <template v-if="
+                                                                    attendance
+                                                                        .user
+                                                                        .courses
+                                                                        .length !=
+                                                                    index +
+                                                                    1
+                                                                ">,</template>
                                                             </div>
                                                         </template>
                                                     </div>
                                                 </template>
                                                 <template v-else> - </template>
                                             </td>
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
+                                            <td class="py-4 px-5 text-gray-900 dark:text-white">
                                                 {{ attendance.date }}
                                             </td>
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
+                                            <td class="py-4 px-5 text-gray-900 dark:text-white">
                                                 {{ attendance.time_in }}
                                             </td>
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
+                                            <td class="py-4 px-5 text-gray-900 dark:text-white">
                                                 {{ attendance.time_out }}
                                             </td>
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
+                                            <td class="py-4 px-5 text-gray-900 dark:text-white">
                                                 {{ attendance.lateness }}
                                             </td>
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
+                                            <td class="py-4 px-5 text-gray-900 dark:text-white">
                                                 {{ attendance.latlon_in }}
                                             </td>
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
+                                            <td class="py-4 px-5 text-gray-900 dark:text-white">
                                                 {{ attendance.latlon_out }}
                                             </td>
                                         </tr>
@@ -298,180 +219,103 @@
                 </div>
             </div>
 
-            <global-table>
-                <template #head>
-                    <th class="py-4 px-5">{{ __("Name") }}</th>
-                    <th class="py-4 px-5">{{ __("Class") }}</th>
-                    <th class="py-4 px-5">{{ __("Study Program") }}</th>
-                    <th class="py-4 px-5">{{ __("Date") }}</th>
-                    <th class="py-4 px-5">{{ __("Leave Type") }}</th>
-                    <th class="py-4 px-5">{{ __("Status") }}</th>
-                </template>
-                <template #body>
-                    <template v-if="filteredAbsent.length > 0">
-                        <template
-                            v-for="absent in filteredAbsent"
-                            :key="absent.id"
-                        >
-                            <tr
-                                class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-                            >
-                                <td
-                                    class="py-4 px-5 text-gray-900 dark:text-white"
-                                >
-                                    {{ absent.name }}
-                                </td>
-                                <td
-                                    class="py-4 px-5 text-gray-900 dark:text-white"
-                                >
-                                    <template v-if="absent.courses.length > 0">
-                                        <div
-                                            class="flex flex-wrap items-center gap-0.5"
-                                        >
-                                            <template
-                                                v-for="(
-                                                    course, index
-                                                ) in absent.courses"
-                                                :key="course.id"
-                                            >
-                                                <div class="font-bold ml-0.5">
-                                                    {{
-                                                        course.course
-                                                            ? course.course.name
-                                                            : ""
-                                                    }}
-                                                    <template
-                                                        v-if="
-                                                            absent.courses
-                                                                .length !=
-                                                            index + 1
-                                                        "
-                                                        >,</template
-                                                    >
-                                                </div>
-                                            </template>
+            <div class="xl:col-span-2 bg-white dark:bg-gray-800 rounded-lg">
+                <div class="flex justify-between items-center px-6 py-4">
+                    <!-- Judul "Absent List" di kiri -->
+                    <div class="text-gray-900 dark:text-gray-400 text-lg font-bold">
+                        {{ __("Absent List") }}
+                    </div>
+
+                    <!-- Tombol Export di kanan -->
+                    <global-button :loading="false" @click="exportAbsent()" type="button" theme="sky">
+                        {{ __("Export") }}
+                    </global-button>
+                </div>
+
+                <global-table>
+                    <template #head>
+                        <th class="py-4 px-5">{{ __("Name") }}</th>
+                        <th class="py-4 px-5">{{ __("Class") }}</th>
+                        <th class="py-4 px-5">{{ __("Study Program") }}</th>
+                        <th class="py-4 px-5">{{ __("Date") }}</th>
+                        <th class="py-4 px-5">{{ __("Leave Type") }}</th>
+                        <th class="py-4 px-5">{{ __("Status") }}</th>
+                    </template>
+
+                    <template #body>
+                        <template v-if="absentStudents.length > 0">
+                            <template v-for="absent in absentStudents" :key="absent.id">
+                                <tr class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                    <td class="py-4 px-5 text-gray-900 dark:text-white">{{ absent.name }}</td>
+                                    <td class="py-4 px-5 text-gray-900 dark:text-white">
+                                        <div v-if="absent.courses.length">
+                                            <div class="flex flex-wrap items-center gap-0.5">
+                                                <template v-for="(course, index) in absent.courses" :key="course.id">
+                                                    <div class="font-bold ml-0.5">
+                                                        {{ course.course?.name }}<template
+                                                            v-if="absent.courses.length !== index + 1">,</template>
+                                                    </div>
+                                                </template>
+                                            </div>
                                         </div>
-                                    </template>
-                                    <template v-else> - </template>
-                                </td>
-                                <td
-                                    class="py-4 px-5 text-gray-900 dark:text-white"
-                                >
-                                    <template v-if="absent.courses.length > 0">
-                                        <div
-                                            class="flex flex-wrap items-center gap-0.5"
-                                        >
-                                            <template
-                                                v-for="(
-                                                    course, index
-                                                ) in absent.courses"
-                                                :key="course.id"
-                                            >
-                                                <div class="font-bold ml-0.5">
-                                                    {{
-                                                        course.course
-                                                            .study_program
-                                                            ? course.course
-                                                                  .study_program
-                                                                  .name
-                                                            : "-"
-                                                    }}
-                                                    <template
-                                                        v-if="
-                                                            absent.courses
-                                                                .length !=
-                                                            index + 1
-                                                        "
-                                                        >,</template
-                                                    >
-                                                </div>
-                                            </template>
+                                        <span v-else>-</span>
+                                    </td>
+                                    <td class="py-4 px-5 text-gray-900 dark:text-white">
+                                        <div v-if="absent.courses.length">
+                                            <div class="flex flex-wrap items-center gap-0.5">
+                                                <template v-for="(course, index) in absent.courses" :key="course.id">
+                                                    <div class="font-bold ml-0.5">
+                                                        {{ course.course?.study_program?.name ?? "-" }}
+                                                        <template
+                                                            v-if="absent.courses.length !== index + 1">,</template>
+                                                    </div>
+                                                </template>
+                                            </div>
                                         </div>
-                                    </template>
-                                    <template v-else> - </template>
-                                </td>
-                                <td
-                                    class="py-4 px-5 text-gray-900 dark:text-white"
-                                >
-                                    {{ absent.date }}
-                                </td>
-                                <td
-                                    class="py-4 px-5 text-gray-900 dark:text-white"
-                                >
-                                    <template v-if="absent.leaves.length > 0">
-                                        <div
-                                            class="flex flex-wrap items-center gap-0.5"
-                                        >
-                                            <template
-                                                v-for="(
-                                                    leave, index
-                                                ) in absent.leaves"
-                                                :key="leave.id"
-                                            >
-                                                <div class="font-bold ml-0.5">
-                                                    {{
-                                                        leave.type
-                                                            ? leave.type
-                                                                  .name
-                                                            : "-"
-                                                    }}
-                                                    <template
-                                                        v-if="
-                                                            absent.leaves
-                                                                .length !=
-                                                            index + 1
-                                                        "
-                                                        >,</template
-                                                    >
-                                                </div>
-                                            </template>
+                                        <span v-else>-</span>
+                                    </td>
+                                    <td class="py-4 px-5 text-gray-900 dark:text-white">{{ absent.date }}</td>
+                                    <td class="py-4 px-5 text-gray-900 dark:text-white">
+                                        <div v-if="absent.leaves.length">
+                                            <div class="flex flex-wrap items-center gap-0.5">
+                                                <template v-for="(leave, index) in absent.leaves" :key="leave.id">
+                                                    <div class="font-bold ml-0.5">
+                                                        {{ leave.type?.name ?? "-" }}
+                                                        <template v-if="absent.leaves.length !== index + 1">,</template>
+                                                    </div>
+                                                </template>
+                                            </div>
                                         </div>
-                                    </template>
-                                    <template v-else> - </template>
-                                </td>
-                                <td
-                                    class="py-4 px-5 text-gray-900 dark:text-white"
-                                >
-                                    <template v-if="absent.leaves.length > 0">
-                                        <div
-                                            class="flex flex-wrap items-center gap-0.5"
-                                        >
-                                            <template
-                                                v-for="(
-                                                    leave, index
-                                                ) in absent.leaves"
-                                                :key="leave.id"
-                                            >
-                                                <div class="font-bold ml-0.5">
-                                                    {{
-                                                        leave.status ?? '-'
-                                                    }}
-                                                    <template
-                                                        v-if="
-                                                            absent.leaves
-                                                                .length !=
-                                                            index + 1
-                                                        "
-                                                        >,</template
-                                                    >
-                                                </div>
-                                            </template>
+                                        <span v-else>-</span>
+                                    </td>
+                                    <td class="py-4 px-5 text-gray-900 dark:text-white">
+                                        <div v-if="absent.leaves.length">
+                                            <div class="flex flex-wrap items-center gap-0.5">
+                                                <template v-for="(leave, index) in absent.leaves" :key="leave.id">
+                                                    <div class="font-bold ml-0.5">
+                                                        {{ leave.status ?? "-" }}
+                                                        <template v-if="absent.leaves.length !== index + 1">,</template>
+                                                    </div>
+                                                </template>
+                                            </div>
                                         </div>
-                                    </template>
-                                    <template v-else> - </template>
+                                        <span v-else>-</span>
+                                    </td>
+                                </tr>
+                            </template>
+                        </template>
+
+                        <template v-else>
+                            <tr>
+                                <td colspan="6" class="text-center p-4">
+                                    <NothingFound asShow="div" />
                                 </td>
                             </tr>
                         </template>
                     </template>
-                    <template v-else>
-                        <tr>
-                            <td colspan="9" class="text-center p-4">
-                                <NothingFound asShow="div" />
-                            </td>
-                        </tr>
-                    </template>
-                </template>
-            </global-table>
+                </global-table>
+            </div>
+
             <div class="flex justify-center">
                 <!-- Pagination bisa ditambahkan di sini jika diperlukan -->
             </div>
@@ -527,6 +371,7 @@ export default {
             export_data: useForm({
                 type: "Excel",
                 course: "all",
+                study_program: "all",
             }),
             filter: {
                 name: "",
@@ -537,33 +382,49 @@ export default {
         };
     },
     mounted() {
-        console.log("absentStudents:", this.absentStudents);
-
-        const ctx = document.getElementById("myChart");
-
-        // Data untuk chart
-        const data = {
-            labels: ["Kehadiran", "Ketidakhadiran"],
+        // Chart Kehadiran
+        const attendanceCtx = document.getElementById("attendanceChart");
+        const attendanceData = {
             datasets: [
                 {
                     label: "Attendance",
                     data: [this.attendance_percentage, this.absence_percentage],
-                    backgroundColor: ["rgb(54, 162, 235)", "rgb(255, 99, 132)"],
+                    backgroundColor: ["rgb(54, 162, 235)", "rgb(255, 99, 132)"], // Biru & Merah
                     hoverOffset: 4,
                 },
             ],
         };
-
-        // Membuat chart
-        const myChart = new Chart(ctx, {
+        new Chart(attendanceCtx, {
             type: "doughnut",
-            data: data,
+            data: attendanceData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+            },
+        });
+
+        // Chart Ketidakhadiran
+        const absenceCtx = document.getElementById("absenceChart");
+        const absenceData = {
+            datasets: [
+                {
+                    label: "Absence",
+                    data: [this.absence_percentage, this.attendance_percentage],
+                    backgroundColor: ["rgb(255, 99, 132)", "rgb(54, 162, 235)"], // Biru & Merah
+                    hoverOffset: 4,
+                },
+            ],
+        };
+        new Chart(absenceCtx, {
+            type: "doughnut",
+            data: absenceData,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
             },
         });
     },
+
     created() {
         this.options.push({
             value: "",
@@ -680,8 +541,8 @@ export default {
                 onFinish: (visit) => {
                     this.loading = false;
                     // Assign hasil yang diterima dari server ke variabel lokal
-                    this.attendancestudent = visit.props.attendance; // Asumsi bahwa data dikirim dalam props.attendance
-                    this.absentStudents = visit.props.absentStudents; // Asumsi bahwa data dikirim dalam props.absentStudents
+                    this.attendancestudent = visit.props.attendance;
+                    this.absentStudents = visit.props.absentStudents;
                 },
             });
 
@@ -693,7 +554,7 @@ export default {
         },
 
         // Metode untuk mengekspor data
-        exportSubmit() {
+        exportAttendance() {
             this.loading = true;
             let exportData = {};
 
@@ -705,6 +566,16 @@ export default {
             // Jika ada filter bulan yang aktif
             if (this.filter.month !== "") {
                 exportData.month = this.filter.month;
+            }
+
+            // Tambahkan filter course jika ada
+            if (this.filter.course && this.filter.course.trim() !== "") {
+                exportData.course = this.filter.course.trim();
+            }
+
+            // Tambahkan filter study program jika ada
+            if (this.filter.study_program && this.filter.study_program.trim() !== "") {
+                exportData.study_program = this.filter.study_program.trim();
             }
 
             axios({
@@ -732,6 +603,69 @@ export default {
                     fileLink.setAttribute(
                         "download",
                         "studentattendance-report." + "xlsx"
+                    );
+                    document.body.appendChild(fileLink);
+
+                    fileLink.click();
+
+                    this.loading = false;
+                    this.visible = false;
+                })
+                .catch((e) => {
+                    this.loading = false;
+                    this.visible = false;
+                });
+        },
+
+        exportAbsent() {
+            this.loading = true;
+            let exportData = {};
+
+            // Jika ada filter nama yang aktif
+            if (this.filter.name.trim() !== "") {
+                exportData.name = this.filter.name.trim();
+            }
+
+            // Jika ada filter bulan yang aktif
+            if (this.filter.month !== "") {
+                exportData.month = this.filter.month;
+            }
+
+            // Tambahkan filter course jika ada
+            if (this.filter.course && this.filter.course.trim() !== "") {
+                exportData.course = this.filter.course.trim();
+            }
+
+            // Tambahkan filter study program jika ada
+            if (this.filter.study_program && this.filter.study_program.trim() !== "") {
+                exportData.study_program = this.filter.study_program.trim();
+            }
+
+            axios({
+                url: this.route("studentabsent.export"),
+                method: "POST",
+                data: {
+                    ...this.export_data,
+                    ...exportData,
+                },
+                headers: {
+                    "X-CSRF-TOKEN": document
+                        .querySelector('meta[name="csrf-token"]')
+                        .getAttribute("content"),
+                },
+                responseType: "blob",
+            })
+                .then((response) => {
+                    let extension = this.export_data.type;
+                    var fileURL = window.URL.createObjectURL(
+                        new Blob([response.data])
+                    );
+                    var fileLink = document.createElement("a");
+
+                    fileLink.href = fileURL;
+                    fileLink.setAttribute(
+                        "download",
+                        "studentabsent-report." + "xlsx"
                     );
                     document.body.appendChild(fileLink);
 

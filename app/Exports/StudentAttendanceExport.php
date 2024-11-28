@@ -2,24 +2,30 @@
 
 namespace App\Exports;
 
-use App\Models\Attendance;
 use App\Models\AttendanceStudent;
-use App\Models\Course;
-use App\Models\User;
+use App\Models\Setting;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class StudentAttendanceExport implements FromCollection, WithHeadings, WithMapping
+
+
+class StudentAttendanceExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
     protected $name;
     protected $month;
+    protected $course;
+    protected $study_program;
 
-    public function __construct($name = null, $month = null)
+    public function __construct($name = null, $month = null, $course = null, $study_program = null)
     {
         $this->name = $name;
         $this->month = $month;
+        $this->course = $course;
+        $this->study_program = $study_program;
     }
 
     /**
@@ -27,22 +33,80 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
      */
     public function collection()
     {
+        // Query utama untuk AttendanceStudent
         $query = AttendanceStudent::query();
 
         if ($this->name) {
-            // Filter berdasarkan nama pengguna
             $query->whereHas('user', function ($q) {
-                $q->where('name', 'like', '%' . $this->name . '%');
+                $q->where('name', 'LIKE', '%' . $this->name . '%');
             });
         }
 
         if ($this->month) {
-            // Filter berdasarkan bulan (gunakan tanggal ISO untuk kompatibilitas database)
-            $query->whereMonth('date', '=', date('m', strtotime($this->month)))
-                  ->whereYear('date', '=', date('Y', strtotime($this->month)));
+            $query->whereDate('date', '=', date('Y-m-d', strtotime($this->month)));
+        } else {
+            $query->whereDate('date', '=',  Carbon::today()->toDateString());
         }
 
-        return $query->get();
+        if ($this->course) {
+            $query->whereHas('user.courses.course', function ($q) {
+                $q->where('slug', 'LIKE', '%' . $this->course . '%');
+            });
+        }
+
+        if ($this->study_program) {
+            $query->whereHas('user.courses.course.study_program', function ($q) {
+                $q->where('slug', 'LIKE', '%' . $this->study_program . '%');
+            });
+        }
+
+        $attendances = $query->get();
+
+        // Ambil data attendances
+        $attendances = $query->get()->map(function ($attendance, $index) {
+            $attendance->number = $index + 1;
+            return $attendance;
+        });
+
+        // Ambil setting waktu 'time_in'
+        $settingTimeIn = Setting::select(['time_in'])->first();
+
+        // Cek apakah settingTimeIn ada dan time_in tidak kosong
+        if ($settingTimeIn && $settingTimeIn->time_in) {
+            // Parsing waktu dari settingTimeIn
+            $settingTime = Carbon::createFromFormat('H:i:s', $settingTimeIn->time_in);
+
+            // Loop untuk menghitung keterlambatan setiap attendance
+            $attendances->map(function ($attendance) use ($settingTime) {
+                // Parsing waktu dari attendance
+                if ($attendance->time_in) {
+                    $attendanceTime = Carbon::createFromFormat('H:i:s', $attendance->time_in);
+
+                    // Jika waktu attendance lebih lambat dari setting time, hitung keterlambatan
+                    if ($attendanceTime->greaterThan($settingTime)) {
+                        // Hitung keterlambatan dalam menit
+                        $latenessMinutes = $attendanceTime->diffInMinutes($settingTime);
+
+                        // Setel keterlambatan dalam format teks "X minutes"
+                        $attendance->lateness = $latenessMinutes . ' minute';
+                    } else {
+                        // Jika tidak terlambat, lateness 0
+                        $attendance->lateness = '0 minute';
+                    }
+                } else {
+                    // Jika tidak ada time_in di attendance, set lateness sebagai 'Not Recorded'
+                    $attendance->lateness = 'Not Recorded';
+                }
+
+                return $attendance;
+            });
+        } else {
+            // Handle jika settingTimeIn tidak ada atau time_in kosong
+            return response()->json(['error' => 'Setting time_in not found or invalid.'], 400);
+        }
+
+        // Kembalikan attendances dengan nomor urut dan lateness
+        return $attendances;
     }
 
     /**
@@ -50,16 +114,19 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
      *
      * @return \Illuminate\Support\Collection
      */
-    public function map($attendance): array
+    public function map($attendances): array
     {
         return [
-            $attendance->id,
-            $attendance->user->name, // assuming you have a relationship 'user' in Attendance model
-            $attendance->date,
-            $attendance->time_in,
-            $attendance->time_out,
-            $attendance->latlon_in,
-            $attendance->latlon_out,
+            $attendances->number,
+            $attendances->user->name, // assuming you have a relationship 'user' in Attendance model
+            $attendances->user->courses->pluck('course.name')->join(', '),
+            $attendances->user->courses->pluck('course.study_program.name')->join(', '),
+            $attendances->date,
+            $attendances->time_in,
+            $attendances->time_out,
+            $attendances->lateness,
+            $attendances->latlon_in,
+            $attendances->latlon_out,
         ];
     }
 
@@ -71,13 +138,29 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
     public function headings(): array
     {
         return [
-            'Id',
-            'Name',
-            'Date',
-            'Time In',
-            'Time Out',
-            'Latlon In',
-            'Latlon Out',
+            'No',                  // Nomor urut
+            'Name',                // Nama siswa
+            'Class',               // Kelas siswa
+            'Study Program',       // Program studi siswa
+            'Date',                // Tanggal kehadiran
+            'Time In',             // Waktu masuk
+            'Time Out',            // Waktu keluar
+            'Lateness',            // Keterlambatan
+            'Latlon In',           // Lokasi masuk
+            'Latlon Out',          // Lokasi keluar
         ];
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        // Menyesuaikan ukuran font header
+        $sheet->getStyle('A1:J1')->getFont()->setSize(15);  // Perbaikan untuk mencakup hingga kolom 'J'
+        $sheet->getStyle('A1:J1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:J1')->getAlignment()->setHorizontal('center');
+
+        // Menyesuaikan lebar kolom agar sesuai dengan konten
+        foreach (range('A', 'J') as $columnID) {  // Memperbaiki untuk mencakup kolom 'J'
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
     }
 }

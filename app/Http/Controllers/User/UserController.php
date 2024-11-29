@@ -13,6 +13,7 @@ use App\Exports\TeacherLateExport;
 use App\Exports\AllTeacherExport;
 use App\Exports\AllUserExport;
 use App\Exports\StudentAbsentExport;
+use App\Exports\TeacherAbsentExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UserRequest;
 use App\Models\Course;
@@ -323,6 +324,19 @@ class UserController extends Controller
         //     // Tanpa filter (semua data)
         //     return Excel::download(new TeacherExport(), 'teachers.xlsx');
         // }
+    }
+
+    public function teacherAbsentExport(Request $request)
+    {
+        $name = $request->name;
+        $month = $request->month;
+
+        $course = $request->course;
+        $study_program = $request->study_program;
+
+        $export = new TeacherAbsentExport($name, $month, $course, $study_program);
+
+        return Excel::download($export, 'teachers.xlsx');
     }
 
     public function teacherClassExport(Request $request)

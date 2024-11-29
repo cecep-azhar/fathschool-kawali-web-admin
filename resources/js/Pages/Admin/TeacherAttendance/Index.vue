@@ -568,7 +568,7 @@ export default {
                     fileLink.href = fileURL;
                     fileLink.setAttribute(
                         "download",
-                        "teacherattendance-report." + "xlsx"
+                        "teacherabsent-report." + "xlsx"
                     );
                     document.body.appendChild(fileLink);
 

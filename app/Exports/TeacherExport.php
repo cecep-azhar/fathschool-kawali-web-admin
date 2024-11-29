@@ -50,7 +50,7 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, WithSt
             });
         }
 
-        return $query->get();
+        $attendances = $query->get();
 
         // Ambil data attendances
         $attendances = $query->get()->map(function ($attendance, $index) {
@@ -96,7 +96,6 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, WithSt
         }
 
         // Kembalikan attendances dengan nomor urut dan lateness
-        dd($attendances);
         return $attendances;
     }
 

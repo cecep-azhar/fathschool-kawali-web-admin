@@ -59,12 +59,14 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::post('parent/index', 'parentGet')->name('parent.index');
             Route::post('student/export', 'studentExport')->name('student.export');
             Route::post('teacher/export', 'teacherExport')->name('teacherattendance.export');
+            Route::post('teacher/absent/export', 'teacherAbsentExport')->name('teacherabsent.export');
             Route::post('all/user/export', 'AllUserExport')->name('all.user.export');
             Route::post('all/teacher/export', 'AllTeacherExport')->name('all.teacher.export');
             Route::post('teacher-class/export', 'teacherClassExport')->name('teacherclass.export');
             Route::post('teacher-rate/export', 'teacherRateExport')->name('rateteacher.export');
             Route::post('teacher-rate/export', 'teacherLateExport')->name('teacher.lateness.export');
             Route::post('student-attendance/export', 'StudentAttendanceExport')->name('studentattendance.export');
+            Route::post('student-absent/export', 'StudentAbsentExport')->name('studentabsent.export');
             Route::post('user-doc/destroy/{doc}', 'docDestroy')->name('doc.destroy');
         });
 

@@ -81,7 +81,6 @@ class StudentAbsentExport implements FromCollection, WithHeadings, WithMapping, 
             return $absent;
         });
 
-        dd($absents);
         return $absents;
     }
 

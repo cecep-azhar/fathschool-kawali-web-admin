@@ -171,47 +171,84 @@ class DataDisplayFathboard extends Controller
     {
         $now = Carbon::now()->format('H:i:s');
         $weekRoutines = Carbon::now()->dayOfWeek;
+        $today = Carbon::now()->toDateString();
 
-        // Ambil data kelas
+        // Get data kelas dari fungsi yang sudah ada
         $classData = $this->getClassData($weekRoutines, $now);
 
-        // Ambil data untuk setiap kelas X, XI, dan XII
-        $classX = $this->prepareClassData($classData['class_x']);
-        $classXI = $this->prepareClassData($classData['class_xi']);
-        $classXII = $this->prepareClassData($classData['class_xii']);
+        // Prepare data untuk setiap tingkat kelas
+        $classes = [];
+        $gradeData = [
+            ['id' => 1, 'name' => 'X', 'classes' => $classData['class_x']],
+            ['id' => 2, 'name' => 'XI', 'classes' => $classData['class_xi']],
+            ['id' => 3, 'name' => 'XII', 'classes' => $classData['class_xii']]
+        ];
 
-        // Respons dengan data yang telah diformat
-        $response = [
+        foreach ($gradeData as $grade) {
+            $classDetails = [];
+            $totalStudentsInGrade = 0;
+            $emptyClassesCount = 0;
+
+            foreach ($grade['classes'] as $index => $className) {
+                // Get jumlah siswa per kelas
+                $studentsInClass = User::active()->student()
+                    ->whereHas('course', function ($query) use ($className) {
+                        $query->where('courses.name', $className);
+                    })->count();
+
+                // Get jumlah kehadiran
+                $attendance = AttendanceStudent::whereHas('user', function ($query) use ($className) {
+                    $query->whereHas('course', function ($subQuery) use ($className) {
+                        $subQuery->where('courses.name', $className);
+                    });
+                })
+                    ->whereDate('date', $today)
+                    ->count();
+
+                // Get jumlah izin dan sakit
+                $leaves = Leave::whereHas('user', function ($query) use ($className) {
+                    $query->whereHas('course', function ($subQuery) use ($className) {
+                        $subQuery->where('courses.name', $className);
+                    });
+                })
+                    ->whereDate('start', '<=', $today)
+                    ->whereDate('end', '>=', $today)
+                    ->count();
+
+                // Hitung jumlah yang tidak hadir
+                $absent = $studentsInClass - ($attendance + $leaves);
+
+                // Update totals untuk tingkat kelas ini
+                $totalStudentsInGrade += $studentsInClass;
+                if ($attendance == 0) {
+                    $emptyClassesCount++;
+                }
+
+                $classDetails[] = [
+                    'id' => $index + 1,
+                    'name' => $className,
+                    'total_student_attendance' => $attendance,
+                    'total_student_absent' => $absent,
+                    'total_student_leave' => $leaves
+                ];
+            }
+
+            $classes[] = [
+                'id' => $grade['id'],
+                'name' => $grade['name'],
+                'kelasKosong' => $emptyClassesCount,
+                'totalAllSiswaClass' => $totalStudentsInGrade,
+                'data' => $classDetails
+            ];
+        }
+
+        return response([
             'status' => true,
             'messages' => 'Successfully retrieved data',
             'data' => [
-                'classes' => [
-                    [
-                        'id' => 1,  // ID untuk kelas X
-                        'name' => 'X',
-                        'kelasKosong' => $classData['absent'],  // Jumlah kelas yang kosong
-                        'totalAllSiswaClass' => $classData['total'],  // Total siswa untuk kelas X
-                        'data' => $classX,
-                    ],
-                    [
-                        'id' => 2,  // ID untuk kelas XI
-                        'name' => 'XI',
-                        'kelasKosong' => $classData['absent'],  // Jumlah kelas yang kosong
-                        'totalAllSiswaClass' => $classData['total'],  // Total siswa untuk kelas XI
-                        'data' => $classXI,
-                    ],
-                    [
-                        'id' => 3,  // ID untuk kelas XII
-                        'name' => 'XII',
-                        'kelasKosong' => $classData['absent'],  // Jumlah kelas yang kosong
-                        'totalAllSiswaClass' => $classData['total'],  // Total siswa untuk kelas XII
-                        'data' => $classXII,
-                    ],
-                ]
+                'classes' => $classes
             ]
-        ];
-
-        return response($response);
+        ]);
     }
 
     private function prepareClassData($classNames)

@@ -187,5 +187,5 @@ Route::get('/get-informasi-guru', [DataDisplayFathboard::class, 'getDataGuru']);
 Route::get('/get-informasi-administrator', [DataDisplayFathboard::class, 'getDataAdmin']);
 
 
-Route::get('/get-information-class', [DataDisplayFathboard::class, 'getDataClass']);
+Route::get('/get-informasi-kelas', [DataDisplayFathboard::class, 'getDataClass']);
 

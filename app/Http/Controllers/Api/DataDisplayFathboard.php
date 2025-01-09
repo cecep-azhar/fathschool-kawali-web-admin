@@ -191,6 +191,7 @@ class DataDisplayFathboard extends Controller
             $totalAbsentClasses = 0;
             $totalAbsent = 0;
             $totalLeave = 0;
+            $totalPresent = 0; // Menambahkan variabel untuk total hadir
 
             foreach ($grade['classes'] as $index => $className) {
                 // Get jumlah siswa per kelas
@@ -210,6 +211,9 @@ class DataDisplayFathboard extends Controller
                 })
                     ->whereDate('date', $today)
                     ->count();
+
+                // Update total siswa yang hadir
+                $totalPresent += $attendance;
 
                 // Get jumlah izin dan sakit
                 $leaves = Leave::whereHas('user', function ($query) use ($className) {
@@ -258,7 +262,7 @@ class DataDisplayFathboard extends Controller
                 ];
             }
 
-            // Menambahkan data tingkat kelas dengan total absent dan leave
+            // Menambahkan data tingkat kelas dengan total present, absent, dan leave
             $classes[] = [
                 'id' => $grade['id'],
                 'name' => $grade['name'],
@@ -266,8 +270,12 @@ class DataDisplayFathboard extends Controller
                 'empty_class' => $totalAbsentClasses, // Kelas kosong
                 'total_class' => $totalActiveClasses + $totalAbsentClasses,
                 'total_students' => $totalStudentsInGrade, // Total siswa
+                'total_present' => $totalPresent, // Total siswa yang hadir
+                'percentage_present' => $totalPresent > 0 ? round(($totalPresent / $totalStudentsInGrade) * 100, 2) . '%' : 0 . '%',
                 'total_absent' => $totalAbsent, // Total siswa yang tidak hadir
+                'percentage_absent' => $totalAbsent > 0 ? round(($totalAbsent / $totalStudentsInGrade) * 100, 2) . '%' : 0 . '%',
                 'total_leave' => $totalLeave, // Total izin dan sakit
+                'percentage_leave' => $totalLeave > 0 ? round(($totalLeave / $totalStudentsInGrade) * 100, 2) . '%' : 0 . '%',
                 'data' => $classDetails
             ];
         }
@@ -280,6 +288,7 @@ class DataDisplayFathboard extends Controller
             ]
         ]);
     }
+
 
 
 

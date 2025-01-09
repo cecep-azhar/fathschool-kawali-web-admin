@@ -188,4 +188,4 @@ Route::get('/get-information-administrations', [DataDisplayFathboard::class, 'ge
 
 
 Route::get('/get-information-class', [DataDisplayFathboard::class, 'getDataClass']);
-
+Route::get('/get-information-others', [DataDisplayFathboard::class, 'getDataOther']);

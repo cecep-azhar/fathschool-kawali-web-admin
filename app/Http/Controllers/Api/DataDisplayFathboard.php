@@ -9,6 +9,7 @@ use App\Models\ClassRoutine;
 use App\Models\Course;
 use App\Models\Leave;
 use App\Models\LeaveType;
+use App\Models\Quote;
 use App\Models\Setting;
 use App\Models\User;
 use Carbon\Carbon;
@@ -287,6 +288,16 @@ class DataDisplayFathboard extends Controller
                 'classes' => $classes
             ]
         ]);
+    }
+
+    public function getDataOther(){
+        return response([
+            'status' => true,
+            'messages' => 'Successfully retrieved data',
+            'data' => [
+                'quote_of_the_day' => Quote::pluck('quote'),
+            ]
+            ]);
     }
 
 

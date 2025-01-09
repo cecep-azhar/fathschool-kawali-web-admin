@@ -67,7 +67,8 @@ class DataDisplayFathboard extends Controller
         return response($response);
     }
 
-    public function getDataGuru(){
+    public function getDataGuru()
+    {
         $now = Carbon::now()->format('H:i:s');
         $dayOfWeek = Carbon::now()->dayOfWeekIso;
         $weekRoutines = Carbon::now()->dayOfWeek;
@@ -78,9 +79,10 @@ class DataDisplayFathboard extends Controller
 
         $attendanceData = $this->getAttendanceData($today);
 
-        $total_teacher = $counts['teacher'];
-        $total_present = $attendanceData['teacher_attendance'];
-        $total_absent = $attendanceData['teacher_absent'];
+        $total_teacher = number_format($counts['teacher']);
+        $total_present = number_format($attendanceData['teacher_attendance']);
+        $total_absent = number_format($attendanceData['teacher_absent']);
+        $total_leave = number_format($attendanceData['teacher_leave']);
 
 
         $classData = $this->getClassData($weekRoutines, $now);
@@ -101,6 +103,7 @@ class DataDisplayFathboard extends Controller
                     'total' => $total_teacher,
                     'present' => $total_present,
                     'absent' => $total_absent,
+                    'leave' => $total_leave,
                     'presentPercentage' => $percentages['teacher'],
                     'absentPercentage' => $percentages_absent['teacher'],
                     'leavePercentage' => $percentags_leave['teacher'],
@@ -110,6 +113,7 @@ class DataDisplayFathboard extends Controller
                 ]
             ]
         ];
+
         return response($response);
     }
 
@@ -124,19 +128,43 @@ class DataDisplayFathboard extends Controller
 
     private function getDetailedPresent($role, $today)
     {
-        return AttendanceStudent::with(['user'])
-            ->where('date', $today) // Memastikan data berdasarkan tanggal yang sama
-            ->whereHas('user', function ($query) use ($role) {
-                $query->where('role', $role); // Memastikan hanya data dengan role tertentu, misalnya student
-            })
-            ->orderBy('time_in', 'desc') // Mengurutkan berdasarkan waktu masuk (terbaru)
-            ->limit(20) // Membatasi hanya 20 siswa terakhir
-            ->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']) // Mengambil field yang relevan
-            ->map(function ($attendance) {
-                $attendance->user_name = $attendance->user->name; // Menambahkan nama pengguna
-                return $attendance;
-            });
+        if ($role === 'student') {
+            // Untuk siswa, ambil data dari attendance_students
+            return AttendanceStudent::with(['user'])
+                ->where('date', $today) // Memastikan data berdasarkan tanggal yang sama
+                ->whereHas('user', function ($query) use ($role) {
+                    $query->where('role', $role); // Memastikan hanya data dengan role siswa
+                })
+                ->orderBy('time_in', 'desc') // Mengurutkan berdasarkan waktu masuk (terbaru)
+                ->limit(20) // Membatasi hanya 20 siswa terakhir
+                ->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']) // Mengambil field yang relevan
+                ->map(function ($attendance) {
+                    $attendance->user_name = $attendance->user->name; // Menambahkan nama pengguna
+                    return $attendance;
+                });
+        } elseif ($role === 'teacher') {
+            // Untuk guru, ambil data dari attendance_teachers
+            return Attendance::with(['user'])
+                ->where('date', $today) // Memastikan data berdasarkan tanggal yang sama
+                ->whereHas('user', function ($query) use ($role) {
+                    $query->where('role', $role); // Memastikan hanya data dengan role guru
+                })
+                ->orderBy('time_in', 'desc') // Mengurutkan berdasarkan waktu masuk (terbaru)
+                ->limit(20) // Membatasi hanya 20 guru terakhir
+                ->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']) // Mengambil field yang relevan
+                ->map(function ($attendance) {
+                    $attendance->user_name = $attendance->user->name; // Menambahkan nama pengguna
+                    return $attendance;
+                });
+        }
+
+        // Jika role bukan student atau teacher, bisa mengembalikan response kosong atau error
+        return response()->json([
+            'status' => false,
+            'message' => 'Invalid role or data not found.'
+        ]);
     }
+
 
     private function getDetailedAbsent($role, $today)
     {
@@ -201,7 +229,7 @@ class DataDisplayFathboard extends Controller
             'teacher_attendance' => $teacherAttendance,
             'student_attendance' => $studentAttendance,
             'admin_attendance' => $adminAttendance,
-            'teacher_absent' => User::where('role', 'teacher')->count() - $teacherAttendance,
+            'teacher_absent' => User::where('role', 'teacher')->count() - ($teacherAttendance + $teacherLeave->count()),
             'student_absent' => User::where('role', 'student')->count() - ($studentAttendance + $studentLeave->count()),
             'admin_absent' => User::where('role', 'Administration')->count() - $adminAttendance,
             'teacher_details' => $teacherDetails,

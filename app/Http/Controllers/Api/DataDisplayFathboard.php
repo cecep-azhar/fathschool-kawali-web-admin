@@ -170,11 +170,81 @@ class DataDisplayFathboard extends Controller
     public function getDataClass()
     {
         $now = Carbon::now()->format('H:i:s');
-        $dayOfWeek = Carbon::now()->dayOfWeekIso;
         $weekRoutines = Carbon::now()->dayOfWeek;
-        $today = now()->format('Y-m-d');
-        $today2 = now();
+
+        // Ambil data kelas
+        $classData = $this->getClassData($weekRoutines, $now);
+
+        // Ambil data untuk setiap kelas X, XI, dan XII
+        $classX = $this->prepareClassData($classData['class_x']);
+        $classXI = $this->prepareClassData($classData['class_xi']);
+        $classXII = $this->prepareClassData($classData['class_xii']);
+
+        // Respons dengan data yang telah diformat
+        $response = [
+            'status' => true,
+            'messages' => 'Successfully retrieved data',
+            'data' => [
+                'classes' => [
+                    [
+                        'id' => 1,  // ID untuk kelas X
+                        'name' => 'X',
+                        'kelasKosong' => $classData['absent'],  // Jumlah kelas yang kosong
+                        'totalAllSiswaClass' => $classData['total'],  // Total siswa untuk kelas X
+                        'data' => $classX,
+                    ],
+                    [
+                        'id' => 2,  // ID untuk kelas XI
+                        'name' => 'XI',
+                        'kelasKosong' => $classData['absent'],  // Jumlah kelas yang kosong
+                        'totalAllSiswaClass' => $classData['total'],  // Total siswa untuk kelas XI
+                        'data' => $classXI,
+                    ],
+                    [
+                        'id' => 3,  // ID untuk kelas XII
+                        'name' => 'XII',
+                        'kelasKosong' => $classData['absent'],  // Jumlah kelas yang kosong
+                        'totalAllSiswaClass' => $classData['total'],  // Total siswa untuk kelas XII
+                        'data' => $classXII,
+                    ],
+                ]
+            ]
+        ];
+
+        return response($response);
     }
+
+    private function prepareClassData($classNames)
+    {
+        $classDetails = [];
+
+        foreach ($classNames as $courseName) {
+            // Ambil data kursus berdasarkan nama kelas (course_name)
+            $course = Course::where('name', $courseName)->first();
+
+            if ($course) {
+                // Ambil data siswa yang terhubung dengan kursus ini
+                $students = $course->user;
+
+                // Hitung kehadiran, absen, dan izin untuk masing-masing siswa
+                $totalAttendance = $students->where('attendance_status', 'present')->count();
+                $totalAbsent = $students->where('attendance_status', 'absent')->count();
+                $totalLeave = $students->where('attendance_status', 'leave')->count();
+
+                // Format data per subkelas
+                $classDetails[] = [
+                    'id' => $course->id,  // ID dari kursus
+                    'name' => $course->name,
+                    'total_student_attendance' => $totalAttendance,
+                    'total_student_absent' => $totalAbsent,
+                    'total_student_leave' => $totalLeave
+                ];
+            }
+        }
+
+        return $classDetails;
+    }
+
 
     private function getBasicCounts()
     {
@@ -191,24 +261,24 @@ class DataDisplayFathboard extends Controller
         $standardTime = Carbon::createFromFormat('H:i:s', '07:00:00');
 
         if ($role === 'student') {
-            // Untuk siswa, ambil data dari attendance_students
-            return AttendanceStudent::with(['user'])
-                ->where('date', $today) // Memastikan data berdasarkan tanggal yang sama
+            return AttendanceStudent::with(['user', 'user.course'])
+                ->where('date', $today)
                 ->whereHas('user', function ($query) use ($role) {
-                    $query->where('role', $role); // Memastikan hanya data dengan role siswa
+                    $query->where('role', $role);
                 })
-                ->orderBy('time_in', 'desc') // Mengurutkan berdasarkan waktu masuk (terbaru)
-                ->limit(20) // Membatasi hanya 20 siswa terakhir
-                ->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']) // Mengambil field yang relevan
+                ->orderBy('time_in', 'desc')
+                ->limit(20)
+                ->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out'])
                 ->map(function ($attendance) use ($standardTime) {
-                    $attendance->user_name = $attendance->user->name; // Menambahkan nama pengguna
+                    $attendance->user_name = $attendance->user->name;
 
-                    // Menghitung keterlambatan (lateness)
+                    // Get single course name instead of array
+                    $attendance->course = $attendance->user->course->first() ? $attendance->user->course->first()->name : null;
+
                     $timeIn = Carbon::parse($attendance->time_in);
-                    $lateness = $standardTime->diffInMinutes($timeIn, false); // Menghitung selisih dalam menit
-                    $lateness = $lateness > 0 ? "{$lateness} menit" : 'Tepat Waktu'; // Menampilkan 'Tepat Waktu' jika tidak terlambat
+                    $lateness = $standardTime->diffInMinutes($timeIn, false);
+                    $attendance->lateness = $lateness > 0 ? "{$lateness} menit" : 'Tepat Waktu';
 
-                    $attendance->lateness = $lateness; // Menambahkan lateness
                     return $attendance;
                 });
         } elseif ($role === 'teacher') {
@@ -261,6 +331,7 @@ class DataDisplayFathboard extends Controller
             'message' => 'Invalid role or data not found.'
         ]);
     }
+
 
 
 
@@ -470,10 +541,31 @@ class DataDisplayFathboard extends Controller
             ->where('activation', $activeStatus)
             ->get();
 
+        // Ambil semua nama course
+        $courseNames = Course::orderBy('id')->pluck('name');
+
+        // Pisahkan berdasarkan kelas (X, XI, XII)
+        $classX = [];
+        $classXI = [];
+        $classXII = [];
+
+        foreach ($courseNames as $courseName) {
+            // Tentukan kelas berdasarkan nama
+            if (strpos($courseName, 'X ') === 0) {
+                $classX[] = $courseName;
+            } elseif (strpos($courseName, 'XI ') === 0) {
+                $classXI[] = $courseName;
+            } elseif (strpos($courseName, 'XII ') === 0) {
+                $classXII[] = $courseName;
+            }
+        }
+
         return [
             'total' => Course::count(),
             'absent' => Course::count() - $classRoutines->count(),
-            'names' => Course::orderBy('id')->pluck('name')
+            'class_x' => $classX,
+            'class_xi' => $classXI,
+            'class_xii' => $classXII
         ];
     }
 }

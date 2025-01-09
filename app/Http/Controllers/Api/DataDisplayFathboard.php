@@ -117,6 +117,65 @@ class DataDisplayFathboard extends Controller
         return response($response);
     }
 
+    public function getDataAdmin()
+    {
+        $now = Carbon::now()->format('H:i:s');
+        $dayOfWeek = Carbon::now()->dayOfWeekIso;
+        $weekRoutines = Carbon::now()->dayOfWeek;
+        $today = now()->format('Y-m-d');
+        $today2 = now();
+
+        $counts = $this->getBasicCounts();
+
+        $attendanceData = $this->getAttendanceData($today);
+
+        $total_admin = number_format($counts['administration']);
+        $total_present = number_format($attendanceData['admin_attendance']);
+        $total_absent = number_format($attendanceData['admin_absent']);
+        $total_leave = number_format($attendanceData['admin_leave']);
+
+
+        $classData = $this->getClassData($weekRoutines, $now);
+        $attendanceData['class_leave'] = $classData['absent'];
+
+        $percentages = $this->calculatePercentages($counts, $attendanceData, 'present');
+        $percentages_absent = $this->calculatePercentages($counts, $attendanceData, 'absent');
+        $percentags_leave = $this->calculatePercentages($counts, $attendanceData, 'leave');
+
+        $presentAdmins = $this->getDetailedPresent('Administration', $today);
+        $absentAdmins = $this->getDetailedAbsent('Administration', $today);
+        $leaveAdmins = $this->getDetailedLeave('Administration', $today);
+        $response = [
+            'status' => true,
+            'messages' => 'Successfully retrieved data',
+            'data' => [
+                'admins' => [
+                    'total' => $total_admin,
+                    'present' => $total_present,
+                    'absent' => $total_absent,
+                    'leave' => $total_leave,
+                    'presentPercentage' => $percentages['administration'],
+                    'absentPercentage' => $percentages_absent['administration'],
+                    'leavePercentage' => $percentags_leave['administration'],
+                    'dataPresent' => $presentAdmins,
+                    'dataAbsent' => $absentAdmins,
+                    'dataLeave' => $leaveAdmins
+                ]
+            ]
+        ];
+
+        return response($response);
+    }
+
+    public function getDataClass()
+    {
+        $now = Carbon::now()->format('H:i:s');
+        $dayOfWeek = Carbon::now()->dayOfWeekIso;
+        $weekRoutines = Carbon::now()->dayOfWeek;
+        $today = now()->format('Y-m-d');
+        $today2 = now();
+    }
+
     private function getBasicCounts()
     {
         return [
@@ -128,6 +187,9 @@ class DataDisplayFathboard extends Controller
 
     private function getDetailedPresent($role, $today)
     {
+        // Tentukan waktu hadir standar (misalnya pukul 07:00:00)
+        $standardTime = Carbon::createFromFormat('H:i:s', '07:00:00');
+
         if ($role === 'student') {
             // Untuk siswa, ambil data dari attendance_students
             return AttendanceStudent::with(['user'])
@@ -138,8 +200,15 @@ class DataDisplayFathboard extends Controller
                 ->orderBy('time_in', 'desc') // Mengurutkan berdasarkan waktu masuk (terbaru)
                 ->limit(20) // Membatasi hanya 20 siswa terakhir
                 ->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']) // Mengambil field yang relevan
-                ->map(function ($attendance) {
+                ->map(function ($attendance) use ($standardTime) {
                     $attendance->user_name = $attendance->user->name; // Menambahkan nama pengguna
+
+                    // Menghitung keterlambatan (lateness)
+                    $timeIn = Carbon::parse($attendance->time_in);
+                    $lateness = $standardTime->diffInMinutes($timeIn, false); // Menghitung selisih dalam menit
+                    $lateness = $lateness > 0 ? "{$lateness} menit" : 'Tepat Waktu'; // Menampilkan 'Tepat Waktu' jika tidak terlambat
+
+                    $attendance->lateness = $lateness; // Menambahkan lateness
                     return $attendance;
                 });
         } elseif ($role === 'teacher') {
@@ -152,8 +221,36 @@ class DataDisplayFathboard extends Controller
                 ->orderBy('time_in', 'desc') // Mengurutkan berdasarkan waktu masuk (terbaru)
                 ->limit(20) // Membatasi hanya 20 guru terakhir
                 ->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']) // Mengambil field yang relevan
-                ->map(function ($attendance) {
+                ->map(function ($attendance) use ($standardTime) {
                     $attendance->user_name = $attendance->user->name; // Menambahkan nama pengguna
+
+                    // Menghitung keterlambatan (lateness)
+                    $timeIn = Carbon::parse($attendance->time_in);
+                    $lateness = $standardTime->diffInMinutes($timeIn, false); // Menghitung selisih dalam menit
+                    $lateness = $lateness > 0 ? "{$lateness} menit" : 'Tepat Waktu'; // Menampilkan 'Tepat Waktu' jika tidak terlambat
+
+                    $attendance->lateness = $lateness; // Menambahkan lateness
+                    return $attendance;
+                });
+        } elseif ($role === 'Administration') {
+            // Untuk admin, ambil data dari attendance_admins
+            return Attendance::with(['user'])
+                ->where('date', $today) // Memastikan data berdasarkan tanggal yang sama
+                ->whereHas('user', function ($query) use ($role) {
+                    $query->where('role', $role); // Memastikan hanya data dengan role admin
+                })
+                ->orderBy('time_in', 'desc') // Mengurutkan berdasarkan waktu masuk (terbaru)
+                ->limit(20) // Membatasi hanya 20 admin terakhir
+                ->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']) // Mengambil field yang relevan
+                ->map(function ($attendance) use ($standardTime) {
+                    $attendance->user_name = $attendance->user->name; // Menambahkan nama pengguna
+
+                    // Menghitung keterlambatan (lateness)
+                    $timeIn = Carbon::parse($attendance->time_in);
+                    $lateness = $standardTime->diffInMinutes($timeIn, false); // Menghitung selisih dalam menit
+                    $lateness = $lateness > 0 ? "{$lateness} menit" : 'Tepat Waktu'; // Menampilkan 'Tepat Waktu' jika tidak terlambat
+
+                    $attendance->lateness = $lateness; // Menambahkan lateness
                     return $attendance;
                 });
         }
@@ -164,6 +261,7 @@ class DataDisplayFathboard extends Controller
             'message' => 'Invalid role or data not found.'
         ]);
     }
+
 
 
     private function getDetailedAbsent($role, $today)
@@ -208,6 +306,7 @@ class DataDisplayFathboard extends Controller
         // Get detailed attendance records with lateness calculation
         $teacherDetails = $this->getDetailedAttendance('teacher', $today, $settingTimeIn);
         $adminDetails = $this->getDetailedAttendance('Administration', $today, $settingTimeIn);
+        $studentDetails = $this->getDetailedAttendance('student', $today, $settingTimeIn);
 
         // Get leave records
         $teacherLeave = Leave::where('start', $today)
@@ -234,14 +333,16 @@ class DataDisplayFathboard extends Controller
             'admin_absent' => User::where('role', 'Administration')->count() - $adminAttendance,
             'teacher_details' => $teacherDetails,
             'admin_details' => $adminDetails,
+            'student_details' => $studentDetails, // Menambahkan detail siswa
             'teacher_leave' => $teacherLeave->count(),
-            'student_leave' => $studentLeave->count(),  // Add student leave count
+            'student_leave' => $studentLeave->count(),
             'admin_leave' => $adminLeave->count(),
             'teacher_leave_details' => $this->getDetailedLeave('Teacher', $today),
-            'student_leave_details' => $this->getDetailedLeave('Student', $today),  // Add student leave details
+            'student_leave_details' => $this->getDetailedLeave('Student', $today),
             'admin_leave_details' => $this->getDetailedLeave('Administration', $today)
         ];
     }
+
 
 
     private function getAbsentCount($today)
@@ -260,22 +361,38 @@ class DataDisplayFathboard extends Controller
             })
             ->get(['id', 'user_id', 'date', 'time_in']);
 
-        if ($settingTimeIn && $settingTimeIn->time_in) {
-            $settingTime = Carbon::createFromFormat('H:i:s', $settingTimeIn->time_in);
+        $attendanceDetails = [];
 
-            return $attendances->map(function ($attendance) use ($settingTime) {
-                $attendanceTime = Carbon::createFromFormat('H:i:s', $attendance->time_in);
-                $latenessMinutes = $attendanceTime->greaterThan($settingTime)
-                    ? $attendanceTime->diffInMinutes($settingTime)
-                    : 0;
+        foreach ($attendances as $attendance) {
+            $lateness = null;
+            $isLate = false;
 
-                $attendance->lateness = $latenessMinutes . ' menit';
-                return $attendance;
-            });
+            // Jika waktu masuk ditentukan dan waktu hadir ada
+            if ($settingTimeIn && $settingTimeIn->time_in && $attendance->time_in) {
+                $settingTime = Carbon::createFromFormat('H:i:s', $settingTimeIn->time_in);
+                $timeIn = Carbon::createFromFormat('H:i:s', $attendance->time_in);
+
+                // Jika waktu masuk lebih lambat dari waktu yang ditentukan
+                if ($timeIn->gt($settingTime)) {
+                    $isLate = true;
+                    $lateness = $settingTime->diffInMinutes($timeIn); // Hitung keterlambatan dalam menit
+                }
+            }
+
+            // Simpan data ke dalam array
+            $attendanceDetails[] = [
+                'id' => $attendance->id,
+                'user_id' => $attendance->user_id,
+                'date' => $attendance->date,
+                'time_in' => $attendance->time_in,
+                'lateness' => $lateness, // Lateness yang dihitung
+                'is_late' => $isLate // Status apakah terlambat atau tidak
+            ];
         }
 
-        return $attendances;
+        return $attendanceDetails;
     }
+
 
 
 

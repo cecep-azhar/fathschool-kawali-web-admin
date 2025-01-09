@@ -184,3 +184,5 @@ Route::get('/mobile-settings', [MobileSettingsController::class, 'index']);
 // get data display fathboard
 Route::get('/get-informasi-siswa', [DataDisplayFathboard::class, 'getDataSiswa']);
 Route::get('/get-informasi-guru', [DataDisplayFathboard::class, 'getDataGuru']);
+Route::get('/get-informasi-administrator', [DataDisplayFathboard::class, 'getDataAdmin']);
+

@@ -189,6 +189,8 @@ class DataDisplayFathboard extends Controller
             $totalStudentsInGrade = 0;
             $totalActiveClasses = 0;
             $totalAbsentClasses = 0;
+            $totalAbsent = 0;
+            $totalLeave = 0;
 
             foreach ($grade['classes'] as $index => $className) {
                 // Get jumlah siswa per kelas
@@ -222,6 +224,10 @@ class DataDisplayFathboard extends Controller
                 // Hitung jumlah yang tidak hadir
                 $absent = $studentsInClass - ($attendance + $leaves);
 
+                // Menambahkan total absent dan leave
+                $totalAbsent += $absent;
+                $totalLeave += $leaves;
+
                 // Determine if class is active or empty
                 $classRoutine = ClassRoutine::whereHas('course', function ($query) use ($className) {
                     $query->where('name', $className); // Assumed 'courses.name' is used
@@ -252,7 +258,7 @@ class DataDisplayFathboard extends Controller
                 ];
             }
 
-            // Menambahkan data tingkat kelas
+            // Menambahkan data tingkat kelas dengan total absent dan leave
             $classes[] = [
                 'id' => $grade['id'],
                 'name' => $grade['name'],
@@ -260,6 +266,8 @@ class DataDisplayFathboard extends Controller
                 'empty_class' => $totalAbsentClasses, // Kelas kosong
                 'total_class' => $totalActiveClasses + $totalAbsentClasses,
                 'total_students' => $totalStudentsInGrade, // Total siswa
+                'total_absent' => $totalAbsent, // Total siswa yang tidak hadir
+                'total_leave' => $totalLeave, // Total izin dan sakit
                 'data' => $classDetails
             ];
         }
@@ -272,6 +280,7 @@ class DataDisplayFathboard extends Controller
             ]
         ]);
     }
+
 
 
 

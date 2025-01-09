@@ -245,7 +245,7 @@
         </div>
 
         <div class="flex gap-6 justify-between absolute left-1/2 -translate-x-1/2 py-10"
-            :class="$transaction - > status == 'unpaid' ? 'bottom-20' : ''">
+            :class="$transaction->status == 'unpaid' ? 'bottom-20' : ''">
             @if ($transaction->status == 'unpaid')
                 @if ($paypal_active || $stripe_active || $razorpay_active || $flutterwave_active || $midtrans_active)
                     <div>

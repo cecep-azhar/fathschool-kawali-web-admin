@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\TotalController;
 use App\Http\Controllers\Api\QuotesController;
 use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\DataDisplayFathboard;
 use App\Models\Api\ClassAttendance;
 use Spatie\Activitylog\Models\Activity;
 use Carbon\Carbon;
@@ -178,3 +179,8 @@ Route::get('/mobile-notifications', [MobileNotificationController::class, 'index
 
 //get mobile settings
 Route::get('/mobile-settings', [MobileSettingsController::class, 'index']);
+
+
+// get data display fathboard
+Route::get('/get-informasi-siswa', [DataDisplayFathboard::class, 'getDataSiswa']);
+Route::get('/get-informasi-guru', [DataDisplayFathboard::class, 'getDataGuru']);

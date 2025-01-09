@@ -527,7 +527,7 @@ class DataDisplayFathboard extends Controller
             'admin_attendance' => $adminAttendance,
             'teacher_absent' => User::where('role', 'teacher')->count() - ($teacherAttendance + $teacherLeave->count()),
             'student_absent' => User::where('role', 'student')->count() - ($studentAttendance + $studentLeave->count()),
-            'admin_absent' => User::where('role', 'Administration')->count() - $adminAttendance,
+            'admin_absent' => User::where('role', 'Administration')->count() - ($adminAttendance + $adminLeave->count()),
             'teacher_details' => $teacherDetails,
             'admin_details' => $adminDetails,
             'student_details' => $studentDetails, // Menambahkan detail siswa

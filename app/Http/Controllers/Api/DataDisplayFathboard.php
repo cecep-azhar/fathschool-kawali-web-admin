@@ -254,6 +254,7 @@ class DataDisplayFathboard extends Controller
                 $classDetails[] = [
                     'id' => $index + 1,
                     'name' => $className,
+                    'course_photo' => Course::where('name', $className)->value('photo'),
                     'total_student_present' => $attendance,
                     'total_student_absent' => $absent,
                     'total_student_leave' => $leaves,

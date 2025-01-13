@@ -74,12 +74,14 @@ Route::post('/qrout', [App\Http\Controllers\Api\ClassAttendanceController::class
 
 //checkin
 Route::post('/checkin', [App\Http\Controllers\Api\AttendanceController::class, 'checkin'])->middleware('auth:sanctum');
-
+Route::post('/checkinManual', [App\Http\Controllers\Api\AttendanceController::class, 'checkinManual']);
 //is checkin
 Route::get('/is-checkin', [App\Http\Controllers\Api\AttendanceController::class, 'isCheckedin'])->middleware('auth:sanctum');
+Route::get('/isCheckinManual', [App\Http\Controllers\Api\AttendanceController::class, 'isCheckedinManual']);
 
 //checkout
 Route::post('/checkout', [App\Http\Controllers\Api\AttendanceController::class, 'checkout'])->middleware('auth:sanctum');
+Route::post('/checkoutManual', [App\Http\Controllers\Api\AttendanceController::class, 'checkoutManual']);
 
 //post journal
 Route::post('/journal', [App\Http\Controllers\Api\JournalController::class, 'postJournal'])->middleware('auth:sanctum');

@@ -41,21 +41,74 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        $department = Department::where('id',$user->department_id)->first();
+        $department = Department::where('id', $user->department_id)->first();
 
         $user->department = $department->name ?? null;
 
         activity()
-        ->useLog('default')
-        ->causedBy($user->id )
-        ->event('login')
-        ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username,
-                          'time' => date('H:i')])
-        ->log('User Login');
+            ->useLog('default')
+            ->causedBy($user->id)
+            ->event('login')
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user' => $user->username,
+                'time' => date('H:i')
+            ])
+            ->log('User Login');
 
         return response(['user' => $user, 'token' => $token], 200);
     }
+
+    public function loginStudent(Request $request)
+    {
+
+        $loginData = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        // Cari user berdasarkan email
+        $user = User::where('email', $loginData['email'])->first();
+
+        if (!$user) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Account not found',
+            ], 404);
+        }
+
+        // Cek password
+        if (!Hash::check($loginData['password'], $user->password)) {
+            return response()->json([
+                'status' => 401,
+                'message' => 'Wrong password',
+            ], 401);
+        }
+
+        // Cek akses manual
+        if (!$user->manual) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'Access denied',
+            ], 403);
+        }
+
+        // Hindari mengembalikan semua data user
+        $responseData = [
+            'id' => $user->id,
+            'email' => $user->email,
+            'name' => $user->name,
+            // tambahkan data lain yang perlu saja
+        ];
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Login success',
+            'data' => $responseData,
+        ], 200);
+    }
+
+
 
     public function updateFace(Request $request)
     {
@@ -77,13 +130,15 @@ class AuthController extends Controller
         $user = $request->user();
 
         activity()
-        ->useLog('default')
-        ->causedBy(auth()->user())
-        ->event('updateFace')
-        ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username,
-                          'time' => date('H:i')])
-        ->log('User Update Face Data');
+            ->useLog('default')
+            ->causedBy(auth()->user())
+            ->event('updateFace')
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user' => $user->username,
+                'time' => date('H:i')
+            ])
+            ->log('User Update Face Data');
 
         return response([
             'message' => 'Face updated',
@@ -110,13 +165,15 @@ class AuthController extends Controller
         $user = $request->user();
 
         activity()
-        ->useLog('default')
-        ->causedBy(auth()->user())
-        ->event('updatePassword')
-        ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username,
-                          'time' => date('H:i')])
-        ->log('User Update New Password');
+            ->useLog('default')
+            ->causedBy(auth()->user())
+            ->event('updatePassword')
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user' => $user->username,
+                'time' => date('H:i')
+            ])
+            ->log('User Update New Password');
 
         return response(['message' => 'Password reset successfully'], 200);
     }
@@ -127,13 +184,15 @@ class AuthController extends Controller
         $user = $request->user();
 
         activity()
-        ->useLog('default')
-        ->causedBy(auth()->user())
-        ->event('logout')
-        ->withProperties(['ip' => $request->ip(),
-                          'user' => $user->username,
-                          'time' => date('H:i')])
-        ->log('User Logout');
+            ->useLog('default')
+            ->causedBy(auth()->user())
+            ->event('logout')
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user' => $user->username,
+                'time' => date('H:i')
+            ])
+            ->log('User Logout');
 
         $request->user()->currentAccessToken()->delete();
 

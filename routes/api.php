@@ -38,10 +38,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 //login
 Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
-
+Route::post('/loginStudent', [App\Http\Controllers\Api\AuthController::class, 'loginStudent']);
 //logout
 Route::post('/logout', [App\Http\Controllers\Api\AuthController::class, 'logout'])->middleware('auth:sanctum');
-
+Route::post('/logoutStudent', [App\Http\Controllers\Api\AuthController::class, 'logoutStudent']);
 //Forgot password
 Route::post('/forget-password', [App\Http\Controllers\Api\AuthController::class, 'forgetPassword'])->middleware('auth:sanctum');
 

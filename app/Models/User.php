@@ -43,7 +43,8 @@ class User extends Authenticatable
         'face_embedding',
         'image_url',
         'fcm_token',
-        'id_reference'
+        'id_reference',
+        'account_hold', 'manual'
     ];
 
     /**

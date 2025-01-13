@@ -53,6 +53,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::post('student/promotion', 'studentPromotionUpdate')->name('student.promotion.update');
             Route::post('user/status/{user}', 'apiStatusUpdate')->name('user.status.update');
             Route::post('user/account-hold/{user}', 'apiAccountHold')->name('user.account.hold');
+            Route::post('user/account-manual/{user}', 'apiAccountManual')->name('user.account.manual');
             // parent create by axios
             Route::post('parent/store', 'parentStore')->name('parent.store');
             Route::get('parent/show/{user}', 'parentShow')->name('parent.show');

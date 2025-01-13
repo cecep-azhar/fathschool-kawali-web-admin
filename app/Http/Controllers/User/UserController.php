@@ -473,7 +473,7 @@ class UserController extends Controller
 
         $this->flashSuccess('User Status Updated');
 
-        return back();
+        return redirect()->back();
     }
 
     /**
@@ -487,9 +487,24 @@ class UserController extends Controller
             'account_hold' => $request->status ? true : false,
         ]);
 
+        // dd($request, $user);
+
         $this->flashSuccess('User Account Hold Date Updated');
 
-        return back();
+        return redirect()->back();
+    }
+
+    public function apiAccountManual(Request $request, User $user)
+    {
+        $user->update([
+            'manual' => $request->status ? true : false,
+        ]);
+
+        // dd($request->status);
+
+        $this->flashSuccess('User Maanual Attendance Date Updated');
+
+        return redirect()->back();
     }
 
     /**

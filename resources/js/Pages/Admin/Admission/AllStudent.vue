@@ -61,6 +61,7 @@
                     <th class="py-4 px-5">{{ __('Guardian Name') }}</th>
                     <th class="py-4 px-5">{{ __('Course') }}</th>
                     <th class="py-4 px-5">{{ __('Account Hold') }}</th>
+                    <th class="py-4 px-5">{{ __('Manual') }}</th>
                     <th width="10%" class="py-4 px-5">{{ __('Action') }}</th>
                 </template>
                 <template #body>
@@ -69,7 +70,8 @@
                             <tr class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                                 <td scope="row"
                                     class="flex items-center py-4 px-5 text-gray-900 whitespace-nowrap dark:text-white">
-                                    <td-user-show :image="user.profile_photo_url" :name="user.name" :email="user.email" />
+                                    <td-user-show :image="user.profile_photo_url" :name="user.name"
+                                        :email="user.email" />
                                 </td>
                                 <td class="py-4 px-5">
                                     <div v-for="parent in user.parents" :key="parent" class="flex">
@@ -103,6 +105,16 @@
                                         </div>
                                     </label>
                                 </td>
+
+                                <td class="py-4 px-5">
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input @change="accountManual($event, user.id)" :checked="user.manual"
+                                            type="checkbox" class="sr-only peer">
+                                        <div
+                                            class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+                                        </div>
+                                    </label>
+                                </td>
                                 <td class="py-4 px-5">
                                     <div class="flex gap-2">
                                         <button @click="sendMail(user.id)" type="button" class="group relative">
@@ -115,14 +127,15 @@
                                         <tool-tip :text="__('View')" />
                                         </Link>
                                         <Link preserve-scroll :href="route(
-                                                'student.admission.edit',
-                                                user.id
-                                            )
+                                            'student.admission.edit',
+                                            user.id
+                                        )
                                             " class="group relative" :id="'edit' + user.id">
                                         <PencilSquareIcon class="text-blue-400 w-6 h-6 hover:text-blue-300" />
                                         <tool-tip :text="__('Edit')" />
                                         </Link>
-                                        <button type="button" @click="destroy(user.id)" class="group relative" :id="'delete' + user.id">
+                                        <button type="button" @click="destroy(user.id)" class="group relative"
+                                            :id="'delete' + user.id">
                                             <trash-icon class="w-6 h-6 text-red-400 hover:text-red-300" />
                                             <tool-tip :text="__('Delete')" />
                                         </button>
@@ -172,7 +185,7 @@
                 <global-button @click="exportSubmit()" :loading="loading" type="button"
                     class=" text-white bg-blue-500 dark:bg-blue-500 hover:bg-blue-500
                      active:bg-blue-600 dark:active:bg-blue-600 focus:border-blue-600 dark:focus:border-blue-600 focus:ring focus:ring-blue-300 mr-2 mb-2 dark:focus:ring-blue-300">
-            {{ __('Export') }}
+                    {{ __('Export') }}
                 </global-button>
                 <global-button :loading="false" @click="export_visible = false" type="button"
                     class="text-white bg-red-500 dark:bg-red-500  hover:bg-red-500 active:bg-red-600 dark:active:bg-red-600 focus:border-red-600 dark:focus:border-red-600 focus:ring focus:ring-red-300 mr-2 mb-2 dark:focus:ring-red-300">
@@ -262,12 +275,24 @@ export default {
     methods: {
         accountHold(event, user) {
             let value = event.target.checked;
+            console.log('Sending status:', value); // Debugging
             this.$inertia.post(this.route('user.account.hold', user), {
+                status: value
+            }, {
+                preserveScroll: true
+            });
+        },
+
+        accountManual(event, user) {
+            let value = event.target.checked;
+            this.$inertia.post(this.route('user.account.manual', user), {
                 status: value
             }, {
                 preserveScroll: true
             })
         },
+
+
         destroy(id) {
             if (confirm("Are you sure ?")) {
                 this.$inertia.delete(this.route("users.destroy", id));
@@ -337,5 +362,4 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

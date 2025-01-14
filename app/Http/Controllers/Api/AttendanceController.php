@@ -230,7 +230,7 @@ class AttendanceController extends Controller
 
         // Check if attendance not found
         if (!$attendance) {
-            return response(['message' => 'Checkin first'], 400);
+            return response(['status'=>401, 'message' => 'Checkin first'], 401);
         }
 
         // Get the time_out setting from the Settings model
@@ -249,7 +249,7 @@ class AttendanceController extends Controller
 
         // Check if the user is attempting to check out before the allowed time
         if (strtotime($currentTime) < strtotime($timeOutSetting) && !$hasLeave) {
-            return response(['message' => 'You cannot checkout before the allowed time unless you have an accepted leave.'], 400);
+            return response(['status' => 400, 'message' => 'You cannot checkout before the allowed time unless you have an accepted leave.'], 400);
         }
 
         // Save checkout

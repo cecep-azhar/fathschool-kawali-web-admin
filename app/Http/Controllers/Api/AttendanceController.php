@@ -328,17 +328,23 @@ class AttendanceController extends Controller
         // Check if the user is attempting to check out before the allowed time
         if (strtotime($currentTime) < strtotime($timeOutSetting) && !$hasLeave) {
             return response()->json([
-                'status' => 400,
+                'status' => 402,
                 'messages' => 'You cannot checkout before the allowed time unless you have an accepted leave.'
-            ], 400);
+            ], 402);
         }
 
-
+        if($attendance->time_out !== null){
+            return response()->json([
+                'status' => 400,
+                'messages' => 'Already Checkout'
+            ], 400);
+        }
 
         // Save checkout
         $attendance->time_out = $currentTime;
         $attendance->latlon_out = $data_att['lattitude'] . ',' . $data_att['longitude'];
         $attendance->save();
+
 
         return response()->json([
             'status' => 200,

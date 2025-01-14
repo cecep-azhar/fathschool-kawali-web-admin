@@ -126,12 +126,23 @@ class AttendanceController extends Controller
                 'message' => 'User not found',
             ], 404);
         }
+
+        $attendance_user = Attendance::where('user_id', $data_att['user_id'])
+            ->where('date', date('Y-m-d'))
+            ->first();
+
+        if ($attendance_user) {
+            return response(['status' => 400, 'message' => 'Already Check-in'], 400);
+        }
+
         $attendance = new Attendance;
         $attendance->user_id = $user_id;
         $attendance->date = date('Y-m-d');
         $attendance->time_in = $currentTime;
         $attendance->latlon_in = $userLatitude . ',' . $userLongitude;
         $attendance->save();
+
+
 
         $message = 'Checkin success';
         if ($isLate) {

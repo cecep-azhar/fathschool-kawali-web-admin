@@ -59,7 +59,7 @@ class AuthController extends Controller
         return response(['user' => $user, 'token' => $token], 200);
     }
 
-    public function loginStudent(Request $request)
+    public function loginUsers(Request $request)
     {
 
         $loginData = $request->validate([

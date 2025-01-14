@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Academic\CourseController;
+use App\Http\Controllers\Api\GetSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ActivityLogController;
@@ -38,7 +39,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 //login
 Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
-Route::post('/loginStudent', [App\Http\Controllers\Api\AuthController::class, 'loginStudent']);
+Route::post('/loginUsers', [App\Http\Controllers\Api\AuthController::class, 'loginUsers']);
 //logout
 Route::post('/logout', [App\Http\Controllers\Api\AuthController::class, 'logout'])->middleware('auth:sanctum');
 Route::post('/logoutStudent', [App\Http\Controllers\Api\AuthController::class, 'logoutStudent']);
@@ -191,3 +192,5 @@ Route::get('/get-information-administrations', [DataDisplayFathboard::class, 'ge
 
 Route::get('/get-information-class', [DataDisplayFathboard::class, 'getDataClass']);
 Route::get('/get-information-others', [DataDisplayFathboard::class, 'getDataOther']);
+
+Route::get('/getSettings', [GetSettings::class, 'index']);

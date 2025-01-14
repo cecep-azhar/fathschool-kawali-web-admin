@@ -85,8 +85,9 @@ class AttendanceController extends Controller
     public function checkinManual(Request $request)
     {
         // Koordinat lokasi tujuan
-        $targetLatitude = -7.186128281714265;
-        $targetLongitude = 108.3622457318053;
+        $settings = Setting::get()->first();
+        $targetLatitude = $settings->latitude;
+        $targetLongitude = $settings->longtitude;
 
         // Validasi input user
         $data_att = $request->validate([
@@ -106,8 +107,8 @@ class AttendanceController extends Controller
         $isLate = strtotime($currentTime) > strtotime($timeInSetting);
 
         $distance = $this->calculateDistance($targetLatitude, $targetLongitude, $userLatitude, $userLongitude);
-
-        if ($distance > 0.3) {
+        $radius = intval($setting->radius);
+        if ($distance > $radius) {
             return response()->json([
                 'status' => 403,
                 'message' => 'You are outside the allowed radius',
@@ -140,7 +141,7 @@ class AttendanceController extends Controller
         return response()->json([
             'status' => 200,
             'message' => $message,
-            'distance_in_km' => $distance,
+            'distance_in_km' => round($distance, 2),
         ], 200);
     }
 
@@ -269,8 +270,9 @@ class AttendanceController extends Controller
 
     public function checkoutManual(Request $request)
     {
-        $targetLatitude = -7.186128281714265;
-        $targetLongitude = 108.3622457318053;
+        $settings = Setting::get()->first();
+        $targetLatitude = $settings->latitude;
+        $targetLongitude = $settings->longtitude;
 
         // Validasi input user
         $data_att = $request->validate([
@@ -284,8 +286,8 @@ class AttendanceController extends Controller
             ->first();
 
         $distance = $this->calculateDistance($targetLatitude, $targetLongitude, $data_att['lattitude'], $data_att['longitude']);
-
-        if ($distance > 0.3) {
+        $radius = intval($settings->radius);
+        if ($distance > $radius) {
             return response()->json([
                 'status' => 403,
                 'message' => 'You are outside the allowed radius',
@@ -333,7 +335,8 @@ class AttendanceController extends Controller
         return response()->json([
             'status' => 200,
             'message' => 'Check-out succesfully',
-            'distance_in_km' => $distance,
+            'attendance' => $attendance,
+            'distance_in_km' => round($distance, 2),
         ], 200);
     }
 

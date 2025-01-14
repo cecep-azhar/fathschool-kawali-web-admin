@@ -200,12 +200,9 @@ class AttendanceController extends Controller
         ], 200);
     }
 
-    public function isCheckedinManual(Request $request)
+    public function isCheckedinManual($user_id)
     {
-        $data = $request->validate([
-            'user_id' => 'required'
-        ]);
-        $attendance = Attendance::where('user_id', $data['user_id'])
+        $attendance = Attendance::where('user_id', $user_id)
             ->where('date', date('Y-m-d'))
             ->first();
 

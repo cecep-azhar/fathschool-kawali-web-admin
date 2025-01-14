@@ -78,7 +78,7 @@ Route::post('/checkin', [App\Http\Controllers\Api\AttendanceController::class, '
 Route::post('/checkinManual', [App\Http\Controllers\Api\AttendanceController::class, 'checkinManual']);
 //is checkin
 Route::get('/is-checkin', [App\Http\Controllers\Api\AttendanceController::class, 'isCheckedin'])->middleware('auth:sanctum');
-Route::get('/isCheckinManual', [App\Http\Controllers\Api\AttendanceController::class, 'isCheckedinManual']);
+Route::get('/isCheckinManual/{user_id}', [App\Http\Controllers\Api\AttendanceController::class, 'isCheckedinManual']);
 
 //checkout
 Route::post('/checkout', [App\Http\Controllers\Api\AttendanceController::class, 'checkout'])->middleware('auth:sanctum');

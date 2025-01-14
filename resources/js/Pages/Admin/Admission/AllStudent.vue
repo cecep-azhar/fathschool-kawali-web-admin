@@ -61,7 +61,7 @@
                     <th class="py-4 px-5">{{ __('Guardian Name') }}</th>
                     <th class="py-4 px-5">{{ __('Course') }}</th>
                     <th class="py-4 px-5">{{ __('Account Hold') }}</th>
-                    <th class="py-4 px-5">{{ __('Manual') }}</th>
+                    <th class="py-4 px-5">{{ __('Manual Attendance') }}</th>
                     <th width="10%" class="py-4 px-5">{{ __('Action') }}</th>
                 </template>
                 <template #body>

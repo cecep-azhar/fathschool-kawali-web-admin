@@ -51,6 +51,7 @@
                     <th class="py-4 px-5">{{ __('Department') }}</th>
                     <th class="py-4 px-5">{{ __('Joined at') }}</th>
                     <th class="py-4 px-5">{{ __('Account Hold') }}</th>
+                    <th class="py-4 px-5">{{ __('Manual Attendance') }}</th>
                     <th width="10%" class="py-4 px-5">{{ __('Action') }}</th>
                 </template>
                 <template #body>
@@ -74,6 +75,15 @@
                                 <td class="py-4 px-5">
                                     <label class="relative inline-flex items-center cursor-pointer">
                                         <input @change="accountHold($event, user.id)" :checked="user.account_hold"
+                                            type="checkbox" class="sr-only peer">
+                                        <div
+                                            class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+                                        </div>
+                                    </label>
+                                </td>
+                                <td class="py-4 px-5">
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input @change="accountManual($event, user.id)" :checked="user.manual"
                                             type="checkbox" class="sr-only peer">
                                         <div
                                             class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
@@ -211,6 +221,14 @@ export default {
         accountHold(event, user) {
             let value = event.target.checked;
             this.$inertia.post(this.route('user.account.hold', user), {
+                status: value
+            }, {
+                preserveScroll: true
+            })
+        },
+        accountManual(event, user) {
+            let value = event.target.checked;
+            this.$inertia.post(this.route('user.account.manual', user), {
                 status: value
             }, {
                 preserveScroll: true

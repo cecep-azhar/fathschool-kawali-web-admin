@@ -199,10 +199,10 @@ class DataDisplayFathboard extends Controller
                 $studentsInClass = User::active()->student()
                     ->whereHas('course', function ($query) use ($className) {
                         $query->where('courses.name', $className);
-                    })->count();
+                    })->get();
 
                 // Update total siswa per grade
-                $totalStudentsInGrade += $studentsInClass;
+                $totalStudentsInGrade += $studentsInClass->count();
 
                 // Get jumlah kehadiran
                 $attendance = AttendanceStudent::whereHas('user', function ($query) use ($className) {
@@ -211,27 +211,99 @@ class DataDisplayFathboard extends Controller
                     });
                 })
                     ->whereDate('date', $today)
-                    ->count();
+                    ->get();
+
+                $standardTime = Carbon::createFromFormat('H:i:s', '07:00:00');
+
+                // List siswa yang hadir
+                $studentsPresent = $attendance->map(function ($att) use ($standardTime) {
+                    // Mendapatkan nama pengguna dan nama mata kuliah
+                    $att->user_name = $att->user->name;
+                    $att->course = $att->user->course->first() ? $att->user->course->first()->name : null;
+
+                    // Menghitung keterlambatan
+                    $timeIn = Carbon::parse($att->time_in);
+                    $lateness = $standardTime->diffInMinutes($timeIn, false);
+
+                    // Menentukan status berdasarkan keterlambatan
+                    $att->status = $lateness > 0 ? "Terlambat {$lateness} Menit" : 'Tepat Waktu';
+
+                    // Mengembalikan data dalam format yang diinginkan
+                    return [
+                        'id' => $att->user_id,
+                        'name' => $att->user->name,
+                        'course' => $att->user->course->first() ? $att->user->course->first()->name : null,
+                        'status' => $att->status
+                    ];
+                })->values();
+
+
+
+                // List siswa yang tidak hadir
+                $studentsAbsent = $studentsInClass->reject(function ($student) use ($attendance) {
+                    return $attendance->contains('user_id', $student->id); // Mencari siswa yang hadir
+                })->map(function ($student) {
+                    return [
+                        'id' => $student->id,   // Menambahkan id siswa
+                        'name' => $student->name // Nama siswa
+                    ];
+                })->values();
 
                 // Update total siswa yang hadir
-                $totalPresent += $attendance;
+                $totalPresent += $attendance->count();
 
                 // Get jumlah izin dan sakit
-                $leaves = Leave::whereHas('user', function ($query) use ($className) {
-                    $query->whereHas('course', function ($subQuery) use ($className) {
-                        $subQuery->where('courses.name', $className);
-                    });
-                })
+                $leaves = Leave::with(['user', 'type:id,name']) // Mengambil relasi user dan type
+                    ->whereHas('user', function ($query) use ($className) {
+                        $query->whereHas('course', function ($subQuery) use ($className) {
+                            $subQuery->where('courses.name', $className);
+                        });
+                    })
                     ->whereDate('start', '<=', $today)
                     ->whereDate('end', '>=', $today)
-                    ->count();
+                    ->get()
+                    ->map(function ($leave) use ($today) {
+                        // Ambil deskripsi leave spesifik berdasarkan ID
+                        $leaveDetails = $this->getDetailedLeave2($leave->id);
+
+                        // Pastikan deskripsi dari leaveDetails diambil dan dimasukkan
+                        if ($leaveDetails) {
+                            $leave->description = $leaveDetails->description;  // Menambahkan deskripsi yang sesuai
+                            $leave->status = $leaveDetails->status ?? 'Approved';  // Status, jika tidak ada status maka 'Approved'
+                        } else {
+                            $leave->description = 'No Description Available';  // Deskripsi default
+                            $leave->status = 'Pending';  // Status default
+                        }
+
+                        // Nama user yang mengajukan leave
+                        $leave->user_name = $leave->user->name;
+
+                        // Menghitung jumlah hari antara start dan end
+                        $start = Carbon::parse($leave->start);
+                        $end = Carbon::parse($leave->end);
+                        $leave->days = $start->diffInDays($end) + 1;
+
+                        return [
+                            'id' => $leave->id,
+                            'user_id' => $leave->user_id,
+                            'name' => $leave->user_name, // Nama user
+                            'description' => $leave->description, // Deskripsi leave
+                            'status' => $leave->status, // Status leave
+                            'days' => $leave->days, // Total hari
+                        ];
+                    });
+
+
+
+
+                // List siswa yang izin atau sakit
 
                 // Hitung jumlah yang tidak hadir
-                $absent = $studentsInClass - ($attendance + $leaves);
+                $absent = $studentsInClass->count() - ($attendance->count() + $leaves->count());
 
                 // Menambahkan total absent dan leave
                 $totalAbsent += $absent;
-                $totalLeave += $leaves;
+                $totalLeave += $leaves->count();
 
                 // Determine if class is active or empty
                 $classRoutine = ClassRoutine::whereHas('course', function ($query) use ($className) {
@@ -255,12 +327,39 @@ class DataDisplayFathboard extends Controller
                     'id' => $index + 1,
                     'name' => $className,
                     'course_photo' => Course::where('name', $className)->value('photo'),
-                    'total_student_present' => $attendance,
-                    'total_student_absent' => $absent,
-                    'total_student_leave' => $leaves,
                     'status' => $isActive ? 'Active' : 'Empty',  // Active or Empty
                     'teacher' => $isActive ? $classRoutine->teacher->name : '-',
-                    'lesson' => $isActive ? $classRoutine->subject->name : '-'
+                    'lesson' => $isActive ? $classRoutine->subject->name : '-',
+                    'students_present' => [
+                        'total_student_present' => $studentsPresent->count(),
+                        'data' => $studentsPresent->map(function ($student) {
+                            return [
+                                'id' => $student['id'],
+                                'name' => $student['name'],
+                                'status' => $student['status'], // Semua siswa dalam present dianggap hadir
+                            ];
+                        })
+                    ],
+                    'students_absent' => [
+                        'total_student_absent' => $studentsAbsent->count(),
+                        'data' => $studentsAbsent->map(function ($student) {
+                            return [
+                                'id' => $student['id'],
+                                'name' => $student['name'],
+                                'status' => 'Absent', // Semua siswa dalam absent dianggap tidak hadir
+                            ];
+                        })
+                    ],
+                    'students_leave' => [
+                        'total_student_leave' => $leaves->count(),
+                        'data' => $leaves->map(function ($leave) {
+                            return [
+                                'id' => $leave['user_id'], // Asumsikan leave memiliki relasi ke student
+                                'name' => $leave['name'],
+                                'status' => $leave['description'], // Status untuk siswa yang cuti
+                            ];
+                        })
+                    ]
                 ];
             }
 
@@ -291,115 +390,19 @@ class DataDisplayFathboard extends Controller
         ]);
     }
 
-    public function getDataOther(){
+
+
+    public function getDataOther()
+    {
         return response([
             'status' => true,
             'messages' => 'Successfully retrieved data',
             'data' => [
                 'quote_of_the_day' => Quote::pluck('quote'),
             ]
-            ]);
+        ]);
     }
 
-
-
-
-
-    private function getCourseAttendanceData($weekRoutines, $today)
-    {
-        $activeStatus = Setting::pluck('status')->toArray();
-
-        // Get ALL courses instead of only those with routines
-        $allCourses = Course::orderBy('name')->get();
-        $attendanceData = [];
-
-        foreach ($allCourses as $course) {
-            $students = User::active()->student()
-                ->whereHas('courses', function ($query) use ($course) {
-                    $query->where('course_id', $course->id);
-                })
-                ->orderBy('name')
-                ->get();
-
-            $leaveTypes = LeaveType::where('role_type', 'student')
-                ->whereIn('name', ['Sakit', 'Izin'])
-                ->pluck('id', 'name');
-
-            // Calculate attendance stats
-            $presentCount = AttendanceStudent::whereIn('user_id', $students->pluck('id'))
-                ->whereDate('date', $today)
-                ->count();
-
-            $sickCount = Leave::whereIn('user_id', $students->pluck('id'))
-                ->where('leave_type_id', $leaveTypes['Sakit'])
-                ->whereDate('start', '<=', $today)
-                ->whereDate('end', '>=', $today)
-                ->count();
-
-            $permissionCount = Leave::whereIn('user_id', $students->pluck('id'))
-                ->where('leave_type_id', $leaveTypes['Izin'])
-                ->whereDate('start', '<=', $today)
-                ->whereDate('end', '>=', $today)
-                ->count();
-
-            $totalStudents = $students->count();
-            $absentCount = $totalStudents - ($presentCount + $sickCount + $permissionCount);
-
-            $attendanceData[] = [
-                'course_name' => $course->name,
-                'total' => [
-                    'total_student' => $totalStudents,
-                    'present' => $presentCount,
-                    'sick' => $sickCount,
-                    'permission' => $permissionCount,
-                    'absent' => $absentCount
-                ]
-            ];
-        }
-
-        // Get teacher names and lesson names for current schedule
-        $currentRoutines = ClassRoutine::where('weekday', $weekRoutines)
-            ->where('activation', $activeStatus)
-            ->get();
-
-        return [
-            'teacher_names' => $currentRoutines->pluck('teacher.name')->toArray(),
-            'lesson_names' => $currentRoutines->pluck('subject.name')->toArray(),
-            'attendance_data' => collect($attendanceData)->sortBy('course_name')->values()->all()
-        ];
-    }
-
-
-    private function prepareClassData($classNames)
-    {
-        $classDetails = [];
-
-        foreach ($classNames as $courseName) {
-            // Ambil data kursus berdasarkan nama kelas (course_name)
-            $course = Course::where('name', $courseName)->first();
-
-            if ($course) {
-                // Ambil data siswa yang terhubung dengan kursus ini
-                $students = $course->user;
-
-                // Hitung kehadiran, absen, dan izin untuk masing-masing siswa
-                $totalAttendance = $students->where('attendance_status', 'present')->count();
-                $totalAbsent = $students->where('attendance_status', 'absent')->count();
-                $totalLeave = $students->where('attendance_status', 'leave')->count();
-
-                // Format data per subkelas
-                $classDetails[] = [
-                    'id' => $course->id,  // ID dari kursus
-                    'name' => $course->name,
-                    'total_student_attendance' => $totalAttendance,
-                    'total_student_absent' => $totalAbsent,
-                    'total_student_leave' => $totalLeave
-                ];
-            }
-        }
-
-        return $classDetails;
-    }
 
 
     private function getBasicCounts()
@@ -572,12 +575,6 @@ class DataDisplayFathboard extends Controller
 
 
 
-    private function getAbsentCount($today)
-    {
-        $leaveTypes = LeaveType::where('role_type', 'student')
-            ->whereIn('name', ['Sakit', 'Izin'])
-            ->pluck('id', 'name');
-    }
 
     private function getDetailedAttendance($role, $today, $settingTimeIn)
     {
@@ -640,6 +637,15 @@ class DataDisplayFathboard extends Controller
                 return $leave;
             });
     }
+
+    private function getDetailedLeave2($leaveId)
+    {
+        return Leave::with(['user', 'type:id,name']) // Mengambil relasi user dan type
+            ->where('id', $leaveId) // Filter berdasarkan ID leave yang spesifik
+            ->select('id', 'user_id', 'title as description', 'leave_type_id', 'start', 'end', 'status')
+            ->first(); // Ambil hanya satu leave yang sesuai
+    }
+
 
     private function calculatePercentages($counts, $attendanceData, $type = 'present')
     {

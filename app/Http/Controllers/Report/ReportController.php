@@ -112,7 +112,7 @@ class ReportController extends Controller
         // Total hadir dan tidak hadir
         $totalPresent = $attendancestudent->filter(function ($attendance) {
             return $attendance->time_in !== null;
-        })->count();
+        })->unique('user_id')->count();
 
         // Total tidak hadir
         $totalAbsent = $totalStudent - $totalPresent;

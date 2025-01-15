@@ -306,9 +306,9 @@ class AttendanceController extends Controller
         // Check if attendance not found
         if (!$attendance) {
             return response()->json([
-                'status' => 400,
+                'status' => 401,
                 'messages' => 'Check-in first'
-            ], 400);
+            ], 401);
         }
 
         // Get the time_out setting from the Settings model

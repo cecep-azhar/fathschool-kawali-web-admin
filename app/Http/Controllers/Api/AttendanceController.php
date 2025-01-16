@@ -252,45 +252,39 @@ class AttendanceController extends Controller
 
     public function isCheckedinManual($user_id)
     {
-        $check_user = User::find($user_id);
-
-        if (!$check_user) {
-            return response([
-                'status' => 404,
-                'message' => 'User not found',
-            ], 404);
-        }
-
+        $check_user = User::where('id', $user_id)->first();
         $role_user = $check_user->role;
 
-        $isCheckedIn = false;
-        $isCheckedOut = false;
-
-        if ($role_user === "Students") {
-            // Pengecekan untuk Students
+        if($role_user == "Student") {
             $attendanceStudent = AttendanceStudent::where('user_id', $user_id)
-                ->whereDate('date', date('Y-m-d'))
-                ->first();
+            ->whereDate('date', date('Y-m-d'))
+            ->first();
 
-            $isCheckedIn = $attendanceStudent !== null;
-            $isCheckedOut = $attendanceStudent && $attendanceStudent->time_out !== null;
-        } else {
-            // Pengecekan untuk Non-Students
+            $isCheckedIn = $attendanceStudent;
+
+            $isCheckedOut = ($attendanceStudent && $attendanceStudent->time_out);
+        }else{
             $attendance = Attendance::where('user_id', $user_id)
-                ->whereDate('date', date('Y-m-d'))
-                ->first();
+            ->whereDate('date', date('Y-m-d'))
+            ->first();
 
-            $isCheckedIn = $attendance !== null;
-            $isCheckedOut = $attendance && $attendance->time_out !== null;
+            $isCheckedIn = $attendance;
+
+            $isCheckedOut = ($attendance && $attendance->time_out);
         }
 
-        // Return hasil pengecekan
+
+
+
+
+
+
+
         return response([
-            'checkedin' => $isCheckedIn,
-            'checkedout' => $isCheckedOut,
+            'checkedin' => $isCheckedIn ? true : false,
+            'checkedout' => $isCheckedOut ? true : false,
         ], 200);
     }
-
 
 
     //checkout

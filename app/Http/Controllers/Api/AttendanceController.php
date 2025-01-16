@@ -255,30 +255,23 @@ class AttendanceController extends Controller
         $check_user = User::where('id', $user_id)->first();
         $role_user = $check_user->role;
 
-        if($role_user == "Student") {
+        if ($role_user == "Student") {
             $attendanceStudent = AttendanceStudent::where('user_id', $user_id)
-            ->whereDate('date', date('Y-m-d'))
-            ->first();
+                ->whereDate('date', date('Y-m-d'))
+                ->first();
 
             $isCheckedIn = $attendanceStudent;
 
             $isCheckedOut = ($attendanceStudent && $attendanceStudent->time_out);
-        }else{
+        } else {
             $attendance = Attendance::where('user_id', $user_id)
-            ->whereDate('date', date('Y-m-d'))
-            ->first();
+                ->whereDate('date', date('Y-m-d'))
+                ->first();
 
             $isCheckedIn = $attendance;
 
             $isCheckedOut = ($attendance && $attendance->time_out);
         }
-
-
-
-
-
-
-
 
         return response([
             'checkedin' => $isCheckedIn ? true : false,
@@ -362,9 +355,22 @@ class AttendanceController extends Controller
             'longitude' => 'required',
         ]);
 
-        $attendance = Attendance::where('user_id', $data_att['user_id'])
-            ->where('date', date('Y-m-d'))
-            ->first();
+        $user_id = $data_att['user_id'];
+
+        $check_user = User::where('id', $user_id)->first();
+        $role_user = $check_user->role;
+
+
+        if ($role_user  == "Student") {
+            $attendance = AttendanceStudent::where('user_id', $user_id)
+                ->where('date', date('Y-m-d'))
+                ->first();
+        } else {
+
+            $attendance = Attendance::where('user_id',)
+                ->where('date', date('Y-m-d'))
+                ->first();
+        }
 
         $distance = $this->calculateDistance($targetLatitude, $targetLongitude, $data_att['lattitude'], $data_att['longitude']);
         $radius = intval($settings->radius);
@@ -380,7 +386,8 @@ class AttendanceController extends Controller
         if (!$attendance) {
             return response()->json([
                 'status' => 401,
-                'messages' => 'Check-in first'
+                'messages' => 'Check-in first',
+                'data' => $attendance
             ], 401);
         }
 

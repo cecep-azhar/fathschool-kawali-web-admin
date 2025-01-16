@@ -502,7 +502,7 @@ class DataDisplayFathboard extends Controller
                         ->from('attendance_students')
                         ->where('date', $today);
                 })
-                ->orderBy('name', 'desc')
+                ->orderBy('name', 'asc')
                 ->limit(50)
                 ->get();
 
@@ -528,7 +528,7 @@ class DataDisplayFathboard extends Controller
                         ->from('attendances')
                         ->where('date', $today);
                 })
-                ->orderBy('name', 'desc')
+                ->orderBy('name', 'asc')
                 ->get(['id', 'name', 'role', 'profile_photo_path'])
                 ->map(function ($user) {
                     $defaultImage = 'https://ui-avatars.com/api/?name=' . urlencode(implode('+', array_map(function ($name) {

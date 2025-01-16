@@ -237,7 +237,7 @@ class AttendanceController extends Controller
     //check is checkedin
     public function isCheckedin(Request $request)
     {
-        //get today attendance
+
         $attendance = Attendance::where('user_id', $request->user()->id)
             ->where('date', date('Y-m-d'))
             ->first();
@@ -252,28 +252,45 @@ class AttendanceController extends Controller
 
     public function isCheckedinManual($user_id)
     {
-        // Cek di tabel Attendance
-        $attendance = Attendance::where('user_id', $user_id)
-            ->whereDate('date', date('Y-m-d'))
-            ->first();
+        $check_user = User::find($user_id);
 
-        // Cek di tabel AttendanceStudent
-        $attendanceStudent = AttendanceStudent::where('user_id', $user_id)
-            ->whereDate('date', date('Y-m-d'))
-            ->first();
+        if (!$check_user) {
+            return response([
+                'status' => 404,
+                'message' => 'User not found',
+            ], 404);
+        }
 
-        // Gabungkan status checked-in dari kedua tabel
-        $isCheckedIn = $attendance || $attendanceStudent;
+        $role_user = $check_user->role;
 
-        // Tentukan status checked-out
-        $isCheckedOut = ($attendance && $attendance->time_out) || ($attendanceStudent && $attendanceStudent->time_out);
+        $isCheckedIn = false;
+        $isCheckedOut = false;
 
-        // Kembalikan status checkedin dan checkedout
+        if ($role_user === "Students") {
+            // Pengecekan untuk Students
+            $attendanceStudent = AttendanceStudent::where('user_id', $user_id)
+                ->whereDate('date', date('Y-m-d'))
+                ->first();
+
+            $isCheckedIn = $attendanceStudent !== null;
+            $isCheckedOut = $attendanceStudent && $attendanceStudent->time_out !== null;
+        } else {
+            // Pengecekan untuk Non-Students
+            $attendance = Attendance::where('user_id', $user_id)
+                ->whereDate('date', date('Y-m-d'))
+                ->first();
+
+            $isCheckedIn = $attendance !== null;
+            $isCheckedOut = $attendance && $attendance->time_out !== null;
+        }
+
+        // Return hasil pengecekan
         return response([
             'checkedin' => $isCheckedIn,
             'checkedout' => $isCheckedOut,
         ], 200);
     }
+
 
 
     //checkout

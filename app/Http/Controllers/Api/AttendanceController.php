@@ -97,6 +97,7 @@ class AttendanceController extends Controller
             'longitude' => 'required',
         ]);
 
+
         $userLatitude = $data_att['lattitude'];
         $userLongitude = $data_att['longitude'];
 
@@ -121,6 +122,15 @@ class AttendanceController extends Controller
 
         $check_user = User::where('id', $user_id)->first();
 
+        if (!$check_user->manual) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'Access denied',
+            ], 403);
+        }
+
+
+        $role_user = $check_user->role;
         if (!$check_user) {
             return response()->json([
                 'status' => 404,
@@ -128,21 +138,60 @@ class AttendanceController extends Controller
             ], 404);
         }
 
-        $attendance_user = Attendance::where('user_id', $data_att['user_id'])
-            ->where('date', date('Y-m-d'))
-            ->first();
+        if ($role_user == "Student") {
+            $attendance_user = AttendanceStudent::where('user_id', $data_att['user_id'])
+                ->where('date', date('Y-m-d'))
+                ->first();
+        } else {
+            $attendance_user = Attendance::where('user_id', $data_att['user_id'])
+                ->where('date', date('Y-m-d'))
+                ->first();
+        }
 
         if ($attendance_user) {
             return response(['status' => 400, 'message' => 'Already Check-in'], 400);
         }
 
-        $attendance = new Attendance;
-        $attendance->user_id = $user_id;
-        $attendance->date = date('Y-m-d');
-        $attendance->time_in = $currentTime;
-        $attendance->latlon_in = $userLatitude . ',' . $userLongitude;
-        $attendance->save();
 
+
+        if ($role_user == "Student") {
+            $attendance = new AttendanceStudent;
+
+            // Cari ID yang tersedia dengan loop sampai menemukan ID yang belum digunakan
+            do {
+                $newId = AttendanceStudent::max('id') + 1;
+            } while (AttendanceStudent::find($newId));
+
+            $attendance->id = $newId;
+            $attendance->user_id = $user_id;
+            $attendance->date = date('Y-m-d');
+            $attendance->time_in = $currentTime;
+            $attendance->latlon_in = $userLatitude . ',' . $userLongitude;
+
+            try {
+                $attendance->save();
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Jika masih terjadi konflik, coba lagi dengan ID baru
+                if ($e->errorInfo[1] == 1062) {
+                    // Recursive retry dengan increment ID
+                    $attendance->id = $newId + 1;
+                    $attendance->save();
+                } else {
+                    throw $e;
+                }
+            }
+        } else {
+            $attendance = new Attendance;
+
+            // Ambil ID terakhir dari tabel
+            $lastId = Attendance::max('id');
+            $attendance->id = $lastId ? $lastId + 1 : 1;
+            $attendance->user_id = $user_id;
+            $attendance->date = date('Y-m-d');
+            $attendance->time_in = $currentTime;
+            $attendance->latlon_in = $userLatitude . ',' . $userLongitude;
+            $attendance->save();
+        }
 
 
         $message = 'Checkin success';

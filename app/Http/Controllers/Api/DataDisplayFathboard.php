@@ -426,7 +426,7 @@ class DataDisplayFathboard extends Controller
                     $query->where('role', $role);
                 })
                 ->orderBy('time_in', 'desc')
-                ->limit(20)
+                ->limit(50)
                 ->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out'])
                 ->map(function ($attendance) use ($standardTime) {
                     $attendance->user_name = $attendance->user->name;
@@ -448,7 +448,6 @@ class DataDisplayFathboard extends Controller
                     $query->where('role', $role); // Memastikan hanya data dengan role guru
                 })
                 ->orderBy('time_in', 'desc') // Mengurutkan berdasarkan waktu masuk (terbaru)
-                ->limit(20) // Membatasi hanya 20 guru terakhir
                 ->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']) // Mengambil field yang relevan
                 ->map(function ($attendance) use ($standardTime) {
                     $attendance->user_name = $attendance->user->name; // Menambahkan nama pengguna
@@ -469,7 +468,6 @@ class DataDisplayFathboard extends Controller
                     $query->where('role', $role); // Memastikan hanya data dengan role admin
                 })
                 ->orderBy('time_in', 'desc') // Mengurutkan berdasarkan waktu masuk (terbaru)
-                ->limit(20) // Membatasi hanya 20 admin terakhir
                 ->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']) // Mengambil field yang relevan
                 ->map(function ($attendance) use ($standardTime) {
                     $attendance->user_name = $attendance->user->name; // Menambahkan nama pengguna
@@ -496,20 +494,55 @@ class DataDisplayFathboard extends Controller
 
     private function getDetailedAbsent($role, $today)
     {
-        // Ambil semua siswa dengan role 'student'
-        return User::where('role', $role) // Menyaring berdasarkan role 'student'
-            ->whereNotIn('id', function ($query) use ($today) {
-                // Menyaring siswa yang sudah memiliki entri attendance untuk hari tersebut
-                $query->select('user_id')
-                    ->from('attendance_students')
-                    ->where('date', $today);
-            })
-            ->orderBy('name', 'asc') // Mengurutkan berdasarkan nama atau kolom lain
-            ->limit(20) // Membatasi hanya 20 siswa
-            ->get(['id', 'name', 'role']) // Mengambil field yang relevan
-            ->map(function ($user) {
-                return $user;
+        if ($role == 'student' || $role == 'Student') {
+            $users = User::with('course')
+                ->where('role', $role)
+                ->whereNotIn('id', function ($query) use ($today) {
+                    $query->select('user_id')
+                        ->from('attendance_students')
+                        ->where('date', $today);
+                })
+                ->orderBy('name', 'desc')
+                ->limit(50)
+                ->get();
+
+            return $users->map(function ($user) {
+                $initials = collect(explode(' ', $user->name))
+                    ->map(function ($word) {
+                        return substr($word, 0, 1);
+                    })->join('+');
+
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'role' => $user->role,
+                    'course' => optional($user->course->first())->name,
+                    'profile_photo_url' => $user->profile_photo_path ??
+                        "https://ui-avatars.com/api/?name={$initials}&color=7F9CF5&background=EBF4FF",
+                ];
             });
+        } else {
+            return User::where('role', $role)
+                ->whereNotIn('id', function ($query) use ($today) {
+                    $query->select('user_id')
+                        ->from('attendances')
+                        ->where('date', $today);
+                })
+                ->orderBy('name', 'desc')
+                ->get(['id', 'name', 'role', 'profile_photo_path'])
+                ->map(function ($user) {
+                    $defaultImage = 'https://ui-avatars.com/api/?name=' . urlencode(implode('+', array_map(function ($name) {
+                        return substr($name, 0, 1);
+                    }, explode(' ', $user->name)))) . '&color=7F9CF5&background=EBF4FF';
+
+                    return [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'role' => $user->role,
+                        'profile_photo_url' => $user->profile_photo_path ?? $defaultImage,
+                    ];
+                });
+        }
     }
 
 
@@ -622,18 +655,25 @@ class DataDisplayFathboard extends Controller
 
     private function getDetailedLeave($role, $today)
     {
-        return Leave::with(['user', 'type:id,name']) // Mengambil relasi user dan type dengan kolom id, name dari type
+        return Leave::with(['user.course', 'type:id,name'])
             ->where('start', $today)
             ->whereHas('user', function ($query) use ($role) {
                 $query->where('role', $role);
             })
             ->select('id', 'user_id', 'title as description', 'leave_type_id', 'start', 'end', 'status')
-            ->get() // Mengambil data
-            ->map(function ($leave) {
-                // Menghitung jumlah hari antara start dan end
+            ->get()
+            ->map(function ($leave) use ($role) {
                 $start = Carbon::parse($leave->start);
                 $end = Carbon::parse($leave->end);
                 $leave->days = $start->diffInDays($end) + 1;
+
+                if ($role === 'Student') {
+                    $leave->course = $leave->user->course->first() ? $leave->user->course->first()->name : null;
+                }
+
+                $leave->user_name = $leave->user->name;
+                $leave->leave_type = $leave->type->name;
+
                 return $leave;
             });
     }

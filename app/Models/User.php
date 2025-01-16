@@ -93,6 +93,9 @@ class User extends Authenticatable
 
     protected $dates = ['join_date', 'date_of_birth'];
 
+    // in User.php model
+
+
     protected static function boot() // for role wise data create
     {
         parent::boot();

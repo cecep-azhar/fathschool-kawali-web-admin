@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AttendanceStudent;
 use Illuminate\Http\Request;
 use App\Models\Attendance;
 use App\Models\ClassRoutine;
@@ -202,17 +203,29 @@ class AttendanceController extends Controller
 
     public function isCheckedinManual($user_id)
     {
+        // Cek di tabel Attendance
         $attendance = Attendance::where('user_id', $user_id)
-            ->where('date', date('Y-m-d'))
+            ->whereDate('date', date('Y-m-d'))
             ->first();
 
-        $isCheckout = $attendance ? $attendance->time_out : false;
+        // Cek di tabel AttendanceStudent
+        $attendanceStudent = AttendanceStudent::where('user_id', $user_id)
+            ->whereDate('date', date('Y-m-d'))
+            ->first();
 
+        // Gabungkan status checked-in dari kedua tabel
+        $isCheckedIn = $attendance || $attendanceStudent;
+
+        // Tentukan status checked-out
+        $isCheckedOut = ($attendance && $attendance->time_out) || ($attendanceStudent && $attendanceStudent->time_out);
+
+        // Kembalikan status checkedin dan checkedout
         return response([
-            'checkedin' => $attendance ? true : false,
-            'checkedout' => $isCheckout ? true : false,
+            'checkedin' => $isCheckedIn,
+            'checkedout' => $isCheckedOut,
         ], 200);
     }
+
 
     //checkout
     public function checkout(Request $request)
@@ -230,7 +243,7 @@ class AttendanceController extends Controller
 
         // Check if attendance not found
         if (!$attendance) {
-            return response(['status'=>401, 'message' => 'Checkin first'], 401);
+            return response(['status' => 401, 'message' => 'Checkin first'], 401);
         }
 
         // Get the time_out setting from the Settings model
@@ -333,7 +346,7 @@ class AttendanceController extends Controller
             ], 402);
         }
 
-        if($attendance->time_out !== null){
+        if ($attendance->time_out !== null) {
             return response()->json([
                 'status' => 400,
                 'messages' => 'Already Checkout'

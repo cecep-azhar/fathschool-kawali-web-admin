@@ -367,7 +367,7 @@ class AttendanceController extends Controller
                 ->first();
         } else {
 
-            $attendance = Attendance::where('user_id',)
+            $attendance = Attendance::where('user_id', $user_id)
                 ->where('date', date('Y-m-d'))
                 ->first();
         }
@@ -387,7 +387,6 @@ class AttendanceController extends Controller
             return response()->json([
                 'status' => 401,
                 'messages' => 'Check-in first',
-                'data' => $attendance
             ], 401);
         }
 

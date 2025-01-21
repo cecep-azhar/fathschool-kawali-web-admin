@@ -194,3 +194,5 @@ Route::get('/get-information-class', [DataDisplayFathboard::class, 'getDataClass
 Route::get('/get-information-others', [DataDisplayFathboard::class, 'getDataOther']);
 
 Route::get('/getSettings', [GetSettings::class, 'index']);
+
+Route::post('/forgot-password-manual', [App\Http\Controllers\Api\AuthController::class, 'passwordManual']);

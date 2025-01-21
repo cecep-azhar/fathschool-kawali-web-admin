@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Auth\ResetPasswordManual;
 use App\Actions\Auth\ResetPasswordMobile;
 use App\Http\Requests\Auth\PasswordRequest;
 use App\Http\Controllers\Controller;
@@ -178,6 +179,8 @@ class AuthController extends Controller
         return response(['message' => 'Password reset successfully'], 200);
     }
 
+
+
     //logout
     public function logout(Request $request)
     {
@@ -272,5 +275,27 @@ class AuthController extends Controller
         $resetPassword->request($request);
 
         return response(['message' => __('auth.password.sent')], 200);
+    }
+
+    public function passwordManual(PasswordRequest $request, ResetPasswordManual $resetPassword){
+        $request->validate([
+            'phone' => 'required',
+        ]);
+
+        $user = User::where('phone', $request->phone)->first();
+
+        if (!$user) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        $resetPassword->request($request);
+
+        return response()->json([
+            'status' => 200,
+            'messages' => 'Password reset successfully',
+        ], 200);
     }
 }

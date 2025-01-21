@@ -19,33 +19,50 @@ class DataDisplayFathboard extends Controller
 {
     public function getDataSiswa()
     {
-
         $now = Carbon::now()->format('H:i:s');
         $dayOfWeek = Carbon::now()->dayOfWeekIso;
         $weekRoutines = Carbon::now()->dayOfWeek;
         $today = now()->format('Y-m-d');
         $today2 = now();
 
-        $counts = $this->getBasicCounts();
+        // Get class data and decode the JSON response
+        $classResponse = $this->getDataClass();
+        $responseContent = json_decode($classResponse->getContent());
+        $classData = $responseContent->data->classes;
 
-        $attendanceData = $this->getAttendanceData($today);
+        // Calculate total students from all grades (X, XI, XII)
+        $raw_total_students = 0;
+        $raw_total_present = 0;
+        $raw_total_absent = 0;
+        $raw_total_leave = 0;
 
-        $total_students = number_format($counts['student']);
-        $total_present = number_format($attendanceData['student_attendance']);
-        $total_absent = number_format($attendanceData['student_absent']);
-        $total_leave = number_format($attendanceData['student_leave']);
+        // Aggregate data from all classes
+        foreach ($classData as $grade) {
+            $raw_total_students += $grade->total_students;
+            $raw_total_present += $grade->total_present;
+            $raw_total_absent += $grade->total_absent;
+            $raw_total_leave += $grade->total_leave;
+        }
 
+        // Calculate percentages using raw numbers
+        $presentPercentage = $raw_total_students > 0 ?
+            round(($raw_total_present / $raw_total_students) * 100, 2) . '%' : '0%';
+        $absentPercentage = $raw_total_students > 0 ?
+            round(($raw_total_absent / $raw_total_students) * 100, 2) . '%' : '0%';
+        $leavePercentage = $raw_total_students > 0 ?
+            round(($raw_total_leave / $raw_total_students) * 100, 2) . '%' : '0%';
 
-        $classData = $this->getClassData($weekRoutines, $now);
-        $attendanceData['class_leave'] = $classData['absent'];
-
-        $percentages = $this->calculatePercentages($counts, $attendanceData, 'present');
-        $percentages_absent = $this->calculatePercentages($counts, $attendanceData, 'absent');
-        $percentags_leave = $this->calculatePercentages($counts, $attendanceData, 'leave');
-
+        // Get attendance details
         $presentStudents = $this->getDetailedPresent('student', $today);
         $absentStudents = $this->getDetailedAbsent('student', $today);
         $leaveStudents = $this->getDetailedLeave('Student', $today);
+
+        // Format the numbers after calculations are done
+        $total_students = number_format($raw_total_students);
+        $total_present = number_format($raw_total_present);
+        $total_absent = number_format($raw_total_absent);
+        $total_leave = number_format($raw_total_leave);
+
         $response = [
             'status' => true,
             'messages' => 'Successfully retrieved data',
@@ -55,9 +72,9 @@ class DataDisplayFathboard extends Controller
                     'present' => $total_present,
                     'absent' => $total_absent,
                     'leave' => $total_leave,
-                    'presentPercentage' => $percentages['student'],
-                    'absentPercentage' => $percentages_absent['student'],
-                    'leavePercentage' => $percentags_leave['student'],
+                    'presentPercentage' => $presentPercentage,
+                    'absentPercentage' => $absentPercentage,
+                    'leavePercentage' => $leavePercentage,
                     'dataPresent' => $presentStudents,
                     'dataAbsent' => $absentStudents,
                     'dataLeave' => $leaveStudents
@@ -199,7 +216,7 @@ class DataDisplayFathboard extends Controller
                 $studentsInClass = User::active()->student()
                     ->whereHas('course', function ($query) use ($className) {
                         $query->where('courses.name', $className);
-                    })->get();
+                    })->get()->unique('id');
 
                 // Update total siswa per grade
                 $totalStudentsInGrade += $studentsInClass->count();
@@ -211,7 +228,8 @@ class DataDisplayFathboard extends Controller
                     });
                 })
                     ->whereDate('date', $today)
-                    ->get();
+                    ->get()
+                    ->unique('user_id');
 
                 $standardTime = Carbon::createFromFormat('H:i:s', '07:00:00');
 
@@ -235,9 +253,7 @@ class DataDisplayFathboard extends Controller
                         'course' => $att->user->course->first() ? $att->user->course->first()->name : null,
                         'status' => $att->status
                     ];
-                })->values();
-
-
+                })->unique('id')->values();
 
                 // List siswa yang tidak hadir
                 $studentsAbsent = $studentsInClass->reject(function ($student) use ($attendance) {
@@ -247,7 +263,7 @@ class DataDisplayFathboard extends Controller
                         'id' => $student->id,   // Menambahkan id siswa
                         'name' => $student->name // Nama siswa
                     ];
-                })->values();
+                })->unique('id')->values();
 
                 // Update total siswa yang hadir
                 $totalPresent += $attendance->count();
@@ -262,6 +278,7 @@ class DataDisplayFathboard extends Controller
                     ->whereDate('start', '<=', $today)
                     ->whereDate('end', '>=', $today)
                     ->get()
+                    ->unique('user_id')
                     ->map(function ($leave) use ($today) {
                         // Ambil deskripsi leave spesifik berdasarkan ID
                         $leaveDetails = $this->getDetailedLeave2($leave->id);
@@ -291,12 +308,7 @@ class DataDisplayFathboard extends Controller
                             'status' => $leave->status, // Status leave
                             'days' => $leave->days, // Total hari
                         ];
-                    });
-
-
-
-
-                // List siswa yang izin atau sakit
+                    })->values();
 
                 // Hitung jumlah yang tidak hadir
                 $absent = $studentsInClass->count() - ($attendance->count() + $leaves->count());
@@ -372,11 +384,11 @@ class DataDisplayFathboard extends Controller
                 'total_class' => $totalActiveClasses + $totalAbsentClasses,
                 'total_students' => $totalStudentsInGrade, // Total siswa
                 'total_present' => $totalPresent, // Total siswa yang hadir
-                'percentage_present' => $totalPresent > 0 ? round(($totalPresent / $totalStudentsInGrade) * 100, 2) . '%' : 0 . '%',
+                'percentage_present' => $totalStudentsInGrade > 0 ? round(($totalPresent / $totalStudentsInGrade) * 100, 2) . '%' : '0%',
                 'total_absent' => $totalAbsent, // Total siswa yang tidak hadir
-                'percentage_absent' => $totalAbsent > 0 ? round(($totalAbsent / $totalStudentsInGrade) * 100, 2) . '%' : 0 . '%',
+                'percentage_absent' => $totalStudentsInGrade > 0 ? round(($totalAbsent / $totalStudentsInGrade) * 100, 2) . '%' : '0%',
                 'total_leave' => $totalLeave, // Total izin dan sakit
-                'percentage_leave' => $totalLeave > 0 ? round(($totalLeave / $totalStudentsInGrade) * 100, 2) . '%' : 0 . '%',
+                'percentage_leave' => $totalStudentsInGrade > 0 ? round(($totalLeave / $totalStudentsInGrade) * 100, 2) . '%' : '0%',
                 'data' => $classDetails
             ];
         }

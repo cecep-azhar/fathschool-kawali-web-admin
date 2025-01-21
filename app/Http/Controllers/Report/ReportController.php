@@ -118,7 +118,11 @@ class ReportController extends Controller
         $totalAbsent = $totalStudent - $totalPresent;
 
         // Persentase
+        // dd($totalPresent);
+
         $attendancePercentage = $totalStudent > 0 ? round(($totalPresent / $totalStudent) * 100) : 0;
+
+        // dd($attendancePercentage);
         $absencePercentage = $totalStudent > 0 ? round(($totalAbsent / $totalStudent) * 100) : 0;
 
         // Membuat query untuk absent students
@@ -252,6 +256,54 @@ class ReportController extends Controller
         ]);
     }
 
+
+    private function calculatePercentages($counts, $attendanceData, $type = 'present')
+    {
+        $result = [
+            'student' => $counts['student'] > 0
+                ? number_format(
+                    $type === 'present'
+                        ? ($attendanceData['student_attendance'] / $counts['student']) * 100
+                        : ($type === 'leave'
+                            ? ($attendanceData['student_leave'] / $counts['student']) * 100
+                            : (1 - ($attendanceData['student_attendance'] / $counts['student'])) * 100),
+                    2
+                ) . '%'
+                : '0%',
+            'teacher' => $counts['teacher'] > 0
+                ? number_format(
+                    $type === 'present'
+                        ? ($attendanceData['teacher_attendance'] / $counts['teacher']) * 100
+                        : ($type === 'leave'
+                            ? ($attendanceData['teacher_leave'] / $counts['teacher']) * 100
+                            : (1 - ($attendanceData['teacher_attendance'] / $counts['teacher'])) * 100),
+                    2
+                ) . '%'
+                : '0%',
+            'administration' => $counts['administration'] > 0
+                ? number_format(
+                    $type === 'present'
+                        ? ($attendanceData['admin_attendance'] / $counts['administration']) * 100
+                        : ($type === 'leave'
+                            ? ($attendanceData['admin_leave'] / $counts['administration']) * 100
+                            : (1 - ($attendanceData['admin_attendance'] / $counts['administration'])) * 100),
+                    2
+                ) . '%'
+                : '0%',
+            'class' => $counts['teacher'] > 0
+                ? number_format(
+                    $type === 'present'
+                        ? ($attendanceData['teacher_attendance'] / $counts['teacher']) * 100
+                        : ($type === 'leave'
+                            ? ($attendanceData['class_leave'] / $counts['teacher']) * 100
+                            : (1 - ($attendanceData['teacher_attendance'] / $counts['teacher'])) * 100),
+                    2
+                ) . '%'
+                : '0%',
+        ];
+
+        return $result;
+    }
 
     public function studentExport(Request $request)
     {

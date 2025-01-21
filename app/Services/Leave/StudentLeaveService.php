@@ -49,7 +49,7 @@ class StudentLeaveService
 
         $leaves = $query->whereHas('user', function ($user) {
             $user->whereNotIn('role', ['parent', 'teacher', 'administration', 'accountant', 'admin']);
-        })->latest()->with('user.department', 'type')->paginate(10);
+        })->latest()->with(['user.department', 'user.courses.course', 'type'])->paginate(10);
         $users = User::active()->latest()->get(['id', 'name', 'email']);
 
         $leave_types = LeaveType::whereNotIn('role_type', ['teacher', 'staff'])

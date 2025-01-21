@@ -32,6 +32,8 @@ class StudentLeaveController extends Controller
             // For Admin & Others role
             $data = (new StudentLeaveService)->index($request);
 
+            // dd($data);
+
             return inertia('Admin/StudentLeave/Index', $data);
         }
     }

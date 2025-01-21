@@ -1,4 +1,5 @@
 <template>
+
     <Head :title="__('Student Leave List')" />
     <AppLayout>
         <Breadcrumb>
@@ -14,7 +15,8 @@
                     </span>
                 </div>
                 <template #content>
-                    <global-button :loading="false" type="link" :url="route('student-leave-type.index')" theme="primary" id="testLeaveType">
+                    <global-button :loading="false" type="link" :url="route('student-leave-type.index')" theme="primary"
+                        id="testLeaveType">
                         {{ __('Leave Type') }}
                     </global-button>
                 </template>
@@ -39,35 +41,18 @@
                         </div>
 
                         <div class="xl:col-span-2">
-                            <a-select
-                                class="width-100"
-                                size="large"
-                                v-model:value="filter.leave_type"
-                                show-search
-                                :placeholder="__('Select a leave type')"
-                                :options="options"
-                                @focus="handleFocus"
-                                @blur="handleBlur"
-                                @change="handleChange"
-                            />
+                            <a-select class="width-100" size="large" v-model:value="filter.leave_type" show-search
+                                :placeholder="__('Select a leave type')" :options="options" @focus="handleFocus"
+                                @blur="handleBlur" @change="handleChange" />
                         </div>
                         <div class="xl:col-span-1">
-                            <a-select
-                                class="width-100"
-                                size="large"
-                                v-model:value="filter.status"
-                                show-search
-                                :placeholder="__('Select a status')"
-                                :options="[
+                            <a-select class="width-100" size="large" v-model:value="filter.status" show-search
+                                :placeholder="__('Select a status')" :options="[
                                     { title: 'All', id: 'all', value: 'all' },
                                     { title: 'Pending', id: 'pending', value: 'pending' },
                                     { title: 'Accepted', id: 'accepted', value: 'accepted' },
                                     { title: 'Rejected', id: 'rejected', value: 'rejected' }
-                                ]"
-                                @focus="handleFocus"
-                                @blur="handleBlur"
-                                @change="handleChange"
-                            />
+                                ]" @focus="handleFocus" @blur="handleBlur" @change="handleChange" />
                         </div>
 
                         <div>
@@ -81,6 +66,7 @@
                     <global-table>
                         <template #head>
                             <th scope="col" class="py-4 px-5 whitespace-nowrap">{{ __('Name') }}</th>
+                            <th scope="col" class="py-4 px-5 whitespace-nowrap">{{ __('Course') }}</th>
                             <th scope="col" class="py-4 px-5 whitespace-nowrap">{{ __('Role') }}</th>
                             <th scope="col" class="py-4 px-5 whitespace-nowrap">{{ __('Leave Type') }}</th>
                             <th scope="col" class="py-4 px-5 whitespace-nowrap">{{ __('Date') }}</th>
@@ -96,8 +82,18 @@
                                             <td-user-show :image="leave.user.profile_photo_url" :name="leave.user.name"
                                                 :email="leave.user.email" />
                                         </td>
+
                                         <td class="py-4 px-5">
-                                            <div class="inline-block mb-2 bg-blue-100 dark:bg-gray-700 text-blue-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded dark:text-gray-400">
+                                            <template v-for="(course, index) in leave.user.courses" :key="course.id">
+                                                <div class="font-bold ml-0.5">
+                                                    {{ course.course ? course.course.name : "" }}
+                                                    <template v-if="leave.user.courses.length != index + 1">,</template>
+                                                </div>
+                                            </template>
+                                        </td>
+                                        <td class="py-4 px-5">
+                                            <div
+                                                class="inline-block mb-2 bg-blue-100 dark:bg-gray-700 text-blue-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded dark:text-gray-400">
                                                 {{ leave.user.role }}
                                             </div>
                                             <div v-if="leave.user.department && leave.user.role == 'Teacher'">
@@ -105,13 +101,15 @@
                                             </div>
                                         </td>
                                         <td class="py-4 px-5">
-                                            <div class="inline-block mb-2 bg-blue-100 dark:bg-gray-700 text-blue-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded dark:text-gray-400">
+                                            <div
+                                                class="inline-block mb-2 bg-blue-100 dark:bg-gray-700 text-blue-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded dark:text-gray-400">
                                                 {{ leave.type?.name }}
                                             </div>
                                         </td>
                                         <td class="py-4 px-5 whitespace-nowrap">
                                             <div class="mb-2">{{ leave.days }}</div>
-                                            <div>{{ formatTime(leave.start,'') }} - {{ formatTime(leave.end,'') }}</div>
+                                            <div>{{ formatTime(leave.start, '') }} - {{ formatTime(leave.end, '') }}
+                                            </div>
                                         </td>
                                         <td class="py-4 px-5">
                                             <span :class="leave.status == 'pending'
@@ -138,17 +136,20 @@
                                                         <XMarkIcon class="text-red-500 w-6 h-6" />
                                                         <tool-tip :text="__('Reject')" />
                                                     </button>
-                                                    <button @click="edit(leave)" type="button" class="group relative" :id="'testEdit' + leave.id">
+                                                    <button @click="edit(leave)" type="button" class="group relative"
+                                                        :id="'testEdit' + leave.id">
                                                         <PencilSquareIcon
                                                             class="text-blue-400 hover:text-blue-300 w-6 h-6" />
                                                         <tool-tip :text="__('Edit')" />
                                                     </button>
                                                 </template>
-                                                <button @click="show(leave)" type="button" class="group relative" :id="'testShow' + leave.id">
+                                                <button @click="show(leave)" type="button" class="group relative"
+                                                    :id="'testShow' + leave.id">
                                                     <eye-icon class="w-6 h-6 text-pink-400 hover:text-pink-300" />
                                                     <tool-tip :text="__('View')" />
                                                 </button>
-                                                <button type="button" @click="destroy(leave.id)" class="group relative" :id="'testDelete' + leave.id">
+                                                <button type="button" @click="destroy(leave.id)" class="group relative"
+                                                    :id="'testDelete' + leave.id">
                                                     <trash-icon class="w-6 h-6 text-red-400 hover:text-red-300" />
                                                     <tool-tip :text="__('Delete')" />
                                                 </button>
@@ -344,4 +345,3 @@ export default {
     },
 };
 </script>
-

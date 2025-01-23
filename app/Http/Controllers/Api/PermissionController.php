@@ -8,6 +8,7 @@ use App\Models\Api\PermissionAttendance;
 use App\Models\Attendance;
 use App\Models\Leave;
 use App\Models\LeaveType;
+use App\Models\User;
 
 class PermissionController extends Controller
 {
@@ -99,4 +100,76 @@ class PermissionController extends Controller
         }
     }
 
+    public function leaveManual(Request $request)
+    {
+        try {
+            // Validasi request
+            $request->validate([
+                'user_id' => 'required|integer', 
+                'leave_type_id' => 'required|integer',
+                'title' => 'required|string|max:255',
+                'start' => 'required|date',
+                'end' => 'required|date',
+                'description' => 'required|string',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg',
+            ]);
+
+            $user = User::find($request->user_id);
+
+            if (!$user) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'User not found',
+                    'data' => null
+                ], 404);
+            }
+
+            // Cek apakah user sudah memiliki leave yang aktif pada hari ini
+            $today = date('Y-m-d');
+            $existingLeave = Leave::where('user_id', $user->id)
+                ->where('start', '<=', $today)
+                ->where('end', '>=', $today)
+                ->where('status', '!=', 'rejected')
+                ->exists();
+
+            if ($existingLeave) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'You already have an active leave during this period.',
+                    'data' => null
+                ], 400);
+            }
+
+            // Buat instance Leave baru
+            $leave = new Leave();
+            $leave->user_id = $user->id;
+            $leave->leave_type_id = $request->leave_type_id;
+            // $leave->name_type_leave = $request->role_type;
+            $leave->title = $request->title;
+            $leave->start = $request->start;
+            $leave->end = $request->end;
+            $leave->status = 'pending';
+            $leave->description = $request->description;
+
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $image->storeAs('public/leaves', $image->hashName());
+                $leave->image = $image->hashName();
+            }
+
+            $leave->save();
+
+            return response()->json([
+                'status' => 201,
+                'message' => 'Leave request created successfully',
+                'data' => $leave
+            ], 201);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 400,
+                'message' => 'Internal server error',
+                'errors' => $th->getMessage()
+            ], 400);
+        }
+    }
 }

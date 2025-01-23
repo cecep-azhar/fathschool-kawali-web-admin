@@ -83,132 +83,164 @@ class AttendanceController extends Controller
         ], 200);
     }
 
+
+    // * CHECK IN MANUAL
     public function checkinManual(Request $request)
     {
-        // Koordinat lokasi tujuan
-        $settings = Setting::get()->first();
-        $targetLatitude = $settings->latitude;
-        $targetLongitude = $settings->longtitude;
+        try {
+            // Koordinat lokasi tujuan
+            $settings = Setting::get()->first();
+            $targetLatitude = $settings->latitude;
+            $targetLongitude = $settings->longtitude;
 
-        // Validasi input user
-        $data_att = $request->validate([
-            'user_id' => 'required',
-            'lattitude' => 'required',
-            'longitude' => 'required',
-        ]);
+            // Validasi input user
+            $data_att = $request->validate([
+                'user_id' => 'required',
+                'lattitude' => 'required',
+                'longitude' => 'required',
+            ]);
 
+            $user_id = $data_att['user_id'];
+            $userLatitude = $data_att['lattitude'];
+            $userLongitude = $data_att['longitude'];
 
-        $userLatitude = $data_att['lattitude'];
-        $userLongitude = $data_att['longitude'];
+            $setting = Setting::first();
+            $timeInSetting = $setting->time_in;
 
-        $setting = Setting::first();
-        $timeInSetting = $setting->time_in;
+            $currentTime = date('H:i:s');
+            $isLate = strtotime($currentTime) > strtotime($timeInSetting);
 
-        $currentTime = date('H:i:s');
-
-        $isLate = strtotime($currentTime) > strtotime($timeInSetting);
-
-        $distance = $this->calculateDistance($targetLatitude, $targetLongitude, $userLatitude, $userLongitude);
-        $radius = intval($setting->radius);
-        if ($distance > $radius) {
-            return response()->json([
-                'status' => 403,
-                'message' => 'You are outside the allowed radius',
-                'distance_in_km' => $distance,
-            ], 403);
-        }
-
-        $user_id = $data_att['user_id'];
-
-        $check_user = User::where('id', $user_id)->first();
-
-        if (!$check_user->manual) {
-            return response()->json([
-                'status' => 403,
-                'message' => 'Access denied',
-            ], 403);
-        }
-
-
-        $role_user = $check_user->role;
-        if (!$check_user) {
-            return response()->json([
-                'status' => 404,
-                'message' => 'User not found',
-            ], 404);
-        }
-
-        if ($role_user == "Student") {
-            $attendance_user = AttendanceStudent::where('user_id', $data_att['user_id'])
-                ->where('date', date('Y-m-d'))
-                ->first();
-        } else {
-            $attendance_user = Attendance::where('user_id', $data_att['user_id'])
-                ->where('date', date('Y-m-d'))
-                ->first();
-        }
-
-        if ($attendance_user) {
-            return response(['status' => 400, 'message' => 'Already Check-in'], 400);
-        }
-
-
-
-        if ($role_user == "Student") {
-            $attendance = new AttendanceStudent;
-
-            // Cari ID yang tersedia dengan loop sampai menemukan ID yang belum digunakan
-            do {
-                $newId = AttendanceStudent::max('id') + 1;
-            } while (AttendanceStudent::find($newId));
-
-            $attendance->id = $newId;
-            $attendance->user_id = $user_id;
-            $attendance->date = date('Y-m-d');
-            $attendance->time_in = $currentTime;
-            $attendance->latlon_in = $userLatitude . ',' . $userLongitude;
-
-            try {
-                $attendance->save();
-            } catch (\Illuminate\Database\QueryException $e) {
-                // Jika masih terjadi konflik, coba lagi dengan ID baru
-                if ($e->errorInfo[1] == 1062) {
-                    // Recursive retry dengan increment ID
-                    $attendance->id = $newId + 1;
-                    $attendance->save();
-                } else {
-                    throw $e;
-                }
+            $distance = round($this->calculateDistance($targetLatitude, $targetLongitude, $userLatitude, $userLongitude), 3); // Presisi hingga 3 desimal
+            $radius = $settings->radius / 1000; // Radius disimpan dalam meter
+            if ($distance > $radius) {
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'You are outside the allowed radius',
+                    'data' => [
+                        'user' => [
+                            'user_id' => $user_id,
+                            'distance_in_km' => $distance,
+                            'location' => [
+                                'latitude' => $data_att['lattitude'],
+                                'longitude' => $data_att['longitude'],
+                            ]
+                        ],
+                        'target_location' => [
+                            'latitude' => $targetLatitude,
+                            'longitude' => $targetLongitude,
+                            'radius' => $radius,
+                        ]
+                    ]
+                ], 403);
             }
-        } else {
-            $attendance = new Attendance;
 
-            // Ambil ID terakhir dari tabel
-            $lastId = Attendance::max('id');
-            $attendance->id = $lastId ? $lastId + 1 : 1;
-            $attendance->user_id = $user_id;
-            $attendance->date = date('Y-m-d');
-            $attendance->time_in = $currentTime;
-            $attendance->latlon_in = $userLatitude . ',' . $userLongitude;
-            $attendance->save();
+            $check_user = User::where('id', $user_id)->first();
+            if (!$check_user->manual) {
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'Access denied',
+                ], 403);
+            }
+
+            $role_user = $check_user->role;
+            if (!$check_user) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'User not found',
+                ], 404);
+            }
+
+            if ($role_user == "Student") {
+                $attendance_user = AttendanceStudent::where('user_id', $data_att['user_id'])
+                    ->where('date', date('Y-m-d'))
+                    ->first();
+            } else {
+                $attendance_user = Attendance::where('user_id', $data_att['user_id'])
+                    ->where('date', date('Y-m-d'))
+                    ->first();
+            }
+
+            if ($attendance_user) {
+                return response(['status' => 400, 'message' => 'Already Check-in'], 400);
+            }
+
+            if ($role_user == "Student") {
+                $attendance = new AttendanceStudent;
+
+                // Cari ID yang tersedia dengan loop sampai menemukan ID yang belum digunakan
+                do {
+                    $newId = AttendanceStudent::max('id') + 1;
+                } while (AttendanceStudent::find($newId));
+
+                $attendance->id = $newId;
+                $attendance->user_id = $user_id;
+                $attendance->date = date('Y-m-d');
+                $attendance->time_in = $currentTime;
+                $attendance->latlon_in = $userLatitude . ',' . $userLongitude;
+
+                try {
+                    $attendance->save();
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Jika masih terjadi konflik, coba lagi dengan ID baru
+                    if ($e->errorInfo[1] == 1062) {
+                        // Recursive retry dengan increment ID
+                        $attendance->id = $newId + 1;
+                        $attendance->save();
+                    } else {
+                        throw $e;
+                    }
+                }
+            } else {
+                $attendance = new Attendance;
+
+                // Ambil ID terakhir dari tabel
+                $lastId = Attendance::max('id');
+                $attendance->id = $lastId ? $lastId + 1 : 1;
+                $attendance->user_id = $user_id;
+                $attendance->date = date('Y-m-d');
+                $attendance->time_in = $currentTime;
+                $attendance->latlon_in = $userLatitude . ',' . $userLongitude;
+                $attendance->save();
+            }
+
+
+            $message = 'Checkin success';
+            if ($isLate) {
+                $message .= ' - Anda telat hari ini';
+            }
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Check-in succesfully',
+                'data' => [
+                    'user' => [
+                        'user_id' => $user_id,
+                        'time_in' => $currentTime,
+                        'distance_in_km' => $distance,
+                        'location' => [
+                            'latitude' => $data_att['lattitude'],
+                            'longitude' => $data_att['longitude'],
+                        ]
+                    ],
+                    'target_location' => [
+                        'latitude' => $targetLatitude,
+                        'longitude' => $targetLongitude,
+                        'radius' => $radius,
+                    ]
+                ]
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Internal Server Error',
+                'erros' => $th->getMessage()
+            ], 500);
         }
-
-
-        $message = 'Checkin success';
-        if ($isLate) {
-            $message .= ' - Anda telat hari ini';
-        }
-
-        return response()->json([
-            'status' => 200,
-            'message' => $message,
-            'distance_in_km' => round($distance, 2),
-        ], 200);
     }
 
 
     /**
-     * Hitung jarak antara dua koordinat dengan Haversine Formula.
+     * * Hitung jarak antara dua koordinat dengan Haversine Formula.
      *
      * @param float $lat1
      * @param float $lon1
@@ -250,33 +282,53 @@ class AttendanceController extends Controller
         ], 200);
     }
 
+    // * IsCheckedIn MANUAL
     public function isCheckedinManual($user_id)
     {
-        $check_user = User::where('id', $user_id)->first();
-        $role_user = $check_user->role;
+        try {
+            $check_user = User::where('id', $user_id)->first();
+            $role_user = $check_user->role;
 
-        if ($role_user == "Student") {
-            $attendanceStudent = AttendanceStudent::where('user_id', $user_id)
-                ->whereDate('date', date('Y-m-d'))
-                ->first();
+            if ($role_user == "Student") {
+                $attendanceStudent = AttendanceStudent::where('user_id', $user_id)
+                    ->whereDate('date', date('Y-m-d'))
+                    ->first();
 
-            $isCheckedIn = $attendanceStudent;
+                $isCheckedIn = $attendanceStudent;
 
-            $isCheckedOut = ($attendanceStudent && $attendanceStudent->time_out);
-        } else {
-            $attendance = Attendance::where('user_id', $user_id)
-                ->whereDate('date', date('Y-m-d'))
-                ->first();
+                $isCheckedOut = ($attendanceStudent && $attendanceStudent->time_out);
+            } else {
+                $attendance = Attendance::where('user_id', $user_id)
+                    ->whereDate('date', date('Y-m-d'))
+                    ->first();
 
-            $isCheckedIn = $attendance;
+                $isCheckedIn = $attendance;
+                $isCheckedOut = ($attendance && $attendance->time_out);
+            }
 
-            $isCheckedOut = ($attendance && $attendance->time_out);
+            // Check leave status
+            $leaveToday = Leave::where('user_id', $user_id)
+                ->whereDate('start', '<=', date('Y-m-d'))
+                ->whereDate('end', '>=', date('Y-m-d'))
+                ->exists();
+
+            return response([
+                'checkedin' => $isCheckedIn ? true : false,
+                'checkedout' => $isCheckedOut ? true : false,
+                'leave' => $leaveToday,
+                'user' => [
+                    'id' => $check_user->id,
+                    'name' => $check_user->name,
+                    'role' => $check_user->role
+                ],
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Internal Server Error',
+                'error' => $th->getMessage()
+            ], 500);
         }
-
-        return response([
-            'checkedin' => $isCheckedIn ? true : false,
-            'checkedout' => $isCheckedOut ? true : false,
-        ], 200);
     }
 
 
@@ -342,95 +394,149 @@ class AttendanceController extends Controller
         ], 200);
     }
 
+
+    // * CHECK OUT MANUAL
     public function checkoutManual(Request $request)
     {
-        $settings = Setting::get()->first();
-        $targetLatitude = $settings->latitude;
-        $targetLongitude = $settings->longtitude;
+        try {
+            $settings = Setting::get()->first();
+            $targetLatitude = $settings->latitude;
+            $targetLongitude = $settings->longtitude;
 
-        // Validasi input user
-        $data_att = $request->validate([
-            'user_id' => 'required',
-            'lattitude' => 'required',
-            'longitude' => 'required',
-        ]);
+            // Validasi input user
+            $data_att = $request->validate([
+                'user_id' => 'required',
+                'lattitude' => 'required',
+                'longitude' => 'required',
+            ]);
 
-        $user_id = $data_att['user_id'];
+            $user_id = $data_att['user_id'];
+            $check_user = User::where('id', $user_id)->first();
+            $role_user = $check_user->role;
 
-        $check_user = User::where('id', $user_id)->first();
-        $role_user = $check_user->role;
+            if ($role_user  == "Student") {
+                $attendance = AttendanceStudent::where('user_id', $user_id)
+                    ->where('date', date('Y-m-d'))
+                    ->first();
+            } else {
+                $attendance = Attendance::where('user_id', $user_id)
+                    ->where('date', date('Y-m-d'))
+                    ->first();
+            }
+
+            // Check if attendance not found
+            if (!$attendance) {
+                return response()->json([
+                    'status' => 401,
+                    'messages' => 'Check-in first',
+                ], 401);
+            }
 
 
-        if ($role_user  == "Student") {
-            $attendance = AttendanceStudent::where('user_id', $user_id)
-                ->where('date', date('Y-m-d'))
-                ->first();
-        } else {
+            // $distance = $this->calculateDistance($targetLatitude, $targetLongitude, $data_att['lattitude'], $data_att['longitude']);
+            $distance = round($this->calculateDistance($targetLatitude, $targetLongitude, $data_att['lattitude'], $data_att['longitude']), 3); // Presisi hingga 3 desimal
+            $radius = $settings->radius / 1000; // Jika radius disimpan dalam meter
+            if ($distance > $radius) {
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'You are outside the allowed radius',
+                    'data' => [
+                        'user' => [
+                            'user_id' => $user_id,
+                            'distance_in_km' => $distance,
+                            'location' => [
+                                'latitude' => $data_att['lattitude'],
+                                'longitude' => $data_att['longitude'],
+                            ]
+                        ],
+                        'target_location' => [
+                            'latitude' => $targetLatitude,
+                            'longitude' => $targetLongitude,
+                            'radius' => $radius,
+                        ]
+                    ]
+                ], 403);
+            }
 
-            $attendance = Attendance::where('user_id', $user_id)
-                ->where('date', date('Y-m-d'))
-                ->first();
-        }
+            // Get the time_out setting from the Settings model
+            $setting = Setting::first(); // Assume there's only one settings record
+            $timeOutSetting = $setting->time_out;
 
-        $distance = $this->calculateDistance($targetLatitude, $targetLongitude, $data_att['lattitude'], $data_att['longitude']);
-        $radius = intval($settings->radius);
-        if ($distance > $radius) {
+            // Get the current time
+            $currentTime = date('H:i:s');
+
+            // Check if the user has an accepted leave that allows early checkout
+            $hasLeave = Leave::where('user_id', $data_att['user_id'])
+                ->where('status', 'accepted')
+                ->where('start', '<=', date('Y-m-d H:i:s'))
+                ->where('end', '>=', date('Y-m-d H:i:s'))
+                ->exists();
+
+            // Check if the user is attempting to check out before the allowed time
+            if (strtotime($currentTime) < strtotime($timeOutSetting) && !$hasLeave) {
+                return response()->json([
+                    'status' => 402,
+                    'messages' => 'You cannot checkout before the allowed time unless you have an accepted leave.',
+                    'data' => [
+                        'user' => [
+                            'user_id' => $user_id,
+                            'time' => $currentTime,
+                            'time_out' => $timeOutSetting,
+                            'distance_in_km' => $distance,
+                            'location' => [
+                                'latitude' => $data_att['lattitude'],
+                                'longitude' => $data_att['longitude'],
+                            ]
+                        ],
+                        'target_location' => [
+                            'latitude' => $targetLatitude,
+                            'longitude' => $targetLongitude,
+                            'radius' => $radius,
+                        ]
+                    ]
+                ], 402);
+            }
+
+            if ($attendance->time_out !== null) {
+                return response()->json([
+                    'status' => 400,
+                    'messages' => 'Already Checkout'
+                ], 400);
+            }
+
+            // Save checkout
+            $attendance->time_out = $currentTime;
+            $attendance->latlon_out = $data_att['lattitude'] . ',' . $data_att['longitude'];
+            $attendance->save();
+
+
             return response()->json([
-                'status' => 403,
-                'message' => 'You are outside the allowed radius',
-                'distance_in_km' => $distance,
-            ], 403);
-        }
-
-        // Check if attendance not found
-        if (!$attendance) {
+                'status' => 200,
+                'message' => 'Check-out succesfully',
+                'data' => [
+                    'user' => [
+                        'user_id' => $user_id,
+                        'time' => $currentTime,
+                        'distance_in_km' => $distance,
+                        'location' => [
+                            'latitude' => $data_att['lattitude'],
+                            'longitude' => $data_att['longitude'],
+                        ]
+                    ],
+                    'target_location' => [
+                        'latitude' => $targetLatitude,
+                        'longitude' => $targetLongitude,
+                        'radius' => $radius,
+                    ]
+                ]
+            ], 200);
+        } catch (\Throwable $th) {
             return response()->json([
-                'status' => 401,
-                'messages' => 'Check-in first',
-            ], 401);
+                'status' => 500,
+                'messages' => 'Internal Server Error',
+                'error' => $th->getMessage()
+            ], 500);
         }
-
-        // Get the time_out setting from the Settings model
-        $setting = Setting::first(); // Assume there's only one settings record
-        $timeOutSetting = $setting->time_out;
-
-        // Get the current time
-        $currentTime = date('H:i:s');
-
-        // Check if the user has an accepted leave that allows early checkout
-        $hasLeave = Leave::where('user_id', $data_att['user_id'])
-            ->where('status', 'accepted')
-            ->where('start', '<=', date('Y-m-d H:i:s'))
-            ->where('end', '>=', date('Y-m-d H:i:s'))
-            ->exists();
-
-        // Check if the user is attempting to check out before the allowed time
-        if (strtotime($currentTime) < strtotime($timeOutSetting) && !$hasLeave) {
-            return response()->json([
-                'status' => 402,
-                'messages' => 'You cannot checkout before the allowed time unless you have an accepted leave.'
-            ], 402);
-        }
-
-        if ($attendance->time_out !== null) {
-            return response()->json([
-                'status' => 400,
-                'messages' => 'Already Checkout'
-            ], 400);
-        }
-
-        // Save checkout
-        $attendance->time_out = $currentTime;
-        $attendance->latlon_out = $data_att['lattitude'] . ',' . $data_att['longitude'];
-        $attendance->save();
-
-
-        return response()->json([
-            'status' => 200,
-            'message' => 'Check-out succesfully',
-            'attendance' => $attendance,
-            'distance_in_km' => round($distance, 2),
-        ], 200);
     }
 
 

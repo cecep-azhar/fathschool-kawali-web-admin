@@ -60,6 +60,51 @@ class AuthController extends Controller
         return response(['user' => $user, 'token' => $token], 200);
     }
 
+    // * OLD
+    // public function loginUsers(Request $request)
+    // {
+
+    //     $loginData = $request->validate([
+    //         'email' => 'required|email',
+    //         'password' => 'required',
+    //     ]);
+
+    //     $user = User::where('email', $loginData['email'])->first();
+
+    //     if (!$user) {
+    //         return response()->json([
+    //             'status' => 404,
+    //             'message' => 'Account not found',
+    //         ], 404);
+    //     }
+
+    //     if (!Hash::check($loginData['password'], $user->password)) {
+    //         return response()->json([
+    //             'status' => 401,
+    //             'message' => 'Wrong password',
+    //         ], 401);
+    //     }
+
+    //     if (!$user->manual) {
+    //         return response()->json([
+    //             'status' => 403,
+    //             'message' => 'Access denied',
+    //         ], 403);
+    //     }
+
+    //     $responseData = [
+    //         'id' => $user->id,
+    //         'email' => $user->email,
+    //         'name' => $user->name,
+    //     ];
+
+    //     return response()->json([
+    //         'status' => 200,
+    //         'message' => 'Login success',
+    //         'data' => $responseData,
+    //     ], 200);
+    // }
+
     public function loginUsers(Request $request)
     {
 
@@ -97,9 +142,9 @@ class AuthController extends Controller
         // Hindari mengembalikan semua data user
         $responseData = [
             'id' => $user->id,
-            'email' => $user->email,
             'name' => $user->name,
-            // tambahkan data lain yang perlu saja
+            'email' => $user->email,
+            'role' => $user->role
         ];
 
         return response()->json([

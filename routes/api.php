@@ -37,9 +37,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-//login
 Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
+
+// * API Login Manual
 Route::post('/loginUsers', [App\Http\Controllers\Api\AuthController::class, 'loginUsers']);
+
 //logout
 Route::post('/logout', [App\Http\Controllers\Api\AuthController::class, 'logout'])->middleware('auth:sanctum');
 Route::post('/logoutStudent', [App\Http\Controllers\Api\AuthController::class, 'logoutStudent']);
@@ -59,10 +61,15 @@ Route::get('/school-phone', [App\Http\Controllers\Api\ApiSchoolController::class
 
 //API permission
 Route::apiResource('/api-permissions', App\Http\Controllers\Api\PermissionController::class)->middleware('auth:sanctum');
-
 Route::get('/permissions/{id}', [App\Http\Controllers\Api\PermissionController::class, 'show'])->middleware('auth:sanctum');
-
 Route::apiResource('/permissions-type', App\Http\Controllers\Api\PermissionTypeController::class)->middleware('auth:sanctum');
+
+// * API Leave Manual
+Route::post('/leaveManualType', [App\Http\Controllers\Api\PermissionTypeController::class, 'typePermissionManual']);
+Route::get('/leaveManualType', [App\Http\Controllers\Api\PermissionTypeController::class, 'getAllPermissionType']);
+Route::get('/leave-types/{roleType}', [App\Http\Controllers\Api\PermissionTypeController::class, 'getLeaveTypesByRoleType']);
+Route::post('/leaveManual', [App\Http\Controllers\Api\PermissionController::class, 'leaveManual']);
+
 
 //Qrin
 Route::post('/qrin', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrin'])->middleware('auth:sanctum');
@@ -73,14 +80,15 @@ Route::get('/is-qrin', [App\Http\Controllers\Api\ClassAttendanceController::clas
 //Qrout
 Route::post('/qrout', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrout'])->middleware('auth:sanctum');
 
-//checkin
+// * API Check In
 Route::post('/checkin', [App\Http\Controllers\Api\AttendanceController::class, 'checkin'])->middleware('auth:sanctum');
 Route::post('/checkinManual', [App\Http\Controllers\Api\AttendanceController::class, 'checkinManual']);
-//is checkin
+
+// * API Is Check
 Route::get('/is-checkin', [App\Http\Controllers\Api\AttendanceController::class, 'isCheckedin'])->middleware('auth:sanctum');
 Route::get('/isCheckinManual/{user_id}', [App\Http\Controllers\Api\AttendanceController::class, 'isCheckedinManual']);
 
-//checkout
+// * API Check Out
 Route::post('/checkout', [App\Http\Controllers\Api\AttendanceController::class, 'checkout'])->middleware('auth:sanctum');
 Route::post('/checkoutManual', [App\Http\Controllers\Api\AttendanceController::class, 'checkoutManual']);
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\LeaveType;
 use App\Models\MobileSetting;
 use App\Models\Setting;
 use Illuminate\Http\Request;
@@ -12,7 +13,7 @@ class GetSettings extends Controller
     public function index(){
         $settings = Setting::get()->first();
         $mobile_settings = MobileSetting::get()->first();
-
+        $leave_types = LeaveType::get();
 
         return response()->json([
             'status' => 200,
@@ -30,7 +31,8 @@ class GetSettings extends Controller
                 ],
                 'mobile_settings' => [
                     'conclusion_apps' => $mobile_settings->conclusion_apps
-                ]
+                ],
+                'types_leave' => $leave_types
             ]
         ], 200);
     }

@@ -84,7 +84,7 @@ Route::post('/qrout', [App\Http\Controllers\Api\ClassAttendanceController::class
 Route::post('/checkin', [App\Http\Controllers\Api\AttendanceController::class, 'checkin'])->middleware('auth:sanctum');
 Route::post('/checkinManual', [App\Http\Controllers\Api\AttendanceController::class, 'checkinManual']);
 
-// * API Is Check
+// * API id Checked User
 Route::get('/is-checkin', [App\Http\Controllers\Api\AttendanceController::class, 'isCheckedin'])->middleware('auth:sanctum');
 Route::get('/isCheckinManual/{user_id}', [App\Http\Controllers\Api\AttendanceController::class, 'isCheckedinManual']);
 

@@ -45,6 +45,8 @@ class ReportController extends Controller
         return inertia('Admin/Report/Index');
     }
 
+
+    // * Export Student Attendance
     public function attendance(Request $request)
     {
         abort_if(! userCan('academic.management'), 403);

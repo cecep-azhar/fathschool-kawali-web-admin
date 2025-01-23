@@ -215,7 +215,7 @@ class AttendanceController extends Controller
                 'data' => [
                     'user' => [
                         'user_id' => $user_id,
-                        'time_in' => $currentTime,
+                        'time' => $currentTime,
                         'distance_in_km' => $distance,
                         'location' => [
                             'latitude' => $data_att['lattitude'],

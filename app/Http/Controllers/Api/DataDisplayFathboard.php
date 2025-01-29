@@ -255,15 +255,39 @@ class DataDisplayFathboard extends Controller
                     ];
                 })->unique('id')->values();
 
+                $leaves = Leave::with(['user', 'type:id,name'])
+                ->whereHas('user', function ($query) use ($className) {
+                    $query->whereHas('course', function ($subQuery) use ($className) {
+                        $subQuery->where('courses.name', $className);
+                    });
+                })
+                ->whereDate('start', '<=', $today)
+                ->whereDate('end', '>=', $today)
+                ->where('status', 'accepted')
+                ->get()
+                ->unique('user_id')
+                ->map(function ($leave) {
+                    $leaveDetails = $this->getDetailedLeave2($leave->id);
+
+                    return [
+                        'id' => $leave->user_id,
+                        'name' => $leave->user->name,
+                        'description' => $leaveDetails ? $leaveDetails->description : 'No Description Available',
+                        'status' => $leaveDetails ? ($leaveDetails->status ?? 'Approved') : 'Pending'
+                    ];
+                })->values();
+
                 // List siswa yang tidak hadir
-                $studentsAbsent = $studentsInClass->reject(function ($student) use ($attendance) {
-                    return $attendance->contains('user_id', $student->id); // Mencari siswa yang hadir
+                $studentsAbsent = $studentsInClass->reject(function ($student) use ($attendance, $leaves) {
+                    // Siswa dianggap tidak absen jika hadir ATAU sedang izin
+                    return $attendance->contains('user_id', $student->id) ||
+                           $leaves->contains('id', $student->id);
                 })->map(function ($student) {
                     return [
-                        'id' => $student->id,   // Menambahkan id siswa
-                        'name' => $student->name // Nama siswa
+                        'id' => $student->id,
+                        'name' => $student->name
                     ];
-                })->unique('id')->values();
+                })->values();
 
                 // Update total siswa yang hadir
                 $totalPresent += $attendance->count();
@@ -277,6 +301,7 @@ class DataDisplayFathboard extends Controller
                     })
                     ->whereDate('start', '<=', $today)
                     ->whereDate('end', '>=', $today)
+                    ->where('status', 'accepted')
                     ->get()
                     ->unique('user_id')
                     ->map(function ($leave) use ($today) {
@@ -525,7 +550,14 @@ class DataDisplayFathboard extends Controller
                     })->join('+');
 
                 return [
-                    'id' => $user->id,
+/*************  ✨ Codeium Command ⭐  *************/
+    /**
+     * Get detailed data of users who are absent on the given date.
+     * For students, it will also include the course name.
+     * For teachers and admins, it will only include the name and role.
+     *
+     * @param string $role The role of the users to retrieve (student, teacher, or admin).
+/******  023c1cd2-61a1-4ce3-b46d-3594569304ed  *******/                    'id' => $user->id,
                     'name' => $user->name,
                     'role' => $user->role,
                     'course' => optional($user->course->first())->name,
@@ -669,6 +701,7 @@ class DataDisplayFathboard extends Controller
     {
         return Leave::with(['user.course', 'type:id,name'])
             ->where('start', $today)
+            ->where('status', 'accepted')
             ->whereHas('user', function ($query) use ($role) {
                 $query->where('role', $role);
             })

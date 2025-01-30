@@ -51,49 +51,67 @@ class ReportController extends Controller
     {
         abort_if(! userCan('academic.management'), 403);
 
-        // Membuat query untuk attendance students
-        $attendance_query = AttendanceStudent::with([
-            'user.courses.course:id,name,study_program_id',
-            'user.courses.course.study_program:id,name'
-        ]);
-
-        // Filter berdasarkan bulan
-        if ($request->has('month') && $request->month !== null) {
-            // Filter berdasarkan bulan yang diberikan
-            $attendance_query->whereDate('date', $request->month);
-        } else {
-            // Gunakan tanggal hari ini sebagai default
-            $attendance_query->whereDate('date', Carbon::today()->toDateString());
+        // Set default dates if not provided
+        if (!$request->has('start_date') && !$request->has('end_date')) {
+            $start_date = Carbon::today()->toDateString();
+            $end_date = Carbon::today()->toDateString();
+            $request->merge([
+                'start_date' => $start_date,
+                'end_date' => $end_date
+            ]);
         }
 
-        // Filter lainnya (keyword, course, study_program)
-        if ($request->has('keyword') && $request->keyword !== null) {
+        // Query awal untuk AttendanceStudent
+        $attendance_query = AttendanceStudent::with([
+            'user:id,name',
+            'user.courses.course:id,name,study_program_id',
+            'user.courses.course.study_program:id,name'
+        ])->whereHas('user', function ($query) {
+            $query->where('role', 'student');
+        });
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $attendance_query->whereBetween('date', [$request->start_date, $request->end_date]);
+        }
+
+        // Filter berdasarkan keyword untuk attendance
+        if ($request->filled('keyword')) {
             $attendance_query->whereHas('user', function ($query) use ($request) {
-                $query->where('name', 'LIKE', '%' . $request->keyword . '%');
+                $query->where('name', 'LIKE', '%' . trim($request->keyword) . '%');
             });
         }
 
+        // Filter berdasarkan course
         if ($request->has('course') && $request->course !== null) {
             $attendance_query->whereHas('user.courses.course', function ($query) use ($request) {
                 $query->where('slug', 'LIKE', '%' . $request->course . '%');
             });
         }
 
+        // Filter berdasarkan study_program
         if ($request->has('study_program') && $request->study_program !== null) {
             $attendance_query->whereHas('user.courses.course.study_program', function ($query) use ($request) {
                 $query->where('slug', 'LIKE', '%' . $request->study_program . '%');
             });
         }
 
-        // Mengambil data attendance
-        $attendancestudent = $attendance_query->get(['id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out']);
+        // Eksekusi query attendance
+        $attendancestudent = $attendance_query->get([
+            'id',
+            'user_id',
+            'date',
+            'time_in',
+            'time_out',
+            'latlon_in',
+            'latlon_out'
+        ]);
 
-        // Total siswa berdasarkan filter
+        // Query untuk total siswa yang sesuai filter
         $totalStudentQuery = User::where('role', 'student');
 
-        // Filter berdasarkan keyword, course, study_program
-        if ($request->has('keyword') && $request->keyword !== null) {
-            $totalStudentQuery->where('name', 'LIKE', '%' . $request->keyword . '%');
+        // Apply filters to total student query
+        if ($request->filled('keyword')) {
+            $totalStudentQuery->where('name', 'LIKE', '%' . trim($request->keyword) . '%');
         }
 
         if ($request->has('course') && $request->course !== null) {
@@ -108,153 +126,118 @@ class ReportController extends Controller
             });
         }
 
-        // Menghitung total student
-        $totalStudent = $totalStudentQuery->count();
+        // Get unique student IDs who have attendance in the date range
+        $presentStudentIds = $attendancestudent->where('time_in', '!=', null)
+            ->pluck('user_id')
+            ->unique();
 
-        // Total hadir dan tidak hadir
-        $totalPresent = $attendancestudent->filter(function ($attendance) {
-            return $attendance->time_in !== null;
-        })->unique('user_id')->count();
-
-        // Total tidak hadir
-        $totalAbsent = $totalStudent - $totalPresent;
-
-        // Persentase
-        // dd($totalPresent);
-
-        $attendancePercentage = $totalStudent > 0 ? round(($totalPresent / $totalStudent) * 100) : 0;
-
-        // dd($attendancePercentage);
-        $absencePercentage = $totalStudent > 0 ? round(($totalAbsent / $totalStudent) * 100) : 0;
-
-        // Membuat query untuk absent students
-        $absent_query = User::with([
-            'courses.course:id,name,study_program_id',
-            'courses.course.study_program:id,name',
-            'leaves.type' // Pastikan relasi ini tetap di-load
-        ])->where('role', 'student'); // Hanya mengambil siswa
-
-        // Filter berdasarkan bulan terlebih dahulu
-        if ($request->has('month') && $request->month !== null) {
-            $absent_query->whereDoesntHave('attendance_student', function ($query) use ($request) {
-                $query->whereDate('date', $request->month)
-                    ->whereNotNull('time_in'); // Pastikan time_in ada (kehadiran)
+        // Query untuk siswa yang tidak hadir
+        $absent_query = User::query()
+            ->where('role', 'student')
+            ->with(['courses.course.study_program', 'leaves.type']) // Eager load tanpa select kolom spesifik
+            ->whereDoesntHave('attendance_student', function ($q) use ($request) {
+                // Gunakan tanggal dari request atau hari ini
+                $targetDate = $request->start_date ?? Carbon::today()->toDateString();
+                $q->whereDate('date', $targetDate);
             });
-        } else {
-            $absent_query->whereDoesntHave('attendance_student');
+
+        // Filter berdasarkan nama
+        if ($request->filled('name')) {
+            $absent_query->where('name', 'LIKE', '%' . $request->name . '%');
         }
 
-        // Filter tambahan (keyword, course, study_program)
-        if ($request->has('keyword') && $request->keyword !== null) {
-            $absent_query->where('name', 'LIKE', '%' . $request->keyword . '%');
-        }
-
-        if ($request->has('course') && $request->course !== null) {
+        // Filter berdasarkan course
+        if ($request->filled('course')) {
             $absent_query->whereHas('courses.course', function ($query) use ($request) {
                 $query->where('slug', 'LIKE', '%' . $request->course . '%');
             });
         }
 
-        if ($request->has('study_program') && $request->study_program !== null) {
+        // Filter berdasarkan study program
+        if ($request->filled('study_program')) {
             $absent_query->whereHas('courses.course.study_program', function ($query) use ($request) {
                 $query->where('slug', 'LIKE', '%' . $request->study_program . '%');
             });
         }
 
-        // Mengambil data absent students tanpa kehilangan data
+
+
+        // Get absent students
         $absentStudents = $absent_query->get(['id', 'name']);
 
-        // Lazy Eager Loading: Filter relasi `leaves` berdasarkan `start`
-        if ($request->has('month') && $request->month !== null) {
-            $absentStudents->load(['leaves' => function ($query) use ($request) {
-                $query->whereDate('start', $request->month)
-                    ->with('type');
-            }]);
-        } else {
-            $absentStudents->load(['leaves.type']); // Jika tidak ada filter bulan, tetap load leaves dengan relasi type
-        }
+        $absentStudents->load(['leaves' => function ($query) use ($request) {
+            $query->whereBetween('start', [$request->start_date, $request->end_date])
+                ->with('type');
+        }]);
 
-        // Menambahkan properti `date` ke setiap student
-        $absentStudents = $absentStudents->map(function ($student) use ($request) {
-            $student->date = $request->month ?? Carbon::today()->toDateString(); // Menambahkan properti date
-            return $student;
+        \Log::info('yow '. $absentStudents);
+        // Tambahkan date untuk setiap absent student
+        $absentStudents->each(function ($student) use ($request) {
+            // Jika siswa punya izin pada range tanggal tersebut
+            if ($student->leaves->isNotEmpty()) {
+                $student->date = $student->leaves->first()->start;
+            } else {
+                // Jika tidak ada izin, gunakan tanggal end_date
+                $student->date = '-';
+            }
         });
 
-        // Total siswa berdasarkan filter
-        $totalStudentQuery = User::where('role', 'student');
-
-        // Filter tambahan pada total siswa
-        if ($request->has('keyword') && $request->keyword !== null) {
-            $totalStudentQuery->where('name', 'LIKE', '%' . $request->keyword . '%');
-        }
-
-        if ($request->has('course') && $request->course !== null) {
-            $totalStudentQuery->whereHas('courses.course', function ($query) use ($request) {
-                $query->where('slug', 'LIKE', '%' . $request->course . '%');
-            });
-        }
-
-        if ($request->has('study_program') && $request->study_program !== null) {
-            $totalStudentQuery->whereHas('courses.course.study_program', function ($query) use ($request) {
-                $query->where('slug', 'LIKE', '%' . $request->study_program . '%');
-            });
-        }
-
-        // Menghitung total siswa
+        // Calculate statistics
         $totalStudent = $totalStudentQuery->count();
+        $totalPresent = $presentStudentIds->count();
+        $totalAbsent = $totalStudent - $totalPresent;
 
-        // Total tidak hadir
-        $totalAbsent = $absentStudents->count();
+        $attendancePercentage = $totalStudent > 0 ? round(($totalPresent / $totalStudent) * 100) : 0;
+        $absencePercentage = $totalStudent > 0 ? round(($totalAbsent / $totalStudent) * 100) : 0;
 
-        // Ambil daftar course dan study program untuk filter dropdown
+        // Get course and study program data for filters
         $classes = Course::get(['id', 'name', 'slug']);
         $study_programs = StudyProgram::get(['id', 'name', 'slug']);
+
+        // Calculate lateness if setting exists
         $settingTimeIn = Setting::select(['time_in'])->first();
 
-        // Cek apakah settingTimeIn ada dan time_in tidak kosong
         if ($settingTimeIn && $settingTimeIn->time_in) {
-            // Parsing waktu dari settingTimeIn
             $settingTime = Carbon::createFromFormat('H:i:s', $settingTimeIn->time_in);
 
-            // Loop untuk menghitung keterlambatan setiap attendance
             $attendancestudent->map(function ($attendance) use ($settingTime) {
-                // Parsing waktu dari attendance
-                $attendanceTime = Carbon::createFromFormat('H:i:s', $attendance->time_in);
-
-                // Jika waktu attendance lebih lambat dari setting time, hitung keterlambatan
-                if ($attendanceTime->greaterThan($settingTime)) {
-                    // Hitung keterlambatan dalam menit
-                    $latenessMinutes = $attendanceTime->diffInMinutes($settingTime);
-
-                    // Setel keterlambatan dalam format teks "X minutes"
-                    $attendance->lateness = $latenessMinutes . ' minute';
-                } else {
-                    // Jika tidak terlambat, lateness 0
-                    $attendance->lateness = '0 minute'; // Bisa menggunakan format teks seperti ini
+                if ($attendance->time_in) {
+                    $attendanceTime = Carbon::createFromFormat('H:i:s', $attendance->time_in);
+                    if ($attendanceTime->greaterThan($settingTime)) {
+                        $latenessMinutes = $attendanceTime->diffInMinutes($settingTime);
+                        $attendance->lateness = $latenessMinutes . ' minute';
+                    } else {
+                        $attendance->lateness = '0 minute';
+                    }
                 }
-
                 return $attendance;
             });
         } else {
-            // Handle jika settingTimeIn tidak ada atau time_in kosong
             return response()->json(['error' => 'Setting time_in not found or invalid.'], 400);
         }
 
-        // Map tambahan untuk menyertakan nama user
+        // Add user information to attendance records
         $attendancestudent->each(function ($attendance) {
             $attendance->user_name = $attendance->user->name;
             $attendance->user_id = $attendance->user->id;
         });
 
-        // Return data ke Vue.js melalui Inertia
+
+        // Return view with data
         return inertia('Admin/Report/Attendance', [
             'attendancestudent' => $attendancestudent,
             'absentStudents' => $absentStudents,
             'attendance_percentage' => $attendancePercentage,
             'absence_percentage' => $absencePercentage,
-            'filter_data' => $request,
+            'filter_data' => [
+                'keyword' => $request->keyword,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'course' => $request->course,
+                'study_program' => $request->study_program
+            ],
             'classes' => $classes,
-            'study_programs' => $study_programs,
+            'study_programs' => $study_programs
         ]);
     }
 

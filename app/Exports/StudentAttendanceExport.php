@@ -11,17 +11,19 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class StudentAttendanceExport implements FromCollection, WithHeadings, WithMapping
+class StudentAttendanceExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
     protected $name;
-    protected $month;
+    protected $start_date;
+    protected $end_date;
     protected $course;
     protected $study_program;
 
-    public function __construct($name = null, $month = null, $course = null, $study_program = null)
+    public function __construct($name = null, $start_date = null, $end_date = null, $course = null, $study_program = null)
     {
         $this->name = $name;
-        $this->month = $month;
+        $this->start_date = $start_date;
+        $this->end_date = $end_date;
         $this->course = $course;
         $this->study_program = $study_program;
     }
@@ -40,8 +42,19 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
             });
         }
 
-        if($this->month) {
-            $query->whereDate('date', '=', date('Y-m-d', strtotime($this->month)));
+
+
+        // Filter berdasarkan date range
+        if ($this->start_date) {
+            $query->whereDate('date', '>=', $this->start_date);
+        }
+        if ($this->end_date) {
+            $query->whereDate('date', '<=', $this->end_date);
+        }
+
+        // Jika tidak ada date range, gunakan hari ini
+        if (!$this->start_date && !$this->end_date) {
+            $query->whereDate('date', '=', Carbon::today()->toDateString());
         }
 
         if($this->course) {
@@ -60,6 +73,7 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
             $attendance->number = $index + 1;
             return $attendance;
         });
+
 
           // Ambil setting waktu 'time_in'
           $settingTimeIn = Setting::select(['time_in'])->first();
@@ -109,19 +123,22 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
      * @return \Illuminate\Support\Collection
      */
     public function map($attendances): array
-    {
-        return [
-            $attendances->number,
-            $attendances->user->name, // assuming you have a relationship 'user' in Attendance model
-            $attendances->user->courses->pluck('course.study_program.name')->join(', '),
-            $attendances->date,
-            $attendances->time_in,
-            $attendances->time_out,
-            $attendances->lateness,
-            $attendances->latlon_in,
-            $attendances->latlon_out,
-        ];
-    }
+{
+    return [
+        $attendances->number,
+        $attendances->user ? $attendances->user->name : 'N/A', // Check if user exists
+        $attendances->user && $attendances->user->courses ?
+            $attendances->user->courses->pluck('course.name')->join(', ') : 'N/A', // Get course names
+        $attendances->user && $attendances->user->courses ?
+            $attendances->user->courses->pluck('course.study_program.name')->join(', ') : 'N/A', // Get study program names
+        $attendances->date,
+        $attendances->time_in,
+        $attendances->time_out,
+        $attendances->lateness,
+        $attendances->latlon_in,
+        $attendances->latlon_out,
+    ];
+}
 
     /**
      * Xls Heading return
@@ -133,6 +150,7 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
         return [
             'No',
             'Name',
+            'Course',
             'Study Program',
             'Date',
             'Time In',

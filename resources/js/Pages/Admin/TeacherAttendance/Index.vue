@@ -17,8 +17,16 @@
                         <input type="text" v-model="filter.name" id="name" placeholder="Name"
                             class="p-2 border rounded" />
 
-                        <label for="month" class="ml-4 mr-2">{{ __("Date") }}:</label>
-                        <input type="date" v-model="filter.month" id="month" class="p-2 border rounded mr-4" />
+                        <div class="ml-4 flex items-center">
+                            <label for="start_date" class="mr-2">{{ __("From") }}:</label>
+                            <input type="date" v-model="filter.start_date" id="start_date" class="p-2 border rounded" />
+                        </div>
+
+                        <div class="ml-4 flex items-center">
+                            <label for="end_date" class="mr-2">{{ __("To") }}:</label>
+                            <input type="date" v-model="filter.end_date" id="end_date"
+                                class="p-2 border rounded mr-4" />
+                        </div>
 
                         <div>
                             <a-select class="width-100" size="large" v-model:value="filter.study_program" show-search
@@ -62,7 +70,7 @@
                         <!-- Tombol Export di sebelah kanan -->
                         <div class="ml-auto">
                             <global-button :loading="false" @click="exportAttendance()" type="button" theme="sky">
-                                {{ __("Export") }}
+                                {{ __("Exports") }}
                             </global-button>
                         </div>
                     </div>
@@ -169,96 +177,96 @@
                         {{ __("Export") }}
                     </global-button>
                 </div>
-            <global-table>
-                <template #head>
-                    <th class="py-4 px-5">{{ __("Name") }}</th>
-                    <th class="py-4 px-5">{{ __("Study Program") }}</th>
-                    <th class="py-4 px-5">{{ __("Date") }}</th>
-                    <th class="py-4 px-5">{{ __("Leave Type") }}</th>
-                    <th class="py-4 px-5">{{ __("Status") }}</th>
-                </template>
-                <template #body>
-                    <template v-if="absentTeachers.length > 0">
-                        <template v-for="absent in absentTeachers" :key="absent.id">
-                            <tr class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                <td class="py-4 px-5 text-gray-900 dark:text-white">
-                                    {{ absent.name }}
-                                </td>
-                                <td class="py-4 px-5 text-gray-900 dark:text-white">
-                                    <template v-if="
-                                        absent.department &&
-                                        absent.department
-                                            .study_program
-                                    ">
-                                        <div class="font-bold">
-                                            {{
-                                                absent.department
-                                                    .study_program.name
-                                            }}
-                                        </div>
-                                    </template>
-                                    <template v-else> - </template>
-                                </td>
-                                <td class="py-4 px-5 text-gray-900 dark:text-white">
-                                    {{ absent.date }}
-                                </td>
-                                <td class="py-4 px-5 text-gray-900 dark:text-white">
-                                    <template v-if="absent.leaves.length > 0">
-                                        <div class="flex flex-wrap items-center gap-0.5">
-                                            <template v-for="(
+                <global-table>
+                    <template #head>
+                        <th class="py-4 px-5">{{ __("Name") }}</th>
+                        <th class="py-4 px-5">{{ __("Study Program") }}</th>
+                        <th class="py-4 px-5">{{ __("Date") }}</th>
+                        <th class="py-4 px-5">{{ __("Leave Type") }}</th>
+                        <th class="py-4 px-5">{{ __("Status") }}</th>
+                    </template>
+                    <template #body>
+                        <template v-if="absentTeachers.length > 0">
+                            <template v-for="absent in absentTeachers" :key="absent.id">
+                                <tr class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                    <td class="py-4 px-5 text-gray-900 dark:text-white">
+                                        {{ absent.name }}
+                                    </td>
+                                    <td class="py-4 px-5 text-gray-900 dark:text-white">
+                                        <template v-if="
+                                            absent.department &&
+                                            absent.department
+                                                .study_program
+                                        ">
+                                            <div class="font-bold">
+                                                {{
+                                                    absent.department
+                                                        .study_program.name
+                                                }}
+                                            </div>
+                                        </template>
+                                        <template v-else> - </template>
+                                    </td>
+                                    <td class="py-4 px-5 text-gray-900 dark:text-white">
+                                        {{ absent.date }}
+                                    </td>
+                                    <td class="py-4 px-5 text-gray-900 dark:text-white">
+                                        <template v-if="absent.leaves.length > 0">
+                                            <div class="flex flex-wrap items-center gap-0.5">
+                                                <template v-for="(
                                                     leave, index
                                                 ) in absent.leaves" :key="leave.id">
-                                                <div class="font-bold ml-0.5">
-                                                    {{
-                                                        leave.type
-                                                            ? leave.type
-                                                                .name
-                                                            : "-"
-                                                    }}
-                                                    <template v-if="
-                                                        absent.leaves
-                                                            .length !=
-                                                        index + 1
-                                                    ">,</template>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </template>
-                                    <template v-else> - </template>
-                                </td>
-                                <td class="py-4 px-5 text-gray-900 dark:text-white">
-                                    <template v-if="absent.leaves.length > 0">
-                                        <div class="flex flex-wrap items-center gap-0.5">
-                                            <template v-for="(
+                                                    <div class="font-bold ml-0.5">
+                                                        {{
+                                                            leave.type
+                                                                ? leave.type
+                                                                    .name
+                                                                : "-"
+                                                        }}
+                                                        <template v-if="
+                                                            absent.leaves
+                                                                .length !=
+                                                            index + 1
+                                                        ">,</template>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <template v-else> - </template>
+                                    </td>
+                                    <td class="py-4 px-5 text-gray-900 dark:text-white">
+                                        <template v-if="absent.leaves.length > 0">
+                                            <div class="flex flex-wrap items-center gap-0.5">
+                                                <template v-for="(
                                                     leave, index
                                                 ) in absent.leaves" :key="leave.id">
-                                                <div class="font-bold ml-0.5">
-                                                    {{
-                                                        leave.status ?? '-'
-                                                    }}
-                                                    <template v-if="
-                                                        absent.leaves
-                                                            .length !=
-                                                        index + 1
-                                                    ">,</template>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </template>
-                                    <template v-else> - </template>
+                                                    <div class="font-bold ml-0.5">
+                                                        {{
+                                                            leave.status ?? '-'
+                                                        }}
+                                                        <template v-if="
+                                                            absent.leaves
+                                                                .length !=
+                                                            index + 1
+                                                        ">,</template>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <template v-else> - </template>
+                                    </td>
+                                </tr>
+                            </template>
+                        </template>
+                        <template v-else>
+                            <tr>
+                                <td colspan="9" class="text-center p-4">
+                                    <NothingFound asShow="div" />
                                 </td>
                             </tr>
                         </template>
                     </template>
-                    <template v-else>
-                        <tr>
-                            <td colspan="9" class="text-center p-4">
-                                <NothingFound asShow="div" />
-                            </td>
-                        </tr>
-                    </template>
-                </template>
-            </global-table>
+                </global-table>
             </div>
             <div class="flex justify-center">
                 <!-- Pagination bisa ditambahkan di sini jika diperlukan -->
@@ -301,6 +309,9 @@ export default {
         absence_percentage: Object,
     },
     data() {
+        const today = new Date().toISOString().slice(0, 10);
+        const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
+
         return {
             loading: false,
             options: [],
@@ -314,11 +325,26 @@ export default {
                 study_program: "all",
             }),
             filter: {
-                name: "",
-                month: "",
-                study_program: this.filter_data.study_program ?? null,
+                name: this.filter_data.keyword || "",
+                start_date: this.filter_data.start_date || firstDayOfMonth,
+                end_date: this.filter_data.end_date || today,
+                study_program: this.filter_data.study_program || null,
             },
         };
+    },
+    watch: {
+        'filter_data': {
+            handler(newVal) {
+                const today = new Date().toISOString().slice(0, 10);
+                const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
+
+                this.filter.name = newVal.keyword || "";
+                this.filter.start_date = newVal.start_date || firstDayOfMonth;
+                this.filter.end_date = newVal.end_date || today;
+                this.filter.study_program = newVal.study_program || null;
+            },
+            immediate: true
+        }
     },
     mounted() {
         // Chart Kehadiran
@@ -328,7 +354,7 @@ export default {
                 {
                     label: "Attendance",
                     data: [this.attendance_percentage, this.absence_percentage],
-                    backgroundColor: ["rgb(54, 162, 235)", "rgb(255, 99, 132)"], // Biru & Merah
+                    backgroundColor: ["rgb(54, 162, 235)", "rgb(255, 99, 132)"],
                     hoverOffset: 4,
                 },
             ],
@@ -349,7 +375,7 @@ export default {
                 {
                     label: "Absence",
                     data: [this.absence_percentage, this.attendance_percentage],
-                    backgroundColor: ["rgb(255, 99, 132)", "rgb(54, 162, 235)"], // Biru & Merah
+                    backgroundColor: ["rgb(255, 99, 132)", "rgb(54, 162, 235)"],
                     hoverOffset: 4,
                 },
             ],
@@ -377,26 +403,22 @@ export default {
     },
     setup(props) {
         const attendanceteacher = ref(props.attendanceteacher);
-
         return {
             attendanceteacher,
         };
     },
     computed: {
-        // Menghitung data yang sudah difilter berdasarkan nama dan bulan
         filteredAttendance() {
             return this.attendanceteacher.filter((attendance) => {
                 let nameMatch = true;
                 let monthMatch = true;
 
-                // Filter berdasarkan nama
                 if (this.filter.name.trim() !== "") {
                     nameMatch = attendance.user.name
                         .toLowerCase()
                         .includes(this.filter.name.trim().toLowerCase());
                 }
 
-                // Filter berdasarkan bulan
                 if (this.filter.month !== "") {
                     let attendanceMonth = new Date(attendance.date)
                         .toISOString()
@@ -412,14 +434,12 @@ export default {
                 let nameMatch = true;
                 let monthMatch = true;
 
-                // Filter berdasarkan nama
                 if (this.filter.name.trim() !== "") {
                     nameMatch = attendance.user_name
                         .toLowerCase()
                         .includes(this.filter.name.trim().toLowerCase());
                 }
 
-                // Filter berdasarkan bulan
                 if (this.filter.month !== "") {
                     let absentMonth = new Date(attendance.date)
                         .toISOString()
@@ -434,49 +454,51 @@ export default {
         },
     },
     methods: {
-        // Metode untuk meng-handle submit filter
+        handleFocus(e) {
+            // Implement focus handling if needed
+        },
+        handleBlur(e) {
+            // Implement blur handling if needed
+        },
+        handleChange(value) {
+            // Implement change handling if needed
+        },
+        filterOption(input, option) {
+            return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+        },
         filterData() {
             this.loading = true;
-            // Filter berdasarkan nama
-            if (this.filter.name.trim() !== "") {
-                this.filter.name = this.filter.name.trim().toLowerCase(); // Menyimpan nilai nama yang difilter dalam format lowercase
-            }
 
-            if (this.filter.month !== "") {
-                const filterDate = this.filter.month;
-                this.filter.month = filterDate;
-            }
-            this.$inertia.get(this.route("teacher.attendance"), this.filter, {
+            const filterParams = {
+                keyword: this.filter.name.trim() !== "" ? this.filter.name.trim().toLowerCase() : null,
+                start_date: this.filter.start_date,
+                end_date: this.filter.end_date,
+                study_program: this.filter.study_program
+            };
+
+            this.$inertia.get(this.route("teacher.attendance"), filterParams, {
                 preserveScroll: true,
-                onFinish: (visit) => {
+                onFinish: () => {
                     this.loading = false;
-                    this.attendanceteacher = visit.props.attendance; // Asumsi bahwa data dikirim dalam props.attendance
-                    this.absentTeachers = visit.props.absentStudents; // Asumsi bahwa data dikirim dalam props.absentStudents
                 },
             });
         },
-
-        // Metode untuk mengekspor data
         exportAttendance() {
             this.loading = true;
             let exportData = {};
 
-            // Jika ada filter nama yang aktif
             if (this.filter.name.trim() !== "") {
                 exportData.name = this.filter.name.trim();
             }
 
-            // Jika ada filter bulan yang aktif
-            if (this.filter.month !== "") {
-                exportData.month = this.filter.month;
+            if (this.filter.start_date !== "") {
+                exportData.start_date = this.filter.start_date;
             }
 
-            // Tambahkan filter course jika ada
-            if (this.filter.course && this.filter.course.trim() !== "") {
-                exportData.course = this.filter.course.trim();
+            if (this.filter.end_date !== "") {
+                exportData.end_date = this.filter.end_date;
             }
 
-            // Tambahkan filter study program jika ada
             if (this.filter.study_program && this.filter.study_program.trim() !== "") {
                 exportData.study_program = this.filter.study_program.trim();
             }
@@ -484,62 +506,50 @@ export default {
             axios({
                 url: this.route("teacherattendance.export"),
                 method: "POST",
-                data: {
-                    ...this.export_data,
-                    ...exportData,
-                },
+                data: exportData,
                 headers: {
-                    "X-CSRF-TOKEN": document
-                        .querySelector('meta[name="csrf-token"]')
-                        .getAttribute("content"),
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content"),
                 },
                 responseType: "blob",
             })
                 .then((response) => {
-                    let extension = this.export_data.type;
-                    var fileURL = window.URL.createObjectURL(
-                        new Blob([response.data])
-                    );
+                    console.log('Response received');
+                    var fileURL = window.URL.createObjectURL(new Blob([response.data]));
                     var fileLink = document.createElement("a");
-
                     fileLink.href = fileURL;
-                    fileLink.setAttribute(
-                        "download",
-                        "studentattendance-report." + "xlsx"
-                    );
+
+                    // Tambahkan tanggal di nama file untuk lebih jelas
+                    const fileName = `teacherattendance-report-${this.filter.start_date}-to-${this.filter.end_date}.xlsx`;
+                    fileLink.setAttribute("download", fileName);
+
                     document.body.appendChild(fileLink);
-
                     fileLink.click();
-
                     this.loading = false;
                     this.visible = false;
                 })
-                .catch((e) => {
+                .catch((error) => {
+                    console.error('Export error:', error);
+                    console.log('Error response:', error.response);
                     this.loading = false;
                     this.visible = false;
                 });
         },
-
         exportAbsent() {
             this.loading = true;
             let exportData = {};
 
-            // Jika ada filter nama yang aktif
             if (this.filter.name.trim() !== "") {
                 exportData.name = this.filter.name.trim();
             }
 
-            // Jika ada filter bulan yang aktif
             if (this.filter.month !== "") {
                 exportData.month = this.filter.month;
             }
 
-            // Tambahkan filter course jika ada
             if (this.filter.course && this.filter.course.trim() !== "") {
                 exportData.course = this.filter.course.trim();
             }
 
-            // Tambahkan filter study program jika ada
             if (this.filter.study_program && this.filter.study_program.trim() !== "") {
                 exportData.study_program = this.filter.study_program.trim();
             }

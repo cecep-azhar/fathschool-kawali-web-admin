@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\AttendanceStudent;
 use App\Models\User;
+use App\Models\Setting;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -14,14 +15,16 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 class StudentAbsentExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
     protected $name;
-    protected $month;
+    protected $start_date;
+    protected $end_date;
     protected $course;
     protected $study_program;
 
-    public function __construct($name = null, $month = null, $course = null, $study_program = null)
+    public function __construct($name = null, $start_date = null, $end_date = null, $course = null, $study_program = null)
     {
         $this->name = $name;
-        $this->month = $month;
+        $this->start_date = $start_date;
+        $this->end_date = $end_date;
         $this->course = $course;
         $this->study_program = $study_program;
     }
@@ -31,23 +34,14 @@ class StudentAbsentExport implements FromCollection, WithHeadings, WithMapping, 
      */
     public function collection()
     {
-        $query = User::query()->where('role', 'student');
+        // Start with base query for students
+        $query = User::query()
+            ->where('role', 'student')
+            ->with(['courses.course.study_program', 'leaves.type']); // Eager load relationships
 
         // Filter berdasarkan nama jika ada
         if ($this->name) {
             $query->where('name', 'LIKE', '%' . $this->name . '%');
-        }
-
-        // Filter berdasarkan bulan dan kehadiran
-        if ($this->month) {
-            // Jika bulan diberikan, pastikan tidak ada kehadiran untuk bulan tersebut
-            $query->whereDoesntHave('attendance_student', function ($q) {
-                $q->whereDate('date', $this->month)
-                    ->whereNotNull('time_in'); // Pastikan time_in ada (kehadiran)
-            });
-        } else {
-            // Jika bulan tidak diberikan, ambil data tanpa mempertimbangkan kehadiran
-            $query->whereDoesntHave('attendance_student');
         }
 
         // Filter berdasarkan course
@@ -64,50 +58,53 @@ class StudentAbsentExport implements FromCollection, WithHeadings, WithMapping, 
             });
         }
 
-        // Ambil data user dengan relasi yang dibutuhkan
-        $absents = $query->with(['leaves' => function ($q) {
-            if ($this->month) {
-                $q->whereDate('start', $this->month)
-                    ->with('type');
-            } else {
-                $q->with('type');
-            }
-        }])->get();
+        // Get the target date
+        $targetDate = $this->start_date ?? Carbon::today()->toDateString();
 
-        // Menambahkan properti `date` dan nomor urut pada setiap student
-        $absents = $absents->map(function ($absent, $index) {
-            $absent->date = $this->month ?? Carbon::today()->toDateString();
-            $absent->number = $index + 1;
-            return $absent;
+        // Filter students who don't have attendance for the target date
+        $query->whereDoesntHave('attendance_student', function ($q) use ($targetDate) {
+            $q->whereDate('date', $targetDate);
         });
 
-        return $absents;
+        // Get the results
+        $absents = $query->get();
+
+        // Add number and date to each record
+        return $absents->map(function ($absent, $index) use ($targetDate) {
+            $absent->number = $index + 1;
+            $absent->date = $targetDate;
+
+            // Get leave for this specific date if exists
+            $leave = $absent->leaves()
+                ->whereDate('start', '<=', $targetDate)
+                ->whereDate('end', '>=', $targetDate)
+                ->with('type')
+                ->first();
+
+            // Store leave info for mapping
+            $absent->current_leave = $leave;
+
+            return $absent;
+        });
     }
 
-
     /**
-     * Xls Mapping for relationship data get
-     *
-     * @return \Illuminate\Support\Collection
+     * @param $absent
+     * @return array
      */
-    public function map($absents): array
+    public function map($absent): array
     {
         return [
-            $absents->number,
-            $absents->name, // assuming you have a relationship 'user' in Attendance model
-            $absents->courses->pluck('course.name')->join(', '),
-            $absents->courses->pluck('course.study_program.name')->join(', '),
-            $absents->date,
-            $absents->leaves->pluck('type.name')->join(', ') ?? '-',
-            $absents->leaves->pluck('status')->join(', ') ?? '-',
+            $absent->number,
+            $absent->name,
+            $absent->courses->pluck('course.name')->first() ?: 'N/A',
+            $absent->courses->pluck('course.study_program.name')->first() ?: 'N/A',
+            $absent->date,
+            $absent->current_leave ? $absent->current_leave->type->name : '-',
+            $absent->current_leave ? $absent->current_leave->status : '-'
         ];
     }
 
-    /**
-     * Xls Heading return
-     *
-     * @return \Illuminate\Support\Collection
-     */
     public function headings(): array
     {
         return [

@@ -27,6 +27,7 @@ use App\Models\UserDocument;
 use App\Services\Admin\User\StudentDetailsService;
 use App\Services\Admin\User\UserService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use Spatie\Permission\Models\Role;
@@ -303,27 +304,23 @@ class UserController extends Controller
     public function teacherExport(Request $request)
     {
         $name = $request->name;
-        $month = $request->month;
-
-        $course = $request->course;
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
         $study_program = $request->study_program;
 
-        $export = new TeacherExport($name, $month, $course, $study_program);
+        if (!$start_date && !$end_date) {
+            $start_date = Carbon::today()->toDateString();
+            $end_date = Carbon::today()->toDateString();
+        }
+
+        $export = new TeacherExport(
+            $name,
+            $start_date,
+            $end_date,
+            $study_program
+        );
 
         return Excel::download($export, 'teachers.xlsx');
-        // if ($name && $month) {
-        //     // Filter berdasarkan nama dan bulan
-        //     return Excel::download(new TeacherExport($name, $month), 'teachers.xlsx');
-        // } elseif ($name) {
-        //     // Filter berdasarkan nama
-        //     return Excel::download(new TeacherExport($name), 'teachers.xlsx');
-        // } elseif ($month) {
-        //     // Filter berdasarkan bulan
-        //     return Excel::download(new TeacherExport(null, $month), 'teachers.xlsx');
-        // } else {
-        //     // Tanpa filter (semua data)
-        //     return Excel::download(new TeacherExport(), 'teachers.xlsx');
-        // }
     }
 
     public function teacherAbsentExport(Request $request)
@@ -401,37 +398,55 @@ class UserController extends Controller
         return Excel::download($export, 'students.xlsx');
     }
 
-    public function StudentAttendanceExport(Request $request)
-    {
-        $name = $request->name;
-        $month = $request->month;
 
-        // Filter tambahan
-        $course = $request->course;
-        $study_program = $request->study_program;
+    public function StudentAttendanceExports(Request $request){
+            $name = $request->name;
+            $start_date = $request->start_date;
+            $end_date = $request->end_date;
+            $course = $request->course;
+            $study_program = $request->study_program;
 
-        // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
-        $export = new StudentAttendanceExport($name, $month, $course, $study_program);
+            if (!$start_date && !$end_date) {
+                $start_date = Carbon::today()->toDateString();
+                $end_date = Carbon::today()->toDateString();
+            }
 
-        // Download file Excel sesuai dengan filter
-        return Excel::download($export, 'students.xlsx');
+            $export = new StudentAttendanceExport(
+                $name,
+                $start_date,
+                $end_date,
+                $course,
+                $study_program);
+
+
+            return Excel::download($export, 'students.xlsx');
     }
 
     public function StudentAbsentExport(Request $request)
     {
         $name = $request->name;
-        $month = $request->month;
-
-        // Filter tambahan
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
         $course = $request->course;
         $study_program = $request->study_program;
 
-        // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
-        $export = new StudentAbsentExport($name, $month, $course, $study_program);
+        if (!$start_date && !$end_date) {
+            $start_date = Carbon::today()->toDateString();
+            $end_date = Carbon::today()->toDateString();
+        }
 
-        // Download file excel sesuai dengan filter
+        $export = new StudentAbsentExport(
+            $name,
+            $start_date,
+            $end_date,
+            $course,
+            $study_program);
+
+
         return Excel::download($export, 'students.xlsx');
     }
+
+
 
     public function exportStudentLeave(Request $request)
     {

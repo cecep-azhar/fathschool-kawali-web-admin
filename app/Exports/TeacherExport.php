@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Illuminate\Support\Collection;
 
 class TeacherExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
@@ -55,7 +56,19 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, WithSt
             });
         }
 
-        $attendances = $query->get()->map(function ($attendance, $index) {
+        // Get all attendance records
+        $attendances = $query->get();
+
+        // Group attendances by user_id and date to remove duplicates
+        $uniqueAttendances = $attendances->groupBy(function ($attendance) {
+            return $attendance->user_id . '_' . $attendance->date;
+        })->map(function ($group) {
+            // Take the first record from each group
+            return $group->first();
+        })->values();
+
+        // Re-number the filtered records
+        $uniqueAttendances = $uniqueAttendances->map(function ($attendance, $index) {
             $attendance->number = $index + 1;
             return $attendance;
         });
@@ -65,7 +78,7 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, WithSt
         if ($settingTimeIn && $settingTimeIn->time_in) {
             $settingTime = Carbon::createFromFormat('H:i:s', $settingTimeIn->time_in);
 
-            $attendances->map(function ($attendance) use ($settingTime) {
+            $uniqueAttendances->map(function ($attendance) use ($settingTime) {
                 if ($attendance->time_in) {
                     $attendanceTime = Carbon::createFromFormat('H:i:s', $attendance->time_in);
                     if ($attendanceTime->greaterThan($settingTime)) {
@@ -80,13 +93,12 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, WithSt
                 return $attendance;
             });
         } else {
-            return response()->json(['error' => 'Setting time_in not found or invalid.'], 400);
+            return new Collection(); // Return empty collection if setting not found
         }
 
-        return $attendances;
+        return $uniqueAttendances;
     }
 
-    // Rest of the methods remain the same
     public function map($attendances): array
     {
         return [

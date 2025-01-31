@@ -170,7 +170,6 @@ class ReportController extends Controller
                 ->with('type');
         }]);
 
-        \Log::info('yow '. $absentStudents);
         // Tambahkan date untuk setiap absent student
         $absentStudents->each(function ($student) use ($request) {
             // Jika siswa punya izin pada range tanggal tersebut

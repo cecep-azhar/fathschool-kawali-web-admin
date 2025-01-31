@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Illuminate\Support\Collection;
 
 class StudentAttendanceExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
@@ -36,13 +37,10 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
         $query = AttendanceStudent::query();
 
         if ($this->name) {
-            // Filter berdasarkan nama pengguna
             $query->whereHas('user', function ($q) {
                 $q->where('name', 'like', '%' . $this->name . '%');
             });
         }
-
-
 
         // Filter berdasarkan date range
         if ($this->start_date) {
@@ -69,82 +67,76 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
             });
         }
 
-        $attendances = $query->get()->map(function ($attendance, $index) {
+        // Get all attendance records
+        $attendances = $query->get();
+
+        // Group attendances by user_id and date to remove duplicates
+        $uniqueAttendances = $attendances->groupBy(function ($attendance) {
+            return $attendance->user_id . '_' . $attendance->date;
+        })->map(function ($group) {
+            // Take the first record from each group
+            return $group->first();
+        })->values();
+
+        // Re-number the filtered records
+        $uniqueAttendances = $uniqueAttendances->map(function ($attendance, $index) {
             $attendance->number = $index + 1;
             return $attendance;
         });
 
+        // Ambil setting waktu 'time_in'
+        $settingTimeIn = Setting::select(['time_in'])->first();
 
-          // Ambil setting waktu 'time_in'
-          $settingTimeIn = Setting::select(['time_in'])->first();
+        // Cek apakah settingTimeIn ada dan time_in tidak kosong
+        if ($settingTimeIn && $settingTimeIn->time_in) {
+            // Parsing waktu dari settingTimeIn
+            $settingTime = Carbon::createFromFormat('H:i:s', $settingTimeIn->time_in);
 
-          // Cek apakah settingTimeIn ada dan time_in tidak kosong
-          if ($settingTimeIn && $settingTimeIn->time_in) {
-              // Parsing waktu dari settingTimeIn
-              $settingTime = Carbon::createFromFormat('H:i:s', $settingTimeIn->time_in);
+            // Loop untuk menghitung keterlambatan setiap attendance
+            $uniqueAttendances->map(function ($attendance) use ($settingTime) {
+                // Parsing waktu dari attendance
+                if ($attendance->time_in) {
+                    $attendanceTime = Carbon::createFromFormat('H:i:s', $attendance->time_in);
 
-              // Loop untuk menghitung keterlambatan setiap attendance
-              $attendances->map(function ($attendance) use ($settingTime) {
-                  // Parsing waktu dari attendance
-                  if ($attendance->time_in) {
-                      $attendanceTime = Carbon::createFromFormat('H:i:s', $attendance->time_in);
+                    // Jika waktu attendance lebih lambat dari setting time, hitung keterlambatan
+                    if ($attendanceTime->greaterThan($settingTime)) {
+                        // Hitung keterlambatan dalam menit
+                        $latenessMinutes = $attendanceTime->diffInMinutes($settingTime);
+                        $attendance->lateness = $latenessMinutes . ' minute';
+                    } else {
+                        $attendance->lateness = '0 minute';
+                    }
+                } else {
+                    $attendance->lateness = 'Not Recorded';
+                }
 
-                      // Jika waktu attendance lebih lambat dari setting time, hitung keterlambatan
-                      if ($attendanceTime->greaterThan($settingTime)) {
-                          // Hitung keterlambatan dalam menit
-                          $latenessMinutes = $attendanceTime->diffInMinutes($settingTime);
+                return $attendance;
+            });
+        } else {
+            return new Collection(); // Return empty collection if setting not found
+        }
 
-                          // Setel keterlambatan dalam format teks "X minutes"
-                          $attendance->lateness = $latenessMinutes . ' minute';
-                      } else {
-                          // Jika tidak terlambat, lateness 0
-                          $attendance->lateness = '0 minute';
-                      }
-                  } else {
-                      // Jika tidak ada time_in di attendance, set lateness sebagai 'Not Recorded'
-                      $attendance->lateness = 'Not Recorded';
-                  }
-
-                  return $attendance;
-              });
-          } else {
-              // Handle jika settingTimeIn tidak ada atau time_in kosong
-              return response()->json(['error' => 'Setting time_in not found or invalid.'], 400);
-          }
-
-        // Kembalikan attendances dengan nomor urut dan lateness
-        return $attendances;
+        return $uniqueAttendances;
     }
 
-
-    /**
-     * Xls Mapping for relationship data get
-     *
-     * @return \Illuminate\Support\Collection
-     */
     public function map($attendances): array
-{
-    return [
-        $attendances->number,
-        $attendances->user ? $attendances->user->name : 'N/A', // Check if user exists
-        $attendances->user && $attendances->user->courses ?
-            $attendances->user->courses->pluck('course.name')->join(', ') : 'N/A', // Get course names
-        $attendances->user && $attendances->user->courses ?
-            $attendances->user->courses->pluck('course.study_program.name')->join(', ') : 'N/A', // Get study program names
-        $attendances->date,
-        $attendances->time_in,
-        $attendances->time_out,
-        $attendances->lateness,
-        $attendances->latlon_in,
-        $attendances->latlon_out,
-    ];
-}
+    {
+        return [
+            $attendances->number,
+            $attendances->user ? $attendances->user->name : 'N/A',
+            $attendances->user && $attendances->user->courses ?
+                $attendances->user->courses->pluck('course.name')->join(', ') : 'N/A',
+            $attendances->user && $attendances->user->courses ?
+                $attendances->user->courses->pluck('course.study_program.name')->join(', ') : 'N/A',
+            $attendances->date,
+            $attendances->time_in,
+            $attendances->time_out,
+            $attendances->lateness,
+            $attendances->latlon_in,
+            $attendances->latlon_out,
+        ];
+    }
 
-    /**
-     * Xls Heading return
-     *
-     * @return \Illuminate\Support\Collection
-     */
     public function headings(): array
     {
         return [
@@ -163,15 +155,12 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
 
     public function styles(Worksheet $sheet)
     {
-        // Menyesuaikan ukuran font header
-        $sheet->getStyle('A1:I1')->getFont()->setSize(15);  // Perbaikan untuk mencakup hingga kolom 'J'
-        $sheet->getStyle('A1:I1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:I1')->getAlignment()->setHorizontal('center');
+        $sheet->getStyle('A1:J1')->getFont()->setSize(15);
+        $sheet->getStyle('A1:J1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:J1')->getAlignment()->setHorizontal('center');
 
-        // Menyesuaikan lebar kolom agar sesuai dengan konten
-        foreach (range('A', 'I') as $columnID) {  // Memperbaiki untuk mencakup kolom 'J'
+        foreach (range('A', 'J') as $columnID) {
             $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
     }
-
 }

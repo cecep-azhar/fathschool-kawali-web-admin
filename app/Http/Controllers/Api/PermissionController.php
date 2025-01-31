@@ -105,7 +105,7 @@ class PermissionController extends Controller
         try {
             // Validasi request
             $request->validate([
-                'user_id' => 'required|integer', 
+                'user_id' => 'required|integer',
                 'leave_type_id' => 'required|integer',
                 'title' => 'required|string|max:255',
                 'start' => 'required|date',

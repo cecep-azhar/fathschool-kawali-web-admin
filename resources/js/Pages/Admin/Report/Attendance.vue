@@ -633,6 +633,7 @@ export default {
                 .catch((error) => {
                     this.loading = false;
                     this.visible = false;
+                    console.error("Error:", error);
                 });
         },
 

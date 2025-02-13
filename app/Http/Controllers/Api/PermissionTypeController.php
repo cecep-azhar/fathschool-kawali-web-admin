@@ -61,6 +61,12 @@ class PermissionTypeController extends Controller
         }
     }
 
+    /**
+     * * Get all leave types by role type
+     *
+     * @param string $roleType
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getLeaveTypesByRoleType($roleType)
     {
         try {
@@ -90,6 +96,12 @@ class PermissionTypeController extends Controller
     }
 
 
+    /**
+     * * Get all leave types by role type for manual permission
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function typePermissionManual(Request $request)
     {
         try {

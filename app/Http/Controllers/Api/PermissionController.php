@@ -100,14 +100,51 @@ class PermissionController extends Controller
         }
     }
 
+    /**
+     * * Get all leave requests
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAllLeaves()
+    {
+        try {
+            $role = Leave::orderBy('id', 'desc')->get();
+
+            if ($role->isNotEmpty()) {
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'Success get all role',
+                    'data' => $role
+                ], 200);
+            }
+
+            return response()->json(['message' => 'Data tidak ditemukan'], 404);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Internal Server Error',
+                'erros' => $th->getMessage()
+            ]);
+        }
+    }
+
+
+
+    /**
+     * * Create a new leave request manually
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    //
     public function leaveManual(Request $request)
     {
         try {
             // Validasi request
             $request->validate([
-                'user_id' => 'required|integer', 
+                'user_id' => 'required|integer',
                 'leave_type_id' => 'required|integer',
-                'title' => 'required|string|max:255',
+                'title' => 'required|string',
                 'start' => 'required|date',
                 'end' => 'required|date',
                 'description' => 'required|string',
@@ -124,12 +161,12 @@ class PermissionController extends Controller
                 ], 404);
             }
 
-            // Cek apakah user sudah memiliki leave yang aktif pada hari ini
+            // Cek apakah user sudah memiliki leave yang aktif pada hari ini (kecuali yang statusnya rejected)
             $today = date('Y-m-d');
             $existingLeave = Leave::where('user_id', $user->id)
                 ->where('start', '<=', $today)
                 ->where('end', '>=', $today)
-                ->where('status', '!=', 'rejected')
+                ->whereIn('status', ['pending', 'approved'])
                 ->exists();
 
             if ($existingLeave) {
@@ -144,11 +181,10 @@ class PermissionController extends Controller
             $leave = new Leave();
             $leave->user_id = $user->id;
             $leave->leave_type_id = $request->leave_type_id;
-            // $leave->name_type_leave = $request->role_type;
             $leave->title = $request->title;
             $leave->start = $request->start;
             $leave->end = $request->end;
-            $leave->status = 'pending';
+            $leave->status = 'pending'; // Default status pending
             $leave->description = $request->description;
 
             if ($request->hasFile('image')) {

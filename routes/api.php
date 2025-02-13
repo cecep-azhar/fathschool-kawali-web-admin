@@ -68,6 +68,7 @@ Route::apiResource('/permissions-type', App\Http\Controllers\Api\PermissionTypeC
 Route::post('/leaveManualType', [App\Http\Controllers\Api\PermissionTypeController::class, 'typePermissionManual']);
 Route::get('/leaveManualType', [App\Http\Controllers\Api\PermissionTypeController::class, 'getAllPermissionType']);
 Route::get('/leave-types/{roleType}', [App\Http\Controllers\Api\PermissionTypeController::class, 'getLeaveTypesByRoleType']);
+Route::get('/leaves', [App\Http\Controllers\Api\PermissionController::class, 'getAllLeaves']);
 Route::post('/leaveManual', [App\Http\Controllers\Api\PermissionController::class, 'leaveManual']);
 
 

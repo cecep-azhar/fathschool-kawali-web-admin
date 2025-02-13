@@ -282,7 +282,16 @@ class AttendanceController extends Controller
         ], 200);
     }
 
-    // * IsCheckedIn MANUAL
+    /**
+     * * Check if user has checked in or out manually
+     *
+     * @param int $user_id User ID
+     */
+    /**
+     * * Check if user has checked in or out manually
+     *
+     * @param int $user_id User ID
+     */
     public function isCheckedinManual($user_id)
     {
         try {
@@ -295,7 +304,6 @@ class AttendanceController extends Controller
                     ->first();
 
                 $isCheckedIn = $attendanceStudent;
-
                 $isCheckedOut = ($attendanceStudent && $attendanceStudent->time_out);
             } else {
                 $attendance = Attendance::where('user_id', $user_id)
@@ -306,16 +314,20 @@ class AttendanceController extends Controller
                 $isCheckedOut = ($attendance && $attendance->time_out);
             }
 
-            // Check leave status
+            // Ambil data cuti terbaru berdasarkan tanggal hari ini
             $leaveToday = Leave::where('user_id', $user_id)
                 ->whereDate('start', '<=', date('Y-m-d'))
                 ->whereDate('end', '>=', date('Y-m-d'))
-                ->exists();
+                ->latest()
+                ->first();
+
+            // Tentukan status cuti (pending, reject, accepted, atau tidak ada)
+            $leaveStatus = $leaveToday ? $leaveToday->status : 'none';
 
             return response([
                 'checkedin' => $isCheckedIn ? true : false,
                 'checkedout' => $isCheckedOut ? true : false,
-                'leave' => $leaveToday,
+                'leave' => $leaveStatus,
                 'user' => [
                     'id' => $check_user->id,
                     'name' => $check_user->name,
@@ -330,6 +342,8 @@ class AttendanceController extends Controller
             ], 500);
         }
     }
+
+
 
 
     //checkout

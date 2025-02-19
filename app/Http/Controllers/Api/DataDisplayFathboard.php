@@ -102,7 +102,7 @@ class DataDisplayFathboard extends Controller
             $total_present = number_format($attendanceData['teacher_attendance']);
             $total_absent = number_format($attendanceData['teacher_absent']);
             $total_leave = number_format($attendanceData['teacher_leave']);
-
+            // $total_leave = Leave::where('status', 'accepted')->whereDate('start', $today)->count();
 
             $classData = $this->getClassData($weekRoutines, $now);
             $attendanceData['class_leave'] = $classData['absent'];
@@ -124,9 +124,10 @@ class DataDisplayFathboard extends Controller
                         'total' => $total_teacher,
                         'present' => $total_present,
                         'absent' => $total_absent,
-                        'leave' => Leave::whereDate('start', $today)
-                            ->where('status', 'accepted') // ✅ Ini sudah benar
-                            ->count(),
+                        // 'leave' => Leave::whereDate('start', $today)
+                        //     ->where('status', 'accepted') // ✅ Ini sudah benar
+                        //     ->count(),
+                        'leave' => $total_leave,
                         'presentPercentage' => $percentages['teacher'],
                         'absentPercentage' => $percentages_absent['teacher'],
                         'leavePercentage' => $percentages_leave['teacher'],

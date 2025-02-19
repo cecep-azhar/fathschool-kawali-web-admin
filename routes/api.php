@@ -193,7 +193,7 @@ Route::get('/mobile-notifications', [MobileNotificationController::class, 'index
 Route::get('/mobile-settings', [MobileSettingsController::class, 'index']);
 
 
-// get data display fathboard
+// * get data display fathboard
 Route::get('/get-information-students', [DataDisplayFathboard::class, 'getDataSiswa']);
 Route::get('/get-information-teachers', [DataDisplayFathboard::class, 'getDataGuru']);
 Route::get('/get-information-administrations', [DataDisplayFathboard::class, 'getDataAdmin']);

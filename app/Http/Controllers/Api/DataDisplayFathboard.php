@@ -55,7 +55,7 @@ class DataDisplayFathboard extends Controller
         // Get attendance details
         $presentStudents = $this->getDetailedPresent('student', $today);
         $absentStudents = $this->getDetailedAbsent('student', $today);
-        $leaveStudents = $this->getDetailedLeave('Student', $today);
+        $leaveStudents = $this->getDetailedLeave('student', $today); //NOTE - 'Student' atau 'student'
 
         // Format the numbers after calculations are done
         $total_students = number_format($raw_total_students);
@@ -84,55 +84,66 @@ class DataDisplayFathboard extends Controller
 
         return response($response);
     }
-
+    // * Function Get Data Guru
     public function getDataGuru()
     {
-        $now = Carbon::now()->format('H:i:s');
-        $dayOfWeek = Carbon::now()->dayOfWeekIso;
-        $weekRoutines = Carbon::now()->dayOfWeek;
-        $today = now()->format('Y-m-d');
-        $today2 = now();
+        try {
+            $now = Carbon::now()->format('H:i:s');
+            $dayOfWeek = Carbon::now()->dayOfWeekIso;
+            $weekRoutines = Carbon::now()->dayOfWeek;
+            $today = now()->format('Y-m-d');
+            $today2 = now();
 
-        $counts = $this->getBasicCounts();
+            $counts = $this->getBasicCounts();
 
-        $attendanceData = $this->getAttendanceData($today);
+            $attendanceData = $this->getAttendanceData($today);
 
-        $total_teacher = number_format($counts['teacher']);
-        $total_present = number_format($attendanceData['teacher_attendance']);
-        $total_absent = number_format($attendanceData['teacher_absent']);
-        $total_leave = number_format($attendanceData['teacher_leave']);
+            $total_teacher = number_format($counts['teacher']);
+            $total_present = number_format($attendanceData['teacher_attendance']);
+            $total_absent = number_format($attendanceData['teacher_absent']);
+            $total_leave = number_format($attendanceData['teacher_leave']);
 
 
-        $classData = $this->getClassData($weekRoutines, $now);
-        $attendanceData['class_leave'] = $classData['absent'];
+            $classData = $this->getClassData($weekRoutines, $now);
+            $attendanceData['class_leave'] = $classData['absent'];
 
-        $percentages = $this->calculatePercentages($counts, $attendanceData, 'present');
-        $percentages_absent = $this->calculatePercentages($counts, $attendanceData, 'absent');
-        $percentags_leave = $this->calculatePercentages($counts, $attendanceData, 'leave');
+            $percentages = $this->calculatePercentages($counts, $attendanceData, 'present');
+            $percentages_absent = $this->calculatePercentages($counts, $attendanceData, 'absent');
+            $percentages_leave = $this->calculatePercentages($counts, $attendanceData, 'leave');
 
-        $presentTeachers = $this->getDetailedPresent('teacher', $today);
-        $absentTeachers = $this->getDetailedAbsent('teacher', $today);
-        $leaveTeachers = $this->getDetailedLeave('Teacher', $today);
-        $response = [
-            'status' => true,
-            'messages' => 'Successfully retrieved data',
-            'data' => [
-                'teachers' => [
-                    'total' => $total_teacher,
-                    'present' => $total_present,
-                    'absent' => $total_absent,
-                    'leave' => $total_leave,
-                    'presentPercentage' => $percentages['teacher'],
-                    'absentPercentage' => $percentages_absent['teacher'],
-                    'leavePercentage' => $percentags_leave['teacher'],
-                    'dataPresent' => $presentTeachers,
-                    'dataAbsent' => $absentTeachers,
-                    'dataLeave' => $leaveTeachers
+            $presentTeachers = $this->getDetailedPresent('teacher', $today);
+            $absentTeachers = $this->getDetailedAbsent('teacher', $today);
+            $leaveTeachers = $this->getDetailedLeave('teacher', $today);
+            // dd($leaveTeachers);
+
+            $response = [
+                'status' => true,
+                'messages' => 'Successfully retrieved data',
+                'data' => [
+                    'teachers' => [
+                        'total' => $total_teacher,
+                        'present' => $total_present,
+                        'absent' => $total_absent,
+                        'leave' => Leave::whereDate('start', $today)
+                            ->where('status', 'accepted') // ✅ Ini sudah benar
+                            ->count(),
+                        'presentPercentage' => $percentages['teacher'],
+                        'absentPercentage' => $percentages_absent['teacher'],
+                        'leavePercentage' => $percentages_leave['teacher'],
+                        'dataPresent' => $presentTeachers,
+                        'dataAbsent' => $absentTeachers,
+                        'dataLeave' => $leaveTeachers
+                    ]
                 ]
-            ]
-        ];
+            ];
 
-        return response($response);
+            return response($response);
+        } catch (\Throwable $th) {
+            return response([
+                'status' => false,
+                'messages' => 'Internal Server',
+            ]);
+        }
     }
 
     public function getDataAdmin()
@@ -256,32 +267,32 @@ class DataDisplayFathboard extends Controller
                 })->unique('id')->values();
 
                 $leaves = Leave::with(['user', 'type:id,name'])
-                ->whereHas('user', function ($query) use ($className) {
-                    $query->whereHas('course', function ($subQuery) use ($className) {
-                        $subQuery->where('courses.name', $className);
-                    });
-                })
-                ->whereDate('start', '<=', $today)
-                ->whereDate('end', '>=', $today)
-                ->where('status', 'accepted')
-                ->get()
-                ->unique('user_id')
-                ->map(function ($leave) {
-                    $leaveDetails = $this->getDetailedLeave2($leave->id);
+                    ->whereHas('user', function ($query) use ($className) {
+                        $query->whereHas('course', function ($subQuery) use ($className) {
+                            $subQuery->where('courses.name', $className);
+                        });
+                    })
+                    ->whereDate('start', '<=', $today)
+                    ->whereDate('end', '>=', $today)
+                    ->where('status', 'accepted')
+                    ->get()
+                    ->unique('user_id')
+                    ->map(function ($leave) {
+                        $leaveDetails = $this->getDetailedLeave2($leave->id);
 
-                    return [
-                        'id' => $leave->user_id,
-                        'name' => $leave->user->name,
-                        'description' => $leaveDetails ? $leaveDetails->description : 'No Description Available',
-                        'status' => $leaveDetails ? ($leaveDetails->status ?? 'Approved') : 'Pending'
-                    ];
-                })->values();
+                        return [
+                            'id' => $leave->user_id,
+                            'name' => $leave->user->name,
+                            'description' => $leaveDetails ? $leaveDetails->description : 'No Description Available',
+                            'status' => $leaveDetails ? ($leaveDetails->status ?? 'Approved') : 'Pending'
+                        ];
+                    })->values();
 
                 // List siswa yang tidak hadir
                 $studentsAbsent = $studentsInClass->reject(function ($student) use ($attendance, $leaves) {
                     // Siswa dianggap tidak absen jika hadir ATAU sedang izin
                     return $attendance->contains('user_id', $student->id) ||
-                           $leaves->contains('id', $student->id);
+                        $leaves->contains('id', $student->id);
                 })->map(function ($student) {
                     return [
                         'id' => $student->id,
@@ -550,14 +561,15 @@ class DataDisplayFathboard extends Controller
                     })->join('+');
 
                 return [
-/*************  ✨ Codeium Command ⭐  *************/
-    /**
-     * Get detailed data of users who are absent on the given date.
-     * For students, it will also include the course name.
-     * For teachers and admins, it will only include the name and role.
-     *
-     * @param string $role The role of the users to retrieve (student, teacher, or admin).
-/******  023c1cd2-61a1-4ce3-b46d-3594569304ed  *******/                    'id' => $user->id,
+                    /*************  ✨ Codeium Command ⭐  *************/
+                    /**
+                     * Get detailed data of users who are absent on the given date.
+                     * For students, it will also include the course name.
+                     * For teachers and admins, it will only include the name and role.
+                     *
+                     * @param string $role The role of the users to retrieve (student, teacher, or admin).
+/******  023c1cd2-61a1-4ce3-b46d-3594569304ed  *******/
+                    'id' => $user->id,
                     'name' => $user->name,
                     'role' => $user->role,
                     'course' => optional($user->course->first())->name,
@@ -593,8 +605,7 @@ class DataDisplayFathboard extends Controller
     private function getAttendanceData($today)
     {
         $settingTimeIn = Setting::select(['time_in'])->first();
-
-        // Get attendance counts
+        
         $teacherAttendance = Attendance::where('date', $today)
             ->whereHas('user', function ($query) {
                 $query->where('role', 'teacher');
@@ -696,9 +707,11 @@ class DataDisplayFathboard extends Controller
 
 
 
-
+    // * Function Get Data Detail Leave
     private function getDetailedLeave($role, $today)
     {
+        // dd(Leave::with(['user.course', 'type:id,name'])->where('start', $today)->get());
+
         return Leave::with(['user.course', 'type:id,name'])
             ->where('start', $today)
             ->where('status', 'accepted')

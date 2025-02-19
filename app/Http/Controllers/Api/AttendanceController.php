@@ -282,11 +282,7 @@ class AttendanceController extends Controller
         ], 200);
     }
 
-    /**
-     * * Check if user has checked in or out manually
-     *
-     * @param int $user_id User ID
-     */
+
     /**
      * * Check if user has checked in or out manually
      *

@@ -102,8 +102,6 @@ class PermissionController extends Controller
 
     /**
      * * Get all leave requests
-     *
-     * @return \Illuminate\Http\JsonResponse
      */
     public function getAllLeaves()
     {
@@ -132,9 +130,6 @@ class PermissionController extends Controller
 
     /**
      * * Create a new leave request manually
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
     //
     public function leaveManual(Request $request)
@@ -184,7 +179,7 @@ class PermissionController extends Controller
             $leave->title = $request->title;
             $leave->start = $request->start;
             $leave->end = $request->end;
-            $leave->status = 'pending'; // Default status pending
+            $leave->status = 'pending'; // Set status ke 'pending'
             $leave->description = $request->description;
 
             if ($request->hasFile('image')) {

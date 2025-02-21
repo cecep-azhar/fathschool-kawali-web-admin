@@ -292,6 +292,7 @@ class AttendanceController extends Controller
     {
         try {
             $check_user = User::where('id', $user_id)->first();
+            $class = 
             $role_user = $check_user->role;
 
             if ($role_user == "Student") {
@@ -327,7 +328,8 @@ class AttendanceController extends Controller
                 'user' => [
                     'id' => $check_user->id,
                     'name' => $check_user->name,
-                    'role' => $check_user->role
+                    'email' => $check_user->email,
+                    'role' => $check_user->role,
                 ],
             ], 200);
         } catch (\Throwable $th) {

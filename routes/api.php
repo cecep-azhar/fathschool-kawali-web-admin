@@ -21,6 +21,7 @@ use Spatie\Activitylog\Models\Activity;
 use Carbon\Carbon;
 use App\Http\Controllers\Api\MobileNotificationController;
 use App\Http\Controllers\Api\MobileSettingsController;
+use App\Http\Controllers\Report\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -205,3 +206,9 @@ Route::get('/get-information-others', [DataDisplayFathboard::class, 'getDataOthe
 Route::get('/getSettings', [GetSettings::class, 'index']);
 
 Route::post('/forgot-password-manual', [App\Http\Controllers\Api\AuthController::class, 'passwordManual']);
+
+// * Route Parent
+Route::post('/auth/parent/login', [App\Http\Controllers\Api\AuthController::class, 'loginParent']);
+// Route::get('/export-attendance/{student_id}', [ReportController::class, 'exportStudentAttendance']);
+Route::get('/export-attendance/{student_id}', [ReportController::class, 'exportStudentAttendancePdf']);
+Route::get('/attendance/{student_id}', [ReportController::class, 'getStudentAttendance']);

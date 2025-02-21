@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Department;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
@@ -60,50 +62,7 @@ class AuthController extends Controller
         return response(['user' => $user, 'token' => $token], 200);
     }
 
-    // * OLD
-    // public function loginUsers(Request $request)
-    // {
 
-    //     $loginData = $request->validate([
-    //         'email' => 'required|email',
-    //         'password' => 'required',
-    //     ]);
-
-    //     $user = User::where('email', $loginData['email'])->first();
-
-    //     if (!$user) {
-    //         return response()->json([
-    //             'status' => 404,
-    //             'message' => 'Account not found',
-    //         ], 404);
-    //     }
-
-    //     if (!Hash::check($loginData['password'], $user->password)) {
-    //         return response()->json([
-    //             'status' => 401,
-    //             'message' => 'Wrong password',
-    //         ], 401);
-    //     }
-
-    //     if (!$user->manual) {
-    //         return response()->json([
-    //             'status' => 403,
-    //             'message' => 'Access denied',
-    //         ], 403);
-    //     }
-
-    //     $responseData = [
-    //         'id' => $user->id,
-    //         'email' => $user->email,
-    //         'name' => $user->name,
-    //     ];
-
-    //     return response()->json([
-    //         'status' => 200,
-    //         'message' => 'Login success',
-    //         'data' => $responseData,
-    //     ], 200);
-    // }
 
     public function loginUsers(Request $request)
     {
@@ -322,7 +281,8 @@ class AuthController extends Controller
         return response(['message' => __('auth.password.sent')], 200);
     }
 
-    public function passwordManual(PasswordRequest $request, ResetPasswordManual $resetPassword){
+    public function passwordManual(PasswordRequest $request, ResetPasswordManual $resetPassword)
+    {
         $request->validate([
             'phone' => 'required',
         ]);
@@ -342,5 +302,68 @@ class AuthController extends Controller
             'status' => 200,
             'messages' => 'Password reset successfully',
         ], 200);
+    }
+
+
+
+    // * Function for Login Parent
+    public function loginParent(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'nisn' => 'required|string',
+                'birthdate' => 'required|date_format:Y-m-d',
+            ]);
+
+            if ($validator->fails()) {
+                if ($validator->errors()->has('birthdate')) {
+                    return response()->json([
+                        'status' => 400,
+                        'message' => 'Password Tidak Sesuai'
+                    ], 400);
+                }
+                return response()->json([
+                    'status' => 400,
+                    'message' => $validator->errors()->first()
+                ], 400);
+            }
+
+            $userProfile = DB::table('user_profiles')
+                ->where('student_id', $request->nisn)
+                ->first();
+
+            if (!$userProfile) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'User Tidak Ditemukan'
+                ], 404);
+            }
+
+            $student = User::where('id', $userProfile->user_id)
+                ->where('role', 'Student')
+                ->first();
+
+            if (!$student) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'Siswa Tidak Ditemukan'
+                ], 404);
+            }
+
+            $token = $student->createToken('authToken')->plainTextToken;
+            
+            return response()->json([
+                'status' => 200,
+                'message' => 'Login Success, Mohon Tunggu Sebentar...',
+                'data' => $student,
+                'token' => $token
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 500,
+                'message' => $th->getMessage(),
+            ], 500);
+        }
     }
 }

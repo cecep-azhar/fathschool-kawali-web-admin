@@ -27,9 +27,12 @@ use App\Models\UserCourse;
 use App\Models\UserProfile;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
+
 
 class ReportController extends Controller
 {
@@ -239,6 +242,248 @@ class ReportController extends Controller
             'study_programs' => $study_programs
         ]);
     }
+
+    //ANCHOR - API STUDENT ATTENDANCE 
+    public function getStudentAttendance(Request $request, $user_id)
+    {
+        try {
+            // Validasi input tanggal
+            $validator = Validator::make($request->all(), [
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date|after_or_equal:start_date',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation error',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Ambil data siswa
+            $student = User::where('id', $user_id)->where('role', 'student')->first();
+            if (!$student) {
+                return response()->json(['message' => 'Student not found'], 404);
+            }
+
+            // Tentukan rentang waktu
+            $startOfWeek = Carbon::now()->startOfWeek();
+            $endOfWeek = Carbon::now()->endOfWeek();
+            $hasDateParams = $request->has('start_date') && $request->has('end_date');
+
+            if ($hasDateParams) {
+                $startOfWeek = Carbon::parse($request->start_date);
+                $endOfWeek = Carbon::parse($request->end_date);
+            }
+
+            // Query dasar
+            $query = AttendanceStudent::where('user_id', $user_id)
+                ->whereBetween('date', [
+                    $startOfWeek->format('Y-m-d'),
+                    $endOfWeek->format('Y-m-d')
+                ]);
+
+            // Tambahkan filter latlon_in jika ada parameter tanggal
+            if ($hasDateParams) {
+                $query->whereNotNull('latlon_in');
+            }
+
+            $attendances = $query->get();
+
+            // Buat array default untuk setiap hari hanya jika tidak ada parameter tanggal
+            $weekDays = [];
+            if (!$hasDateParams) {
+                for ($date = clone $startOfWeek; $date->lte($endOfWeek); $date->addDay()) {
+                    $weekDays[$date->format('Y-m-d')] = [
+                        'date' => $date->format('d M Y'),
+                        'day' => $this->convertDayToIndonesian($date->format('l')),
+                        'status' => 'Tidak Hadir',
+                        'check_in' => null,
+                        'check_out' => null,
+                    ];
+                }
+
+                // Gabungkan dengan data kehadiran yang ada
+                foreach ($attendances as $attendance) {
+                    $weekDays[$attendance->date] = array_merge($weekDays[$attendance->date], [
+                        'status' => isset($attendance->latlon_in) ? 'Hadir' : 'Tidak Hadir',
+                        'check_in' => $attendance->time_in ? Carbon::parse($attendance->time_in)->format('H:i') : null,
+                        'check_out' => $attendance->time_out ? Carbon::parse($attendance->time_out)->format('H:i') : null,
+                    ]);
+                }
+
+                // Konversi ke array numerik
+                $attendances = array_values($weekDays);
+            } else {
+                // Jika ada parameter tanggal, format langsung data kehadiran
+                $attendances = $attendances->map(function ($attendance) {
+                    return [
+                        'date' => Carbon::parse($attendance->date)->format('d M Y'),
+                        'day' => $this->convertDayToIndonesian(Carbon::parse($attendance->date)->format('l')),
+                        'status' => 'Hadir',
+                        'check_in' => $attendance->time_in ? Carbon::parse($attendance->time_in)->format('H:i') : null,
+                        'check_out' => $attendance->time_out ? Carbon::parse($attendance->time_out)->format('H:i') : null,
+                    ];
+                })->toArray();
+            }
+
+            return response()->json([
+                'student' => [
+                    'id' => $student->id,
+                    'name' => $student->name,
+                    'role' => $student->role,
+                ],
+                'attendances' => $attendances,
+                'start_date' => $startOfWeek->format('d M Y'),
+                'end_date' => $endOfWeek->format('d M Y'),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while fetching attendance data',
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ], 500);
+        }
+    }
+
+
+    //ANCHOR PDF STUDENT ATTENDANCE 
+    public function exportStudentAttendancePdf(Request $request, $user_id)
+    {
+        try {
+            // Validasi input tanggal
+            $validator = Validator::make($request->all(), [
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date|after_or_equal:start_date',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation error',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Ambil data siswa
+            $student = User::where('id', $user_id)
+                ->where('role', 'student')
+                ->first();
+
+            if (!$student) {
+                return response()->json([
+                    'message' => 'Student not found'
+                ], 404);
+            }
+
+            // Tentukan rentang waktu
+            $startOfWeek = Carbon::now()->startOfWeek();
+            $endOfWeek = Carbon::now()->endOfWeek();
+            $hasDateParams = $request->has('start_date') && $request->has('end_date');
+
+            if ($hasDateParams) {
+                $startOfWeek = Carbon::parse($request->start_date);
+                $endOfWeek = Carbon::parse($request->end_date);
+            }
+
+            // Query dasar
+            $query = AttendanceStudent::where('user_id', $user_id)
+                ->whereBetween('date', [
+                    $startOfWeek->format('Y-m-d'),
+                    $endOfWeek->format('Y-m-d')
+                ]);
+
+            // Tambahkan filter latlon_in jika ada parameter tanggal
+            if ($hasDateParams) {
+                $query->whereNotNull('latlon_in');
+            }
+
+            $attendances = $query->get();
+
+            // Cek jika tidak ada data kehadiran saat menggunakan parameter tanggal
+            if ($hasDateParams && $attendances->isEmpty()) {
+                return response()->json([
+                    'message' => 'Tidak ada data kehadiran'
+                ], 404);
+            }
+
+            // Format data berdasarkan ada tidaknya parameter tanggal
+            $formattedAttendances = [];
+            if (!$hasDateParams) {
+                // Buat array default untuk setiap hari dalam seminggu
+                for ($date = clone $startOfWeek; $date->lte($endOfWeek); $date->addDay()) {
+                    $currentDate = $date->format('Y-m-d');
+                    $attendance = $attendances->where('date', $currentDate)->first();
+
+                    $formattedAttendances[] = [
+                        'date' => $date->format('d M Y'),
+                        'day' => $this->convertDayToIndonesian($date->format('l')),
+                        'status' => $attendance && $attendance->latlon_in ? 'Hadir' : 'Tidak Hadir',
+                        'check_in' => $attendance && $attendance->time_in ? Carbon::parse($attendance->time_in)->format('H:i') : '-',
+                        'check_out' => $attendance && $attendance->time_out ? Carbon::parse($attendance->time_out)->format('H:i') : '-',
+                    ];
+                }
+            } else {
+                // Format data kehadiran berdasarkan parameter tanggal
+                $formattedAttendances = $attendances->map(function ($attendance) {
+                    return [
+                        'date' => Carbon::parse($attendance->date)->format('d M Y'),
+                        'day' => $this->convertDayToIndonesian(Carbon::parse($attendance->date)->format('l')),
+                        'status' => 'Hadir',
+                        'check_in' => $attendance->time_in ? Carbon::parse($attendance->time_in)->format('H:i') : '-',
+                        'check_out' => $attendance->time_out ? Carbon::parse($attendance->time_out)->format('H:i') : '-',
+                    ];
+                })->toArray();
+            }
+
+            $data = [
+                'student' => $student,
+                'attendances' => $formattedAttendances,
+                'start_date' => $startOfWeek->format('d M Y'),
+                'end_date' => $endOfWeek->format('d M Y'),
+            ];
+
+            // Generate PDF
+            $pdf = PDF::loadView('pdf.attendance_student', $data);
+            $pdf->setPaper('A4', 'portrait');
+            $pdf->setOptions([
+                'defaultFont' => 'sans-serif',
+                'isRemoteEnabled' => true
+            ]);
+
+            // Set nama file
+            $filename = 'Attendance_' . $student->name . '_' . Carbon::now()->format('Y-m-d') . '.pdf';
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while generating the PDF',
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Fungsi untuk mengubah nama hari ke bahasa Indonesia.
+     */
+    private function convertDayToIndonesian($day)
+    {
+        $days = [
+            'Monday' => 'Senin',
+            'Tuesday' => 'Selasa',
+            'Wednesday' => 'Rabu',
+            'Thursday' => 'Kamis',
+            'Friday' => 'Jumat',
+            'Saturday' => 'Sabtu',
+            'Sunday' => 'Minggu',
+        ];
+
+        return $days[$day] ?? $day;
+    }
+
+
 
 
     private function calculatePercentages($counts, $attendanceData, $type = 'present')

@@ -354,7 +354,7 @@ class AuthController extends Controller
             
             return response()->json([
                 'status' => 200,
-                'message' => 'Login Success, Mohon Tunggu Sebentar...',
+                'message' => 'Login Berhasil, Mohon Tunggu Sebentar...',
                 'data' => $student,
                 'token' => $token
             ], 200);

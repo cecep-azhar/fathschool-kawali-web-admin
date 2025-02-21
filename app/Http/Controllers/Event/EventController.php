@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Event;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\EventResource;
 use App\Models\Event;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ class EventController extends Controller
     public function index()
     {
         abort_if(!userCan('event.index'), 403);
-        
+
         return inertia('Admin/Event/Index', [
             'all_events' => Event::latest()->paginate(15)->onEachSide(-1),
         ]);
@@ -91,5 +92,40 @@ class EventController extends Controller
         $this->flashSuccess('Event delete successful !');
 
         return redirect()->route('event.index');
+    }
+
+
+    //ANCHOR - API EVENT
+    public function getEvents(Request $request)
+    {
+        try {
+            $query = Event::query();
+
+            // Filter berdasarkan rentang tanggal jika ada parameter di request
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $query->whereBetween('start', [$request->start_date, $request->end_date]);
+            }
+
+            $events = $query->latest()->get();
+
+            if ($events->isEmpty()) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'Data Event Tidak Ditemukan'
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Berhasil Menemukan Data Event',
+                'data' => EventResource::collection($events)
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Internal Server Error',
+                'errors' => $th->getMessage()
+            ], 500);
+        }
     }
 }

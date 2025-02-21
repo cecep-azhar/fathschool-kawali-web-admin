@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Academic\CourseController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\GetSettings;
+use App\Http\Controllers\Event\EventController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ActivityLogController;
@@ -208,7 +210,7 @@ Route::get('/getSettings', [GetSettings::class, 'index']);
 Route::post('/forgot-password-manual', [App\Http\Controllers\Api\AuthController::class, 'passwordManual']);
 
 // * Route Parent
-Route::post('/auth/parent/login', [App\Http\Controllers\Api\AuthController::class, 'loginParent']);
-// Route::get('/export-attendance/{student_id}', [ReportController::class, 'exportStudentAttendance']);
+Route::post('/auth/parent/login', [AuthController::class, 'loginParent']);
 Route::get('/export-attendance/{student_id}', [ReportController::class, 'exportStudentAttendancePdf']);
 Route::get('/attendance/{student_id}', [ReportController::class, 'getStudentAttendance']);
+Route::get('/events', [EventController::class, 'getEvents']);

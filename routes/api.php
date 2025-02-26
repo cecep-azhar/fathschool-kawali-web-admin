@@ -23,6 +23,7 @@ use Spatie\Activitylog\Models\Activity;
 use Carbon\Carbon;
 use App\Http\Controllers\Api\MobileNotificationController;
 use App\Http\Controllers\Api\MobileSettingsController;
+use App\Http\Controllers\DummyController;
 use App\Http\Controllers\Report\ReportController;
 
 /*
@@ -214,3 +215,7 @@ Route::post('/auth/parent/login', [AuthController::class, 'loginParent']);
 Route::get('/export-attendance/{student_id}', [ReportController::class, 'exportStudentAttendancePdf']);
 Route::get('/attendance/{student_id}', [ReportController::class, 'getStudentAttendance']);
 Route::get('/events', [EventController::class, 'getEvents']);
+
+Route::prefix('dummy')->controller(DummyController::class)->group(function () {
+    Route::get('condition', 'condition');
+});

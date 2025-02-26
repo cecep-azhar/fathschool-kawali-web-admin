@@ -95,7 +95,6 @@ class EventController extends Controller
     }
 
 
-    //ANCHOR - API EVENT
     public function getEvents(Request $request)
     {
         try {
@@ -104,6 +103,19 @@ class EventController extends Controller
             // Filter berdasarkan rentang tanggal jika ada parameter di request
             if ($request->has('start_date') && $request->has('end_date')) {
                 $query->whereBetween('start', [$request->start_date, $request->end_date]);
+            }
+
+            // Filter berdasarkan status (Upcoming, Ongoing, Ended)
+            if ($request->has('status')) {
+                $today = Carbon::now();
+
+                if ($request->status === 'Upcoming') {
+                    $query->whereDate('start', '>', $today);
+                } elseif ($request->status === 'Ongoing') {
+                    $query->whereDate('start', '<=', $today)->whereDate('end', '>=', $today);
+                } elseif ($request->status === 'Ended') {
+                    $query->whereDate('end', '<', $today);
+                }
             }
 
             $events = $query->latest()->get();

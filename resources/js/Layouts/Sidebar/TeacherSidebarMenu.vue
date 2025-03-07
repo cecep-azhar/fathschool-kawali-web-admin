@@ -1,7 +1,7 @@
 <template>
-    <li class="text-xs uppercase mb-2 text-gray-500 pt-6 pl-2">
+    <!-- <li class="text-xs uppercase mb-2 text-gray-500 pt-6 pl-2">
         {{ __("Application") }}
-    </li>
+    </li> -->
     <li>
         <NavLink
             :href="route('dashboard')"
@@ -18,11 +18,21 @@
             :active="route().current('leave-student.index')"
         >
             <ArrowLeftOnRectangleIcon class="w-6 h-6" />
-            {{ __("Student Leave") }}
+            {{ __("Leave Request") }}
         </NavLink>
     </li>
 
-    <li v-if="can('online-class.index')" class="online_class_section">
+    <li v-if="can('report.index')" class="report_section">
+        <NavLink
+            :href="route('reports.index')"
+            :active="route().current('reports.*')"
+        >
+            <FlagIcon class="h-6 w-5" />
+            {{ __("Reports") }}
+        </NavLink>
+    </li>
+
+    <!-- <li v-if="can('online-class.index')" class="online_class_section">
         <NavLink
             :href="route('online.class.index')"
             :active="
@@ -73,9 +83,9 @@
             <PaperAirplaneIcon class="w-6 h-6" />
             {{ __("My Messages") }}
         </NavLink>
-    </li>
+    </li> -->
 
-    <li class="text-xs uppercase mb-2 text-gray-500 pt-6 pl-2">
+    <!-- <li class="text-xs uppercase mb-2 text-gray-500 pt-6 pl-2">
         {{ __("Others") }}
     </li>
     <li v-if="can('syllabus.index')" class="syllabus_section">
@@ -129,15 +139,7 @@
             {{ __("Send Sms") }}
         </NavLink>
     </li>
-    <li v-if="can('report.index')" class="report_section">
-        <NavLink
-            :href="route('reports.index')"
-            :active="route().current('reports.*')"
-        >
-            <FlagIcon class="h-6 w-5" />
-            {{ __("Reports") }}
-        </NavLink>
-    </li>
+
     <li v-if="can('request-leave.index')" class="leave_request_section">
         <NavLink
             :href="route('manage-leave.index')"
@@ -146,7 +148,7 @@
             <ArrowLeftOnRectangleIcon class="w-6 h-6" />
             {{ __("Leave Request") }}
         </NavLink>
-    </li>
+    </li> -->
 </template>
 
 <script>

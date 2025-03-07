@@ -11,24 +11,17 @@
             {{ __("Dashboard") }}
         </NavLink>
     </li>
-    <li class="leave_request_section">
+
+    <li>
         <NavLink
-            :href="route('manage-leave.index')"
-            :active="route().current('manage-leave.index')"
+            :href="route('leave-student.index')"
+            :active="route().current('leave-student.index')"
         >
-            <GiftIcon class="w-6 h-6" />
-            {{ __("Leave Request") }}
+            <ArrowLeftOnRectangleIcon class="w-6 h-6" />
+            {{ __("Student Leave") }}
         </NavLink>
     </li>
-    <li class="report_section">
-        <NavLink
-            :href="route('reports.index')"
-            :active="route().current('reports.*')"
-        >
-            <FlagIcon class="h-6 w-5" />
-            {{ __("Reports") }}
-        </NavLink>
-    </li>
+
     <li v-if="can('online-class.index')" class="online_class_section">
         <NavLink
             :href="route('online.class.index')"
@@ -204,16 +197,8 @@ export default {
                 {
                     title: this.getOnboardingContent("welcome", "title"),
                     text: this.getOnboardingContent("welcome", "description"),
-                    attachTo: {
-                        element: "#welcome",
-                        on: "bottom",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
+                    attachTo: { element: "#welcome", on: "bottom" },
+                    buttons: [{ action: this.tourGoNext, text: "Next" }],
                 },
                 {
                     title: this.getOnboardingContent("topbar_section", "title"),
@@ -221,16 +206,8 @@ export default {
                         "topbar_section",
                         "description"
                     ),
-                    attachTo: {
-                        element: ".topbar_section",
-                        on: "bottom",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
+                    attachTo: { element: ".topbar_section", on: "bottom" },
+                    buttons: [{ action: this.tourGoNext, text: "Next" }],
                 },
                 {
                     title: this.getOnboardingContent(
@@ -241,392 +218,28 @@ export default {
                         "sidebar_section",
                         "description"
                     ),
-                    attachTo: {
-                        element: ".sidebar_section",
-                        on: "right",
-                    },
+                    attachTo: { element: ".sidebar_section", on: "right" },
                     buttons: [
-                        {
-                            action: this.complete,
-                            text: "Complete",
-                        },
-                        {
-                            action: this.tourGoNext,
-                            text: "Ouick over",
-                        },
-                    ],
-                },
-                {
-                    title: this.getOnboardingContent(
-                        "notice_board_top_section",
-                        "title"
-                    ),
-                    text: this.getOnboardingContent(
-                        "notice_board_top_section",
-                        "description"
-                    ),
-                    attachTo: {
-                        element: ".notice_board_top_section",
-                        on: "bottom",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-
-                {
-                    title: this.getOnboardingContent("notification", "title"),
-                    text: this.getOnboardingContent(
-                        "notification",
-                        "description"
-                    ),
-                    attachTo: {
-                        element: "#notification",
-                        on: "bottom",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-
-                {
-                    title: this.getOnboardingContent("currency", "title"),
-                    text: this.getOnboardingContent("currency", "description"),
-                    attachTo: {
-                        element: "#currency",
-                        on: "bottom",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-
-                {
-                    title: this.getOnboardingContent("language", "title"),
-                    text: this.getOnboardingContent("language", "description"),
-                    attachTo: {
-                        element: "#language",
-                        on: "bottom",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-
-                {
-                    title: this.getOnboardingContent("darkMode", "title"),
-                    text: this.getOnboardingContent("darkMode", "description"),
-                    attachTo: {
-                        element: "#darkMode",
-                        on: "bottom",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-
-                {
-                    title: this.getOnboardingContent(
-                        "my_course_section",
-                        "title"
-                    ),
-                    text: this.getOnboardingContent(
-                        "my_course_section",
-                        "description"
-                    ),
-                    attachTo: {
-                        element: ".my_course_section",
-                        on: "right",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-                {
-                    title: this.getOnboardingContent(
-                        "my_schedule_section",
-                        "title"
-                    ),
-                    text: this.getOnboardingContent(
-                        "my_schedule_section",
-                        "description"
-                    ),
-                    attachTo: {
-                        element: ".my_schedule_section",
-                        on: "right",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-                {
-                    title: this.getOnboardingContent(
-                        "online_class_section",
-                        "title"
-                    ),
-                    text: this.getOnboardingContent(
-                        "online_class_section",
-                        "description"
-                    ),
-                    attachTo: {
-                        element: ".online_class_section",
-                        on: "right",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-                {
-                    title: this.getOnboardingContent(
-                        "assignment_section",
-                        "title"
-                    ),
-                    text: this.getOnboardingContent(
-                        "assignment_section",
-                        "description"
-                    ),
-                    attachTo: {
-                        element: ".assignment_section",
-                        on: "right",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-                {
-                    title: this.getOnboardingContent(
-                        "attendance_section",
-                        "title"
-                    ),
-                    text: this.getOnboardingContent(
-                        "attendance_section",
-                        "description"
-                    ),
-                    attachTo: {
-                        element: ".attendance_section",
-                        on: "right",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-                {
-                    title: this.getOnboardingContent("exam_section", "title"),
-                    text: this.getOnboardingContent(
-                        "exam_section",
-                        "description"
-                    ),
-                    attachTo: {
-                        element: ".exam_section",
-                        on: "right",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-
-                {
-                    title: this.getOnboardingContent(
-                        "group_chat_section",
-                        "title"
-                    ),
-                    text: this.getOnboardingContent(
-                        "group_chat_section",
-                        "description"
-                    ),
-                    attachTo: {
-                        element: ".group_chat_section",
-                        on: "right",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-
-                {
-                    title: this.getOnboardingContent(
-                        "syllabus_section",
-                        "title"
-                    ),
-                    text: this.getOnboardingContent(
-                        "syllabus_section",
-                        "description"
-                    ),
-                    attachTo: {
-                        element: ".syllabus_section",
-                        on: "right",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-
-                {
-                    title: this.getOnboardingContent("meeting", "title"),
-                    text: this.getOnboardingContent("meeting", "description"),
-                    attachTo: {
-                        element: ".meeting",
-                        on: "right",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-
-                {
-                    title: this.getOnboardingContent(
-                        "holiday_section",
-                        "title"
-                    ),
-                    text: this.getOnboardingContent(
-                        "holiday_section",
-                        "description"
-                    ),
-                    attachTo: {
-                        element: ".holiday_section",
-                        on: "right",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-
-                {
-                    title: this.getOnboardingContent("event_section", "title"),
-                    text: this.getOnboardingContent(
-                        "event_section",
-                        "description"
-                    ),
-                    attachTo: {
-                        element: ".event_section",
-                        on: "right",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-
-                {
-                    title: this.getOnboardingContent(
-                        "notice_board_section",
-                        "title"
-                    ),
-                    text: this.getOnboardingContent(
-                        "notice_board_section",
-                        "description"
-                    ),
-                    attachTo: {
-                        element: ".notice_board_section",
-                        on: "right",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-                {
-                    title: this.getOnboardingContent("report_section", "title"),
-                    text: this.getOnboardingContent(
-                        "report_section",
-                        "description"
-                    ),
-                    attachTo: {
-                        element: ".report_section",
-                        on: "right",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Next",
-                        },
-                    ],
-                },
-                {
-                    title: this.getOnboardingContent(
-                        "leave_request_section",
-                        "title"
-                    ),
-                    text: this.getOnboardingContent(
-                        "leave_request_section",
-                        "description"
-                    ),
-                    attachTo: {
-                        element: ".leave_request_section",
-                        on: "right",
-                    },
-                    buttons: [
-                        {
-                            action: this.tourGoNext,
-                            text: "Complete",
-                        },
+                        { action: this.complete, text: "Complete" },
+                        { action: this.tourGoNext, text: "Quick overview" },
                     ],
                 },
             ],
         };
     },
-    mounted: function () {
+
+    mounted() {
+        // Cek apakah tour sudah pernah diselesaikan
+        if (localStorage.getItem("tourCompleted") === "true") {
+            return; // Tidak menjalankan tour lagi
+        }
+
         this.tour = new Shepherd.Tour({
             useModalOverlay: true,
             tourName: "UserTour",
             defaultStepOptions: {
-                scrollTo: {
-                    behavior: "smooth",
-                    block: "center",
-                },
-                cancelIcon: {
-                    enabled: true,
-                    label: "Close tour",
-                },
+                scrollTo: { behavior: "smooth", block: "center" },
+                cancelIcon: { enabled: true, label: "Close tour" },
             },
         });
 
@@ -634,24 +247,16 @@ export default {
             this.tour.addStep(step);
         });
 
+        // Cek apakah user sudah menyelesaikan tour sebelumnya
         if (!this.$page.props.auth.tour_completed) {
             this.tour.start();
         }
 
         this.tour.on("cancel", () => {
-            const sidebar = document.querySelector(".sidebar");
-            const sidebarOverlay = document.querySelector(".sidebar-overlay");
-            sidebar.classList.remove("active");
-            sidebarOverlay.classList.remove("active");
-            this.$inertia.post(
-                this.route("tour.completed"),
-                {},
-                {
-                    preserveScroll: true,
-                }
-            );
+            this.closeTour();
         });
     },
+
     methods: {
         tourGoNext() {
             this.tour.next();
@@ -660,23 +265,26 @@ export default {
         completeStep() {
             let total_steps = this.tour.steps.length;
             let current_step = this.tour.steps.indexOf(this.tour.currentStep);
-            if (total_steps == current_step + 1) {
-                const sidebar = document.querySelector(".sidebar");
-                const sidebarOverlay =
-                    document.querySelector(".sidebar-overlay");
-                sidebar.classList.remove("active");
-                sidebarOverlay.classList.remove("active");
-                this.$inertia.post(
-                    this.route("tour.completed"),
-                    {},
-                    {
-                        preserveScroll: true,
-                    }
-                );
+            if (total_steps === current_step + 1) {
+                this.complete();
             }
         },
         complete() {
-            this.tour.cancel();
+            localStorage.setItem("tourCompleted", "true"); // Simpan status selesai
+            this.closeTour();
+        },
+        closeTour() {
+            this.tour.cancel(); // Menutup tour
+            this.tour = null; // Hapus instance tour
+            this.steps = []; // Kosongkan langkah-langkah
+
+            // Tutup sidebar jika masih terbuka
+            const sidebar = document.querySelector(".sidebar");
+            const sidebarOverlay = document.querySelector(".sidebar-overlay");
+            if (sidebar && sidebarOverlay) {
+                sidebar.classList.remove("active");
+                sidebarOverlay.classList.remove("active");
+            }
         },
         tourGoback() {
             this.tour.back();

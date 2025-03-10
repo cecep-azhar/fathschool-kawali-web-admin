@@ -3,164 +3,168 @@
 namespace App\Exports;
 
 use App\Models\AttendanceStudent;
-use App\Models\Setting;
+use App\Models\User;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use Illuminate\Support\Collection;
 
 class StudentAttendanceExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
+    protected $month;
     protected $name;
-    protected $start_date;
-    protected $end_date;
     protected $course;
     protected $study_program;
 
-    public function __construct($name = null, $start_date = null, $end_date = null, $course = null, $study_program = null)
+    public function __construct($month = null, $name = null, $course = null, $study_program = null)
     {
+        $this->month = $month ?? Carbon::now()->format('Y-m');
         $this->name = $name;
-        $this->start_date = $start_date;
-        $this->end_date = $end_date;
         $this->course = $course;
         $this->study_program = $study_program;
     }
 
-    /**
-     * @return \Illuminate\Support\Collection
-     */
     public function collection()
     {
-        $query = AttendanceStudent::query();
-
-        if ($this->name) {
-            $query->whereHas('user', function ($q) {
-                $q->where('name', 'like', '%' . $this->name . '%');
-            });
+        // 🔹 Ambil bulan dari constructor
+        try {
+            $start_date = Carbon::createFromFormat('Y-m', $this->month)->startOfMonth()->toDateString();
+            $end_date = Carbon::createFromFormat('Y-m', $this->month)->endOfMonth()->toDateString();
+        } catch (\Exception $e) {
+            return collect([]); // Kosongkan data jika format bulan salah
         }
 
-        // Filter berdasarkan date range
-        if ($this->start_date) {
-            $query->whereDate('date', '>=', $this->start_date);
-        }
-        if ($this->end_date) {
-            $query->whereDate('date', '<=', $this->end_date);
-        }
+        // 🔹 Query awal untuk mendapatkan siswa berdasarkan bulan yang difilter
+        $studentsQuery = User::where('role', 'student')->with([
+            'courses.course:id,name',
+            'leaves' => function ($query) use ($start_date, $end_date) {
+                $query->whereDate('start', '<=', $end_date)
+                    ->whereDate('end', '>=', $start_date);
+            }
+        ]);
 
-        // Jika tidak ada date range, gunakan hari ini
-        if (!$this->start_date && !$this->end_date) {
-            $query->whereDate('date', '=', Carbon::today()->toDateString());
-        }
+        // 🔹 Eksekusi query setelah filter diterapkan
+        $students = $studentsQuery->get();
 
-        if($this->course) {
-            $query->whereHas('user.courses.course', function ($q) {
-                $q->where('slug', 'LIKE', '%' . $this->course . '%');
-            });
-        }
+        // 🔹 Ambil kehadiran hanya untuk bulan yang dipilih
+        $attendances = AttendanceStudent::whereBetween('date', [$start_date, $end_date])
+            ->get()
+            ->groupBy('user_id');
 
-        if($this->study_program) {
-            $query->whereHas('user.courses.course.study_program', function ($q) {
-                $q->where('slug', 'LIKE', '%' . $this->study_program . '%');
-            });
-        }
+        return $students->map(function ($student) use ($attendances, $start_date, $end_date) {
+            $dates = collect(Carbon::parse($start_date)->daysUntil($end_date))->map(fn($date) => $date->toDateString());
+            $userAttendances = $attendances->get($student->id, collect());
 
-        // Get all attendance records
-        $attendances = $query->get();
+            // 🔹 Hitung total izin berdasarkan jumlah hari izin dalam rentang bulan
+            $leaveDates = collect();
+            foreach ($student->leaves as $leave) {
+                $leavePeriod = collect(Carbon::parse($leave->start)->daysUntil($leave->end))->map(fn($date) => $date->toDateString());
+                $leaveDates = $leaveDates->merge($leavePeriod);
+            }
 
-        // Group attendances by user_id and date to remove duplicates
-        $uniqueAttendances = $attendances->groupBy(function ($attendance) {
-            return $attendance->user_id . '_' . $attendance->date;
-        })->map(function ($group) {
-            // Take the first record from each group
-            return $group->first();
-        })->values();
-
-        // Re-number the filtered records
-        $uniqueAttendances = $uniqueAttendances->map(function ($attendance, $index) {
-            $attendance->number = $index + 1;
-            return $attendance;
-        });
-
-        // Ambil setting waktu 'time_in'
-        $settingTimeIn = Setting::select(['time_in'])->first();
-
-        // Cek apakah settingTimeIn ada dan time_in tidak kosong
-        if ($settingTimeIn && $settingTimeIn->time_in) {
-            // Parsing waktu dari settingTimeIn
-            $settingTime = Carbon::createFromFormat('H:i:s', $settingTimeIn->time_in);
-
-            // Loop untuk menghitung keterlambatan setiap attendance
-            $uniqueAttendances->map(function ($attendance) use ($settingTime) {
-                // Parsing waktu dari attendance
-                if ($attendance->time_in) {
-                    $attendanceTime = Carbon::createFromFormat('H:i:s', $attendance->time_in);
-
-                    // Jika waktu attendance lebih lambat dari setting time, hitung keterlambatan
-                    if ($attendanceTime->greaterThan($settingTime)) {
-                        // Hitung keterlambatan dalam menit
-                        $latenessMinutes = $attendanceTime->diffInMinutes($settingTime);
-                        $attendance->lateness = $latenessMinutes . ' minute';
-                    } else {
-                        $attendance->lateness = '0 minute';
-                    }
-                } else {
-                    $attendance->lateness = 'Not Recorded';
+            // 🔹 Inisialisasi data kehadiran per hari dalam bulan
+            $attendanceStatus = $dates->mapWithKeys(function ($date) use ($userAttendances, $leaveDates) {
+                if ($leaveDates->contains($date)) {
+                    return [$date => 'Ijin'];
                 }
-
-                return $attendance;
+                $attendance = $userAttendances->firstWhere('date', $date);
+                return [$date => $attendance ? 'Hadir' : 'Alfa'];
             });
-        } else {
-            return new Collection(); // Return empty collection if setting not found
-        }
 
-        return $uniqueAttendances;
+            // 🔹 Hitung total hadir, alfa, dan izin
+            $totalHadir = $attendanceStatus->filter(fn($status) => $status === 'Hadir')->count();
+            $totalAlfa = $attendanceStatus->filter(fn($status) => $status === 'Alfa')->count();
+            $totalIjin = $attendanceStatus->filter(fn($status) => $status === 'Ijin')->count();
+
+            return collect([
+                'user_name' => $student->name,
+                'class' => $student->courses->first()->course->name ?? '-',
+                'attendance' => $attendanceStatus->values()->toArray(),
+                'summary' => [
+                    'hadir' => $totalHadir,
+                    'sakit' => 0,
+                    'ijin' => $totalIjin,
+                    'alfa' => $totalAlfa,
+                ],
+            ]);
+        });
     }
 
-    public function map($attendances): array
+    public function map($student): array
     {
-        return [
-            $attendances->number,
-            $attendances->user ? $attendances->user->name : 'N/A',
-            $attendances->user && $attendances->user->courses ?
-                $attendances->user->courses->pluck('course.name')->join(', ') : 'N/A',
-            $attendances->user && $attendances->user->courses ?
-                $attendances->user->courses->pluck('course.study_program.name')->join(', ') : 'N/A',
-            $attendances->date,
-            $attendances->time_in,
-            $attendances->time_out,
-            $attendances->lateness,
-            $attendances->latlon_in,
-            $attendances->latlon_out,
-        ];
+        return array_merge(
+            [
+                $student['user_name'], // Nama Siswa
+                $student['class'],     // Kelas
+            ],
+            $student['attendance'],  // Kehadiran harian
+            [
+                $student['summary']['hadir'],
+                $student['summary']['sakit'],
+                $student['summary']['ijin'],
+                $student['summary']['alfa'],
+            ]
+        );
     }
 
     public function headings(): array
     {
-        return [
-            'No',
-            'Name',
-            'Course',
-            'Study Program',
-            'Date',
-            'Time In',
-            'Time Out',
-            'Lateness',
-            'Latlon In',
-            'Latlon Out',
-        ];
+        // 🔹 Ambil tanggal berdasarkan bulan yang difilter
+        $start_date = Carbon::createFromFormat('Y-m', $this->month)->startOfMonth();
+        $end_date = Carbon::createFromFormat('Y-m', $this->month)->endOfMonth();
+
+        $dates = collect(Carbon::parse($start_date)->daysUntil($end_date))->map(fn($date) => $date->format('d/m/Y'))->toArray();
+
+        // 🔹 Header baris pertama (merge cell untuk tanggal)
+        $firstRow = array_merge(
+            ['Nama Siswa', 'Kelas'],  // Nama dan Kelas tetap di awal
+            array_fill(0, count($dates), 'Tanggal'), // Semua tanggal di-merge di Excel
+            ['Total'] // Merge untuk total (Hadir, Sakit, Ijin, Alfa)
+        );
+
+        // 🔹 Header baris kedua (tanggal harian)
+        $secondRow = array_merge(
+            ['', ''], // Kosong untuk "Nama Siswa" & "Kelas"
+            $dates,  // List tanggal
+            ['Hadir', 'Sakit', 'Ijin', 'Alfa'] // Total masing-masing kategori
+        );
+
+        return [$firstRow, $secondRow];
     }
+
 
     public function styles(Worksheet $sheet)
     {
-        $sheet->getStyle('A1:J1')->getFont()->setSize(15);
-        $sheet->getStyle('A1:J1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:J1')->getAlignment()->setHorizontal('center');
+        $totalColumns = count($this->headings()[1]); // Ambil jumlah kolom dari header kedua
 
-        foreach (range('A', 'J') as $columnID) {
-            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        // Merge cell untuk header pertama
+        $sheet->mergeCells("C1:" . $this->getExcelColumn($totalColumns - 4) . "1");
+        $sheet->setCellValue("C1", "Tanggal"); // Isi teks di merge cell
+
+        // Merge cell untuk kolom total
+        $sheet->mergeCells($this->getExcelColumn($totalColumns - 3) . "1:" . $this->getExcelColumn($totalColumns) . "1");
+        $sheet->setCellValue($this->getExcelColumn($totalColumns - 3) . "1", "Total Kehadiran");
+
+        // Buat bold dan rata tengah
+        $sheet->getStyle("A1:" . $this->getExcelColumn($totalColumns) . "2")->getFont()->setBold(true);
+        $sheet->getStyle("A1:" . $this->getExcelColumn($totalColumns) . "2")->getAlignment()->setHorizontal('center');
+
+        // Set auto-size untuk semua kolom
+        for ($i = 1; $i <= $totalColumns; $i++) {
+            $sheet->getColumnDimensionByColumn($i)->setAutoSize(true);
         }
+    }
+
+    private function getExcelColumn($number)
+    {
+        $letter = '';
+        while ($number > 0) {
+            $modulo = ($number - 1) % 26;
+            $letter = chr(65 + $modulo) . $letter;
+            $number = (int)(($number - $modulo) / 26);
+        }
+        return $letter;
     }
 }

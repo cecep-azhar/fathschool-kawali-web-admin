@@ -89,10 +89,10 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
                 'class' => $student->courses->first()->course->name ?? '-',
                 'attendance' => $attendanceStatus->values()->toArray(),
                 'summary' => [
-                    'hadir' => $attendanceStatus->filter(fn($status) => $status === 'H')->count(),
+                    'hadir' => $attendanceStatus->filter(fn($status) => $status === 'Hadir')->count(),
                     'sakit' => 0,
-                    'ijin' => $attendanceStatus->filter(fn($status) => $status === 'I')->count(),
-                    'alfa' => $attendanceStatus->filter(fn($status) => $status === 'A')->count(),
+                    'ijin' => $attendanceStatus->filter(fn($status) => $status === 'Ijin')->count(),
+                    'alfa' => $attendanceStatus->filter(fn($status) => $status === 'Alfa')->count(),
                 ],
             ];
         });

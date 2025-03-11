@@ -9,6 +9,7 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class StudentAttendanceExport implements FromCollection, WithHeadings, WithMapping, WithStyles
@@ -28,78 +29,100 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
 
     public function collection()
     {
-        // 🔹 Ambil bulan dari constructor
         try {
             $start_date = Carbon::createFromFormat('Y-m', $this->month)->startOfMonth()->toDateString();
             $end_date = Carbon::createFromFormat('Y-m', $this->month)->endOfMonth()->toDateString();
         } catch (\Exception $e) {
-            return collect([]); // Kosongkan data jika format bulan salah
+            return collect([]);
         }
 
-        // 🔹 Query awal untuk mendapatkan siswa berdasarkan bulan yang difilter
         $studentsQuery = User::where('role', 'student')->with([
-            'courses.course:id,name',
+            'courses.course:id,name,slug',
             'leaves' => function ($query) use ($start_date, $end_date) {
                 $query->whereDate('start', '<=', $end_date)
                     ->whereDate('end', '>=', $start_date);
             }
         ]);
 
-        // 🔹 Eksekusi query setelah filter diterapkan
-        $students = $studentsQuery->get();
+        if ($this->name) {
+            $studentsQuery->where('name', 'LIKE', '%' . $this->name . '%');
+        }
 
-        // 🔹 Ambil kehadiran hanya untuk bulan yang dipilih
+        if ($this->course) {
+            $studentsQuery->whereHas('courses.course', function ($query) {
+                $query->where('slug', 'LIKE', '%' . $this->course . '%');
+            });
+        }
+
+        $students = $studentsQuery->get();
         $attendances = AttendanceStudent::whereBetween('date', [$start_date, $end_date])
             ->get()
             ->groupBy('user_id');
 
-        return $students->map(function ($student) use ($attendances, $start_date, $end_date) {
-            $dates = collect(Carbon::parse($start_date)->daysUntil($end_date))->map(fn($date) => $date->toDateString());
+        $dates = collect(Carbon::parse($start_date)->daysUntil($end_date))->map(fn($date) => $date->toDateString());
+        $dailyPresentCount = array_fill(0, $dates->count(), 0);
+
+        $data = $students->map(function ($student) use ($attendances, $dates, &$dailyPresentCount) {
             $userAttendances = $attendances->get($student->id, collect());
 
-            // 🔹 Hitung total izin berdasarkan jumlah hari izin dalam rentang bulan
             $leaveDates = collect();
             foreach ($student->leaves as $leave) {
                 $leavePeriod = collect(Carbon::parse($leave->start)->daysUntil($leave->end))->map(fn($date) => $date->toDateString());
                 $leaveDates = $leaveDates->merge($leavePeriod);
             }
 
-            // 🔹 Inisialisasi data kehadiran per hari dalam bulan
-            $attendanceStatus = $dates->mapWithKeys(function ($date) use ($userAttendances, $leaveDates) {
+            $attendanceStatus = $dates->mapWithKeys(function ($date, $index) use ($userAttendances, $leaveDates, &$dailyPresentCount) {
                 if ($leaveDates->contains($date)) {
-                    return [$date => 'Ijin'];
+                    return [$date => 'I'];
                 }
                 $attendance = $userAttendances->firstWhere('date', $date);
-                return [$date => $attendance ? 'Hadir' : 'Alfa'];
+                if ($attendance) {
+                    $dailyPresentCount[$index]++;
+                    return [$date => 'H'];
+                }
+                return [$date => 'A'];
             });
 
-            // 🔹 Hitung total hadir, alfa, dan izin
-            $totalHadir = $attendanceStatus->filter(fn($status) => $status === 'Hadir')->count();
-            $totalAlfa = $attendanceStatus->filter(fn($status) => $status === 'Alfa')->count();
-            $totalIjin = $attendanceStatus->filter(fn($status) => $status === 'Ijin')->count();
-
-            return collect([
+            return [
                 'user_name' => $student->name,
                 'class' => $student->courses->first()->course->name ?? '-',
                 'attendance' => $attendanceStatus->values()->toArray(),
                 'summary' => [
-                    'hadir' => $totalHadir,
+                    'hadir' => $attendanceStatus->filter(fn($status) => $status === 'H')->count(),
                     'sakit' => 0,
-                    'ijin' => $totalIjin,
-                    'alfa' => $totalAlfa,
+                    'ijin' => $attendanceStatus->filter(fn($status) => $status === 'I')->count(),
+                    'alfa' => $attendanceStatus->filter(fn($status) => $status === 'A')->count(),
                 ],
-            ]);
+            ];
         });
+
+        $dstRow = [
+            'user_name' => 'Dst',
+            'class' => '',
+            'attendance' => $dailyPresentCount,
+            'summary' => ['hadir' => '', 'sakit' => '', 'ijin' => '', 'alfa' => ''],
+        ];
+
+        $totalRow = [
+            'user_name' => 'Total',
+            'class' => '',
+            'attendance' => array_fill(0, $dates->count(), ''),
+            'summary' => [
+                'hadir' => $data->sum(fn($student) => $student['summary']['hadir']),
+                'sakit' => 0,
+                'ijin' => $data->sum(fn($student) => $student['summary']['ijin']),
+                'alfa' => $data->sum(fn($student) => $student['summary']['alfa']),
+            ],
+        ];
+
+        return $data->push($dstRow)->push($totalRow);
     }
 
     public function map($student): array
     {
         return array_merge(
-            [
-                $student['user_name'], // Nama Siswa
-                $student['class'],     // Kelas
-            ],
-            $student['attendance'],  // Kehadiran harian
+            [$student['user_name'], $student['class']],
+            $student['attendance'],
             [
                 $student['summary']['hadir'],
                 $student['summary']['sakit'],
@@ -111,60 +134,56 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
 
     public function headings(): array
     {
-        // 🔹 Ambil tanggal berdasarkan bulan yang difilter
         $start_date = Carbon::createFromFormat('Y-m', $this->month)->startOfMonth();
         $end_date = Carbon::createFromFormat('Y-m', $this->month)->endOfMonth();
-
         $dates = collect(Carbon::parse($start_date)->daysUntil($end_date))->map(fn($date) => $date->format('d/m/Y'))->toArray();
 
-        // 🔹 Header baris pertama (merge cell untuk tanggal)
-        $firstRow = array_merge(
-            ['Nama Siswa', 'Kelas'],  // Nama dan Kelas tetap di awal
-            array_fill(0, count($dates), 'Tanggal'), // Semua tanggal di-merge di Excel
-            ['Total'] // Merge untuk total (Hadir, Sakit, Ijin, Alfa)
-        );
-
-        // 🔹 Header baris kedua (tanggal harian)
-        $secondRow = array_merge(
-            ['', ''], // Kosong untuk "Nama Siswa" & "Kelas"
-            $dates,  // List tanggal
-            ['Hadir', 'Sakit', 'Ijin', 'Alfa'] // Total masing-masing kategori
-        );
-
-        return [$firstRow, $secondRow];
+        return [
+            array_merge(['Nama Siswa', 'Kelas'], array_fill(0, count($dates), 'Tanggal'), ['Total']),
+            array_merge(['', ''], $dates, ['Hadir', 'Sakit', 'Ijin', 'Alfa'])
+        ];
     }
-
 
     public function styles(Worksheet $sheet)
     {
-        $totalColumns = count($this->headings()[1]); // Ambil jumlah kolom dari header kedua
+        $highestColumnIndex = count($this->headings()[1]);
+        $lastColumn = Coordinate::stringFromColumnIndex($highestColumnIndex);
 
-        // Merge cell untuk header pertama
-        $sheet->mergeCells("C1:" . $this->getExcelColumn($totalColumns - 4) . "1");
-        $sheet->setCellValue("C1", "Tanggal"); // Isi teks di merge cell
+        $sheet->mergeCells("C1:{$lastColumn}1");
+        $sheet->setCellValue("C1", "Tanggal");
 
-        // Merge cell untuk kolom total
-        $sheet->mergeCells($this->getExcelColumn($totalColumns - 3) . "1:" . $this->getExcelColumn($totalColumns) . "1");
-        $sheet->setCellValue($this->getExcelColumn($totalColumns - 3) . "1", "Total Kehadiran");
+        $totalStartColumn = Coordinate::stringFromColumnIndex($highestColumnIndex - 3);
+        $sheet->mergeCells("{$totalStartColumn}1:{$lastColumn}1");
+        $sheet->setCellValue("{$totalStartColumn}1", "Total Kehadiran");
 
-        // Buat bold dan rata tengah
-        $sheet->getStyle("A1:" . $this->getExcelColumn($totalColumns) . "2")->getFont()->setBold(true);
-        $sheet->getStyle("A1:" . $this->getExcelColumn($totalColumns) . "2")->getAlignment()->setHorizontal('center');
+        $sheet->mergeCells("A1:A2");
+        $sheet->mergeCells("B1:B2");
 
-        // Set auto-size untuk semua kolom
-        for ($i = 1; $i <= $totalColumns; $i++) {
-            $sheet->getColumnDimensionByColumn($i)->setAutoSize(true);
+        $sheet->getStyle("A1:{$lastColumn}2")->applyFromArray([
+            'font' => ['bold' => true, 'size' => 12],
+            'alignment' => [
+                'horizontal' => 'center',
+                'vertical' => 'center',
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FFC000'],
+            ],
+        ]);
+
+        $highestRow = $sheet->getHighestRow();
+        $sheet->getStyle("A1:{$lastColumn}{$highestRow}")->applyFromArray([
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['argb' => '000000'],
+                ],
+            ],
+        ]);
+
+        foreach (range(1, $highestColumnIndex) as $colIndex) {
+            $colLetter = Coordinate::stringFromColumnIndex($colIndex);
+            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
         }
-    }
-
-    private function getExcelColumn($number)
-    {
-        $letter = '';
-        while ($number > 0) {
-            $modulo = ($number - 1) % 26;
-            $letter = chr(65 + $modulo) . $letter;
-            $number = (int)(($number - $modulo) / 26);
-        }
-        return $letter;
     }
 }

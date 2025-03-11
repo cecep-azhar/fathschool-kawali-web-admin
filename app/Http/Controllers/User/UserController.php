@@ -12,8 +12,6 @@ use App\Exports\StudentLeaveExport;
 use App\Exports\TeacherLateExport;
 use App\Exports\AllTeacherExport;
 use App\Exports\AllUserExport;
-use App\Exports\StudentAbsentExport;
-use App\Exports\TeacherAbsentExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UserRequest;
 use App\Models\Course;
@@ -303,35 +301,13 @@ class UserController extends Controller
      */
     public function teacherExport(Request $request)
     {
+        $month = $request->input('month', Carbon::now()->format('Y-m')); // Ambil month dari request
+
         $name = $request->name;
-        $start_date = $request->start_date;
-        $end_date = $request->end_date;
-        $study_program = $request->study_program;
-
-        if (!$start_date && !$end_date) {
-            $start_date = Carbon::today()->toDateString();
-            $end_date = Carbon::today()->toDateString();
-        }
-
-        $export = new TeacherExport(
-            $name,
-            $start_date,
-            $end_date,
-            $study_program
-        );
-
-        return Excel::download($export, 'teachers.xlsx');
-    }
-
-    public function teacherAbsentExport(Request $request)
-    {
-        $name = $request->name;
-        $month = $request->month;
-
         $course = $request->course;
         $study_program = $request->study_program;
 
-        $export = new TeacherAbsentExport($name, $month, $course, $study_program);
+        $export = new TeacherExport($month, $name, $course, $study_program);
 
         return Excel::download($export, 'teachers.xlsx');
     }
@@ -399,54 +375,17 @@ class UserController extends Controller
     }
 
 
-    public function StudentAttendanceExports(Request $request){
-            $name = $request->name;
-            $start_date = $request->start_date;
-            $end_date = $request->end_date;
-            $course = $request->course;
-            $study_program = $request->study_program;
-
-            if (!$start_date && !$end_date) {
-                $start_date = Carbon::today()->toDateString();
-                $end_date = Carbon::today()->toDateString();
-            }
-
-            $export = new StudentAttendanceExport(
-                $name,
-                $start_date,
-                $end_date,
-                $course,
-                $study_program);
-
-
-            return Excel::download($export, 'students.xlsx');
-    }
-
-    public function StudentAbsentExport(Request $request)
+    public function StudentAttendanceExports(Request $request)
     {
+        $month = $request->input('month', Carbon::now()->format('Y-m')); // Ambil month dari request
         $name = $request->name;
-        $start_date = $request->start_date;
-        $end_date = $request->end_date;
         $course = $request->course;
         $study_program = $request->study_program;
 
-        if (!$start_date && !$end_date) {
-            $start_date = Carbon::today()->toDateString();
-            $end_date = Carbon::today()->toDateString();
-        }
-
-        $export = new StudentAbsentExport(
-            $name,
-            $start_date,
-            $end_date,
-            $course,
-            $study_program);
-
+        $export = new StudentAttendanceExport($month, $name, $course, $study_program);
 
         return Excel::download($export, 'students.xlsx');
     }
-
-
 
     public function exportStudentLeave(Request $request)
     {

@@ -77,129 +77,114 @@
                 </form>
             </div>
 
-            <div class="grid grid-cols-1 gap-6 xl:grid-cols-3 items-start mb-6">
-                <div
-                    class="xl:col-span-3 bg-white dark:bg-gray-800 rounded-lg p-4"
-                >
+            <div class="xl:col-span-2 bg-white dark:bg-gray-800 rounded-lg">
+                <div class="flex justify-between items-center px-6 py-4">
                     <div
-                        class="flex justify-between items-center text-gray-900 dark:text-gray-400 text-base font-bold mb-4"
+                        class="text-gray-900 dark:text-gray-400 text-lg font-bold"
                     >
-                        <div>{{ __("Attendance List") }}</div>
-                        <global-button
-                            :loading="false"
-                            @click="exportAttendance"
-                            type="button"
-                            theme="sky"
-                        >
-                            {{ __("Export") }}
-                        </global-button>
+                        {{ __("Attendance List") }}
                     </div>
-
-                    <div class="overflow-x-auto">
-                        <table
-                            class="w-full text-sm text-center text-gray-500 dark:text-gray-400 border border-gray-300"
+                    <global-button
+                        :loading="false"
+                        @click="exportAttendance"
+                        type="button"
+                        theme="sky"
+                    >
+                        {{ __("Export") }}
+                    </global-button>
+                </div>
+                <div class="overflow-x-auto shadow-md rounded-lg">
+                    <table
+                        class="w-full text-sm text-center text-gray-700 dark:text-gray-300"
+                    >
+                        <thead
+                            class="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
                         >
-                            <thead>
-                                <!-- Baris Pertama: Label "Tanggal" -->
-                                <tr class="bg-gray-100 dark:bg-gray-700">
-                                    <th rowspan="2" class="px-3 py-2">No</th>
-                                    <th rowspan="2" class="px-3 py-2">
-                                        {{ __("Nama Siswa") }}
-                                    </th>
-                                    <th rowspan="2" class="px-3 py-2">
-                                        {{ __("Kelas") }}
-                                    </th>
-                                    <th
-                                        :colspan="datesInMonth.length"
-                                        class="px-3 py-2"
+                            <!-- Baris Pertama: Label "Tanggal" -->
+                            <tr>
+                                <th rowspan="2" class="py-4 px-6">No</th>
+                                <th rowspan="2" class="py-4 px-6">
+                                    {{ __("Nama Siswa") }}
+                                </th>
+                                <th rowspan="2" class="py-4 px-6">
+                                    {{ __("Kelas") }}
+                                </th>
+                                <th
+                                    :colspan="datesInMonth.length"
+                                    class="py-4 px-6"
+                                >
+                                    {{ __("Tanggal") }}
+                                </th>
+                                <th rowspan="2" class="py-4 px-6">Hadir</th>
+                                <th rowspan="2" class="py-4 px-6">Sakit</th>
+                                <th rowspan="2" class="py-4 px-6">Ijin</th>
+                                <th rowspan="2" class="py-4 px-6">Alfa</th>
+                            </tr>
+                            <!-- Baris Kedua: Daftar Tanggal -->
+                            <tr class="border-b border-gray-300">
+                                <th
+                                    v-for="(date, index) in datesInMonth"
+                                    :key="index"
+                                    class="py-3 px-5"
+                                >
+                                    {{ date }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template v-if="attendancestudent.length > 0">
+                                <template
+                                    v-for="(
+                                        attendance, index
+                                    ) in attendancestudent"
+                                    :key="attendance.id"
+                                >
+                                    <tr
+                                        class="border-b border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
                                     >
-                                        {{ __("Tanggal") }}
-                                    </th>
-                                    <th rowspan="2" class="px-3 py-2">Hadir</th>
-                                    <th rowspan="2" class="px-3 py-2">Sakit</th>
-                                    <th rowspan="2" class="px-3 py-2">Ijin</th>
-                                    <th rowspan="2" class="px-3 py-2">Alfa</th>
-                                </tr>
-                                <!-- Baris Kedua: Daftar Tanggal dalam Format DD/MM/YYYY -->
-                                <tr class="bg-gray-100 dark:bg-gray-700">
-                                    <th
-                                        v-for="(date, index) in datesInMonth"
-                                        :key="index"
-                                        class="px-3 py-2"
-                                    >
-                                        {{ date }}
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template v-if="attendancestudent.length > 0">
-                                    <template
-                                        v-for="(
-                                            attendance, index
-                                        ) in attendancestudent"
-                                        :key="attendance.id"
-                                    >
-                                        <tr
-                                            class="hover:bg-gray-50 dark:hover:bg-gray-600"
+                                        <td class="py-4 px-6 font-medium">
+                                            {{ index + 1 }}
+                                        </td>
+                                        <td class="py-4 px-6 font-medium">
+                                            {{ attendance.user_name }}
+                                        </td>
+                                        <td class="py-4 px-6">
+                                            {{ attendance.class || "-" }}
+                                        </td>
+                                        <td
+                                            v-for="(
+                                                status, i
+                                            ) in attendance.attendance"
+                                            :key="i"
+                                            class="py-4 px-6"
                                         >
-                                            <!-- No -->
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
-                                                {{ index + 1 }}
-                                            </td>
-                                            <!-- Nama Siswa -->
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
-                                                {{ attendance.user_name }}
-                                            </td>
-                                            <!-- Kelas -->
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
-                                                {{ attendance.class || "-" }}
-                                            </td>
-                                            <!-- Kehadiran per tanggal -->
-                                            <td
-                                                v-for="(
-                                                    status, i
-                                                ) in attendance.attendance"
-                                                :key="i"
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
-                                                {{ status || "-" }}
-                                            </td>
-                                            <!-- Total Hadir -->
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
-                                                {{ attendance.summary.hadir }}
-                                            </td>
-                                            <!-- Total Sakit -->
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
-                                                {{ attendance.summary.sakit }}
-                                            </td>
-                                            <!-- Total Ijin -->
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
-                                                {{ attendance.summary.ijin }}
-                                            </td>
-                                            <!-- Total Alfa -->
-                                            <td
-                                                class="py-4 px-5 text-gray-900 dark:text-white"
-                                            >
-                                                {{ attendance.summary.alfa }}
-                                            </td>
-                                        </tr>
-                                    </template>
+                                            {{ status || "-" }}
+                                        </td>
+                                        <td
+                                            class="py-4 px-6 font-semibold dark:text-white"
+                                        >
+                                            {{ attendance.summary.hadir }}
+                                        </td>
+                                        <td
+                                            class="py-4 px-6 font-semibold dark:text-white"
+                                        >
+                                            {{ attendance.summary.sakit }}
+                                        </td>
+                                        <td
+                                            class="py-4 px-6 font-semibold dark:text-white"
+                                        >
+                                            {{ attendance.summary.ijin }}
+                                        </td>
+                                        <td
+                                            class="py-4 px-6 font-semibold dark:text-white"
+                                        >
+                                            {{ attendance.summary.alfa }}
+                                        </td>
+                                    </tr>
                                 </template>
-                            </tbody>
-                        </table>
-                    </div>
+                            </template>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -391,14 +376,15 @@ export default {
 
             axios({
                 url: this.route("studentattendance.export"),
-                method: "POST", // Pastikan backend menerima POST
+                method: "POST",
                 data: exportData,
                 headers: {
                     "X-CSRF-TOKEN": document
                         .querySelector('meta[name="csrf-token"]')
                         .getAttribute("content"),
+                    "Content-Type": "application/json",
                 },
-                responseType: "blob", // Mengatur agar menerima file sebagai respons
+                responseType: "blob", // 🔹 Agar menerima file sebagai respons
             })
                 .then((response) => {
                     try {
@@ -407,7 +393,7 @@ export default {
                         let fileLink = document.createElement("a");
                         fileLink.href = fileURL;
 
-                        // 🔹 Pastikan nama file aman dari karakter tidak valid
+                        // 🔹 Nama file sesuai filter
                         let fileName = `studentattendance-report-${encodeURIComponent(
                             this.filter.course || "all"
                         )}-${encodeURIComponent(

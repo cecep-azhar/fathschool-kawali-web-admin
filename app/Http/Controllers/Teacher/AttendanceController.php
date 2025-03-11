@@ -31,152 +31,110 @@ class AttendanceController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
+   
     public function index(Request $request)
     {
         abort_if(! userCan('academic.management'), 403);
 
-        // Set default dates if not provided
-        if (!$request->has('start_date') && !$request->has('end_date')) {
-            $start_date = Carbon::today()->toDateString();
-            $end_date = Carbon::today()->toDateString();
-            $request->merge([
-                'start_date' => $start_date,
-                'end_date' => $end_date
-            ]);
+        // jika tidak ada paramater month, gunakan bulan ini sebagai default
+        $month = $request->input('month', Carbon::now()->format('Y-m')); // Format YYYY-MM
+        try {
+            $start_date = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->toDateString();
+            $end_date = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->toDateString();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Format bulan tidak valid. Gunakan YYYY-MM.'], 400);
         }
 
-        // Query awal untuk Attendance
-        $attendance_query = Attendance::with([
-            'user:id,name,department_id',
-            'user.department:id,name,study_program_id',
-            'user.department.study_program:id,name',
-        ])->whereHas('user', function ($query) {
-            $query->whereNotIn('role', ['parent', 'student', 'admin', 'accountant']);
-        });
+        // Ambil daftar tanggal dalam bulan yang dipilih
+        $dates = collect(Carbon::parse($start_date)->daysUntil($end_date))->map(fn($date) => $date->toDateString());
 
-        // Filter berdasarkan tanggal untuk attendance
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $attendance_query->whereBetween('date', [$request->start_date, $request->end_date]);
+        // Query awal untuk mendapatkan guru
+        $teachersQuery = User::where('role', 'teacher')
+            ->with(['department.study_program', 'leaves']);
+
+        if ($request->filled('keyword')) {
+            $teachersQuery->where('name', 'LIKE', '%' . $request->keyword . '%');
         }
 
-        // Filter berdasarkan keyword untuk attendance
-        if ($request->has('keyword') && $request->keyword !== null) {
-            $attendance_query->whereHas('user', function ($q) use ($request) {
-                $q->where('name', 'LIKE', '%' . $request->keyword . '%');
-            });
-        }
-
-        // Filter berdasarkan study_program untuk attendance
-        if ($request->has('study_program') && $request->study_program !== null) {
-            $attendance_query->whereHas('user.department.study_program', function ($q) use ($request) {
-                $q->where('slug', 'LIKE', '%' . $request->study_program . '%');
-            });
-        }
-
-        // Eksekusi query attendance
-        $attendanceteacher = $attendance_query->get([
-            'id', 'user_id', 'date', 'time_in', 'time_out', 'latlon_in', 'latlon_out'
-        ]);
-
-        // Query untuk total guru yang sesuai filter
-        $totalTeacherQuery = User::whereNotIn('role', ['parent', 'student', 'admin', 'accountant']);
-
-        if ($request->has('keyword') && $request->keyword !== null) {
-            $totalTeacherQuery->where('name', 'LIKE', '%' . $request->keyword . '%');
-        }
-
-        if ($request->has('study_program') && $request->study_program !== null) {
-            $totalTeacherQuery->whereHas('department.study_program', function ($query) use ($request) {
+        if ($request->filled('study_program')) {
+            $teachersQuery->whereHas('user.department.study_program', function ($query) use ($request) {
                 $query->where('slug', 'LIKE', '%' . $request->study_program . '%');
             });
         }
 
-        // Get unique teacher IDs who have attendance in the date range
-        $presentTeacherIds = $attendanceteacher->where('time_in', '!=', null)
-            ->pluck('user_id')
-            ->unique();
+        $teachers = $teachersQuery->get();
 
-        // Query untuk guru yang tidak hadir
-        $absent_query = User::with([
-            'department:id,name,study_program_id',
-            'department.study_program:id,name',
-            'leaves.type'
-        ])
-        ->whereNotIn('role', ['parent', 'student', 'admin', 'accountant'])
-        ->whereNotIn('id', $presentTeacherIds); // Exclude teachers who are present
+        $attendances = Attendance::whereBetween('date', [$start_date, $end_date])
+            ->get()
+            ->groupBy('user_id');
 
-        // Apply filters to absent query
-        if ($request->has('keyword') && $request->keyword !== null) {
-            $absent_query->where('name', 'LIKE', '%' . $request->keyword . '%');
-        }
+        // Struktur data guru dan kehadiran
+        $attendanceteacher = $teachers->map(function ($teacher) use ($dates, $attendances) {
+            $userAttendances = $attendances->get($teacher->id, collect());
 
-        if ($request->has('study_program') && $request->study_program !== null) {
-            $absent_query->whereHas('department.study_program', function ($q) use ($request) {
-                $q->where('slug', 'LIKE', '%' . $request->study_program . '%');
+            // Hitung total izin berdasarkan jumlah hari izin dalam bulan
+            $totalIjin = $teacher->leaves->filter(function ($leave) use ($dates) {
+                return $leave->start <= $dates->last() && $leave->end >= $dates->first();
+            })->sum(function ($leave) {
+                return Carbon::parse($leave->start)->diffInDays(Carbon::parse($leave->end)) + 1;
             });
-        }
 
-        // Get absent teachers
-        $absentTeachers = $absent_query->get(['id', 'name']);
+            // Ambil daftar tanggal izin
+            $leaveDates = collect();
+            foreach ($teacher->leaves as $leave) {
+                $leavePeriod = collect(Carbon::parse($leave->start)->daysUntil($leave->end))->map(fn($date) => $date->toDateString());
+                $leaveDates = $leaveDates->merge($leavePeriod);
+            }
 
-        // Load leaves for absent teachers within date range
-        $absentTeachers->load(['leaves' => function ($query) use ($request) {
-            $query->whereBetween('start', [$request->start_date, $request->end_date])
-                ->with('type');
-        }]);
+            // Inisialisasi data kehadiran per hari
+            $attendanceStatus = $dates->mapWithKeys(function ($date) use ($userAttendances, $leaveDates) {
+                if ($leaveDates->contains($date)) {
+                    return [$date => 'Ijin']; // Jika ada izin
+                }
 
-        // Add date property to absent teachers
-        $absentTeachers = $absentTeachers->map(function ($teacher) use ($request) {
-            $teacher->date = $request->start_date;
-            return $teacher;
+                $attendance = $userAttendances->firstWhere('date', $date);
+                return [$date => $attendance ? 'Hadir' : 'Alfa']; // Hadir atau Alfa
+            });
+
+            // Hitung total hadir dan alfa
+            $totalHadir = $attendanceStatus->filter(fn($status) => $status === 'Hadir')->count();
+            $totalAlfa = $attendanceStatus->filter(fn($status) => $status === 'Alfa')->count();
+
+            return [
+                'id' => $teacher->id,
+                'name' => $teacher->name,
+                'study_program' => $teacher->department->study_program->name ?? '-',
+                'attendance' => $attendanceStatus,
+                'summary' => [
+                    'hadir' => $totalHadir,
+                    'sakit' => 0, // Jika ada data sakit, bisa ditambahkan
+                    'ijin' => $totalIjin,
+                    'alfa' => $totalAlfa,
+                ],
+            ];
         });
 
-        // Calculate statistics
-        $totalTeacher = $totalTeacherQuery->count();
-        $totalPresent = $presentTeacherIds->count();
-        $totalAbsent = $totalTeacher - $totalPresent;
+        // Hitung total semua guru
+        $total = [
+            'hadir' => $attendanceteacher->sum(fn($teacher) => $teacher['summary']['hadir']),
+            'sakit' => 0, // Sesuaikan jika ada data sakit
+            'ijin' => $attendanceteacher->sum(fn($teacher) => $teacher['summary']['ijin']),
+            'alfa' => $attendanceteacher->sum(fn($teacher) => $teacher['summary']['alfa']),
+        ];
 
-        $attendancePercentage = $totalTeacher > 0 ? round(($totalPresent / $totalTeacher) * 100) : 0;
-        $absencePercentage = $totalTeacher > 0 ? round(($totalAbsent / $totalTeacher) * 100) : 0;
-
-        // Get study programs for filter
         $study_programs = StudyProgram::get(['id', 'name', 'slug']);
 
-        // Calculate lateness if setting exists
-        $settingTimeIn = Setting::select(['time_in'])->first();
-
-        if ($settingTimeIn && $settingTimeIn->time_in) {
-            $settingTime = Carbon::createFromFormat('H:i:s', $settingTimeIn->time_in);
-
-            $attendanceteacher->map(function ($attendance) use ($settingTime) {
-                if ($attendance->time_in) {
-                    $attendanceTime = Carbon::createFromFormat('H:i:s', $attendance->time_in);
-                    if ($attendanceTime->greaterThan($settingTime)) {
-                        $latenessMinutes = $attendanceTime->diffInMinutes($settingTime);
-                        $attendance->lateness = $latenessMinutes . ' minute';
-                    } else {
-                        $attendance->lateness = '0 minute';
-                    }
-                }
-                return $attendance;
-            });
-        } else {
-            return response()->json(['error' => 'Setting time_in not found or invalid.'], 400);
-        }
-
-        // Return view with data
         return inertia('Admin/TeacherAttendance/Index', [
             'attendanceteacher' => $attendanceteacher,
-            'absentTeachers' => $absentTeachers,
-            'attendance_percentage' => $attendancePercentage,
-            'absence_percentage' => $absencePercentage,
+            'dates' => $dates,
+            'total' => $total,
+            'study_programs' => $study_programs,
             'filter_data' => [
-                'keyword' => $request->keyword,
-                'start_date' => $request->start_date,
-                'end_date' => $request->end_date,
-                'study_program' => $request->study_program
-            ],
-            'study_programs' => $study_programs
+                'month' => $month,
+                'keyword' => $request->input('keyword'),
+                'study_program' => $request->input('study_program'),
+            ]
         ]);
     }
 

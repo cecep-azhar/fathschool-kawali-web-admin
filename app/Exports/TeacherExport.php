@@ -31,7 +31,7 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, Should
         $teachers = User::where('role', 'teacher')->with(['department.study_program', 'leaves'])->get();
         $attendances = Attendance::whereBetween('date', [$start_date, $end_date])->get()->groupBy('user_id');
 
-        return $teachers->map(function ($teacher) use ($dates, $attendances) {
+        return $teachers->map(function ($teacher, $index) use ($dates, $attendances) {
             $userAttendances = $attendances->get($teacher->id, collect());
 
             $leaveDates = collect();
@@ -55,6 +55,7 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, Should
             $totalSakit = 0;
 
             return collect([
+                'no' => $index + 1,
                 'name' => $teacher->name,
                 'study_program' => $teacher->department->study_program->name ?? '-',
             ])->merge($attendanceStatus)->merge([
@@ -73,14 +74,14 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, Should
             ->map(fn($date) => $date->format('d/m/Y'));
 
         $firstRow = array_merge(
-            ['Nama Guru', 'Program Studi'],
+            ['No', 'Nama Guru', 'Program Studi'],
             ['Tanggal'],
             array_fill(0, count($dates) - 1, ''),
             ['Total']
         );
 
         $secondRow = array_merge(
-            ['', ''],
+            ['', '', ''],
             $dates->toArray(),
             ['Hadir', 'Sakit', 'Ijin', 'Alfa']
         );
@@ -99,9 +100,10 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, Should
         $lastColumn = Coordinate::stringFromColumnIndex($highestColumnIndex);
 
         // Merge "Tanggal" di tengah
-        $sheet->mergeCells("C1:{$lastColumn}1");
+        $sheet->mergeCells("D1:{$lastColumn}1");
         $sheet->mergeCells("A1:A2");
         $sheet->mergeCells("B1:B2");
+        $sheet->mergeCells("C1:C2");
 
         // Merge "Total" agar rapi
         $totalStartColumn = Coordinate::stringFromColumnIndex($highestColumnIndex - 3);
@@ -116,7 +118,7 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, Should
             ],
             'fill' => [
                 'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['argb' => 'FFC000'],
+                'startColor' => ['argb' => 'FFFFF'],
             ],
         ]);
 

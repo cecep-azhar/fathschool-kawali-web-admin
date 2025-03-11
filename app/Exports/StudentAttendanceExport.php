@@ -62,7 +62,7 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
         $dates = collect(Carbon::parse($start_date)->daysUntil($end_date))->map(fn($date) => $date->toDateString());
         $dailyPresentCount = array_fill(0, $dates->count(), 0);
 
-        $data = $students->map(function ($student) use ($attendances, $dates, &$dailyPresentCount) {
+        $data = $students->map(function ($student, $index) use ($attendances, $dates, &$dailyPresentCount) {
             $userAttendances = $attendances->get($student->id, collect());
 
             $leaveDates = collect();
@@ -73,17 +73,18 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
 
             $attendanceStatus = $dates->mapWithKeys(function ($date, $index) use ($userAttendances, $leaveDates, &$dailyPresentCount) {
                 if ($leaveDates->contains($date)) {
-                    return [$date => 'I'];
+                    return [$date => 'Ijin'];
                 }
                 $attendance = $userAttendances->firstWhere('date', $date);
                 if ($attendance) {
                     $dailyPresentCount[$index]++;
-                    return [$date => 'H'];
+                    return [$date => 'Hadir'];
                 }
-                return [$date => 'A'];
+                return [$date => 'Alfa'];
             });
 
             return [
+                'no' => $index + 1, // Tambahkan Nomor Urut
                 'user_name' => $student->name,
                 'class' => $student->courses->first()->course->name ?? '-',
                 'attendance' => $attendanceStatus->values()->toArray(),
@@ -96,32 +97,13 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
             ];
         });
 
-        $dstRow = [
-            'user_name' => 'Dst',
-            'class' => '',
-            'attendance' => $dailyPresentCount,
-            'summary' => ['hadir' => '', 'sakit' => '', 'ijin' => '', 'alfa' => ''],
-        ];
-
-        $totalRow = [
-            'user_name' => 'Total',
-            'class' => '',
-            'attendance' => array_fill(0, $dates->count(), ''),
-            'summary' => [
-                'hadir' => $data->sum(fn($student) => $student['summary']['hadir']),
-                'sakit' => 0,
-                'ijin' => $data->sum(fn($student) => $student['summary']['ijin']),
-                'alfa' => $data->sum(fn($student) => $student['summary']['alfa']),
-            ],
-        ];
-
-        return $data->push($dstRow)->push($totalRow);
+        return $data;
     }
 
     public function map($student): array
     {
         return array_merge(
-            [$student['user_name'], $student['class']],
+            [$student['no'], $student['user_name'], $student['class']], // Tambahkan No
             $student['attendance'],
             [
                 $student['summary']['hadir'],
@@ -139,10 +121,11 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
         $dates = collect(Carbon::parse($start_date)->daysUntil($end_date))->map(fn($date) => $date->format('d/m/Y'))->toArray();
 
         return [
-            array_merge(['Nama Siswa', 'Kelas'], array_fill(0, count($dates), 'Tanggal'), ['Total']),
-            array_merge(['', ''], $dates, ['Hadir', 'Sakit', 'Ijin', 'Alfa'])
+            array_merge(['No', 'Nama Siswa', 'Kelas'], array_fill(0, count($dates), 'Tanggal'), ['Total']),
+            array_merge(['', '', ''], $dates, ['Hadir', 'Sakit', 'Ijin', 'Alfa'])
         ];
     }
+
 
     public function styles(Worksheet $sheet)
     {
@@ -167,7 +150,7 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
             ],
             'fill' => [
                 'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['argb' => 'FFC000'],
+                'startColor' => ['argb' => 'FFFFF'],
             ],
         ]);
 

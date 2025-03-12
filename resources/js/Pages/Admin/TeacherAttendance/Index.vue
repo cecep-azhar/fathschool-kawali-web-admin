@@ -36,29 +36,27 @@
                             />
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <a-select
-                                    class="width-100"
-                                    size="large"
-                                    v-model:value="filter.study_program"
-                                    show-search
-                                    :placeholder="__('Select a study program')"
-                                    :options="options"
-                                    :filter-option="filterOption"
-                                    @focus="handleFocus"
-                                    @blur="handleBlur"
-                                    @change="handleChange"
-                                />
-                            </div>
-
-                            <button
-                                type="submit"
-                                class="ml-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                            >
-                                {{ __("Filter") }}
-                            </button>
+                        <div>
+                            <a-select
+                                class="width-100"
+                                size="large"
+                                v-model:value="filter.study_program"
+                                show-search
+                                :placeholder="__('Select a study program')"
+                                :options="options"
+                                :filter-option="filterOption"
+                                @focus="handleFocus"
+                                @blur="handleBlur"
+                                @change="handleChange"
+                            />
                         </div>
+
+                        <button
+                            type="submit"
+                            class="ml-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        >
+                            {{ __("Filter") }}
+                        </button>
                     </div>
                 </form>
             </div>

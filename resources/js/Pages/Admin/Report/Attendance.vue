@@ -36,22 +36,22 @@
                             />
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <a-select
-                                    class="width-100"
-                                    size="large"
-                                    v-model:value="filter.course"
-                                    show-search
-                                    :placeholder="__('Select a course')"
-                                    :options="options"
-                                    :filter-option="filterOption"
-                                    @focus="handleFocus"
-                                    @blur="handleBlur"
-                                    @change="handleChange"
-                                />
-                            </div>
-                            <div>
+                        <!-- <div class="grid grid-cols-2 gap-4"> -->
+                        <div>
+                            <a-select
+                                class="width-100"
+                                size="large"
+                                v-model:value="filter.course"
+                                show-search
+                                :placeholder="__('Select a course')"
+                                :options="options"
+                                :filter-option="filterOption"
+                                @focus="handleFocus"
+                                @blur="handleBlur"
+                                @change="handleChange"
+                            />
+                        </div>
+                        <!-- <div>
                                 <a-select
                                     class="width-100"
                                     size="large"
@@ -64,8 +64,8 @@
                                     @blur="handleBlur"
                                     @change="handleChange"
                                 />
-                            </div>
-                        </div>
+                            </div> -->
+                        <!-- </div> -->
 
                         <button
                             type="submit"

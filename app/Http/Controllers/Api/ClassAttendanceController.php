@@ -13,6 +13,43 @@ use Illuminate\Support\Carbon;
 
 class ClassAttendanceController extends Controller
 {
+    public function schedule(Request $request)
+    {
+        $teacher_id = $request->teacher_id;
+
+        if (!$teacher_id) {
+            return response()->json(['message' => 'Teacher ID is required'], 400);
+        }
+
+        // Query jadwal berdasarkan teacher_id
+        $schedules = ClassRoutine::where('teacher_id', $teacher_id)
+            ->where(function ($q) {
+                $now = Carbon::now()->format('Y-m-d');
+                $q->where('start_date', '<=', $now)
+                    ->orWhereNull('start_date');
+            })
+            ->whereIn('activation', Setting::pluck('status')->toArray())
+            ->with(['course:id,name,qr_code_id', 'teacher:id,name', 'subject:id,name,color']) // Tambahkan qr_code_id dari course
+            ->get()
+            ->transform(function ($data) {
+                return [
+                    'course_id' => $data->course_id,
+                    'qr_code_id' => $data->course->qr_code_id, // Tambahkan qr_code_id
+                    'course_name' => $data->course->name,
+                    'teacher_name' => $data->teacher->name,
+                    'subject_name' => $data->subject->name,
+                    'color' => $data->subject->color,
+                    'daysOfWeek' => (string) $data->weekday,
+                    'startTime' => $data->start_time,
+                    'endTime' => $data->end_time,
+                    'title' => "Course: {$data->course->name}<br>Teacher: {$data->teacher->name}<br>Subject: {$data->subject->name}<br>Time: " . Carbon::parse($data->start_time)->format('h:i') . ' - ' . Carbon::parse($data->end_time)->format('h:i A'),
+                    'hiddenDays' => [1, 2, 3],
+                ];
+            });
+
+        return response()->json($schedules);
+    }
+
     // Qrin
     public function qrin(Request $request)
     {
@@ -81,6 +118,79 @@ class ClassAttendanceController extends Controller
 
         return response([
             'message' => 'Qrin success',
+            'attendance' => $attendance,
+            'attendance_id' => $attendance->id
+        ], 200);
+    }
+
+    // QrinManual
+    public function qrinManual(Request $request)
+    {
+        // Validate course_id
+        $request->validate([
+            'qr_code_id' => 'required',
+        ]);
+
+        // Get the course by course_id
+        $course = Course::where('qr_code_id', $request->qr_code_id)->first();
+
+        // Check if course not found
+        if (!$course) {
+            return response(['message' => 'Course not found'], 404);
+        }
+
+        // Get the current user
+        $user = $request->user();
+
+        $activeStatus = Setting::pluck('status')->toArray();
+
+        // Get the class routine for the user
+        $classRoutine = ClassRoutine::where('teacher_id', $user->id)
+            ->where('course_id', $course->id)
+            ->where('activation', $activeStatus)
+            ->first();
+
+        // Check if class routine not found
+        if (!$classRoutine) {
+            return response(['message' => 'Anda tidak memiliki jadwal'], 400);
+        }
+
+        // Check if course_id does not match
+        if ($classRoutine->course_id !== $course->id) {
+            return response(['message' => 'Anda tidak memiliki jadwal pada kelas ini'], 400);
+        }
+
+        // Check if time_in is before start_time
+        if (date('H:i:s') < $classRoutine->start_time) {
+            return response(['message' => 'Ini belum jam pelajaran anda'], 400);
+        }
+
+        // Check if time_in is after end_time
+        if (date('H:i:s') > $classRoutine->end_time) {
+            return response(['message' => 'Sudah bukan jam pembelajaran anda'], 400);
+        }
+
+        // Save new attendance
+        $attendance = new ClassAttendance;
+        $attendance->user_id = $user->id;
+        $attendance->course_id = $course->id;
+        $attendance->date = date('Y-m-d');
+        $attendance->time_in = date('H:i:s');
+        $attendance->save();
+
+        activity()
+            ->useLog('default')
+            ->causedBy(auth()->user())
+            ->event('QrinManual')
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user' => $user->username,
+                'time' => date('H:i')
+            ])
+            ->log('User QrinManual');
+
+        return response([
+            'message' => 'QrinManual success',
             'attendance' => $attendance,
             'attendance_id' => $attendance->id
         ], 200);

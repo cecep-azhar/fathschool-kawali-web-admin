@@ -22,8 +22,8 @@ class TeacherController extends Controller
 
         // filter => keyword
         if ($request->has('keyword') && $request->keyword !== null) {
-            $query->where('name', $request->keyword)
-                ->orWhere('email', $request->keyword);
+            $query->where('name', $request->keyword);
+            // ->orWhere('email', $request->keyword);
         }
         // filter => department
         if ($request->has('department') && $request->department !== null) {
@@ -33,6 +33,7 @@ class TeacherController extends Controller
         }
 
         $users = $query->latest()->paginate(15)->onEachSide(-1);
+
         $departments = Department::get(['id', 'name', 'slug']);
 
         return inertia('Admin/Teacher/Index', [

@@ -2,6 +2,7 @@
 
 namespace App\Services\Leave;
 
+use App\Models\Course;
 use App\Models\Leave;
 use App\Models\LeaveType;
 use App\Models\User;
@@ -15,11 +16,10 @@ class StudentLeaveService
 
         // keyword filter
         if ($request->has('keyword') && $request->keyword != null) {
-
             $query->whereHas('user', function ($user) use ($request) {
-                $user->where('name', 'Like', '%'.$request->keyword.'%')
-                    ->orWhere('email', 'Like', '%'.$request->keyword.'%')
-                    ->orWhere('role', 'Like', '%'.$request->keyword.'%');
+                $user->where('name', 'Like', '%' . $request->keyword . '%')
+                    ->orWhere('email', 'Like', '%' . $request->keyword . '%')
+                    ->orWhere('role', 'Like', '%' . $request->keyword . '%');
             });
         }
 
@@ -46,10 +46,17 @@ class StudentLeaveService
             });
         }
 
+        // class filter (filter berdasarkan kelas)
+        if ($request->has('class') && $request->class != 'all' && $request->class != null) {
+            $query->whereHas('user.courses.course', function ($course) use ($request) {
+                $course->where('slug', $request->class);
+            });
+        }
 
         $leaves = $query->whereHas('user', function ($user) {
             $user->whereNotIn('role', ['parent', 'teacher', 'administration', 'accountant', 'admin']);
         })->latest()->with(['user.department', 'user.courses.course', 'type'])->paginate(10);
+
         $users = User::active()->latest()->get(['id', 'name', 'email']);
 
         $leave_types = LeaveType::whereNotIn('role_type', ['teacher', 'staff'])
@@ -57,13 +64,17 @@ class StudentLeaveService
             ->distinct()
             ->get();
 
+        $classes = Course::get(['id', 'name', 'slug']);
+
         $data['leaves'] = $leaves;
         $data['filter_data'] = $request;
         $data['users'] = $users;
         $data['leave_types'] = $leave_types;
+        $data['classes'] = $classes;
 
         return $data;
     }
+
 
     public function defaultRoleLeavePage(object $auth_user): array
     {

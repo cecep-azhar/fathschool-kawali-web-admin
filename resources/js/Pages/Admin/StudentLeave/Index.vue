@@ -67,6 +67,21 @@
                                 @change="handleChange"
                             />
                         </div>
+
+                        <div class="xl:col-span-">
+                            <a-select
+                                class="width-100"
+                                size="large"
+                                v-model:value="filter.class"
+                                show-search
+                                :placeholder="__('Select a class')"
+                                :options="options2"
+                                @focus="handleFocus"
+                                @blur="handleBlur"
+                                @change="handleChange"
+                            />
+                        </div>
+
                         <div class="xl:col-span-1">
                             <a-select
                                 class="width-100"
@@ -438,17 +453,20 @@ export default {
         filter_data: Object,
         users: Object,
         leave_types: Object,
+        classes: Object,
     },
     data() {
         return {
             loading: false,
             options: [],
+            options2: [],
             causeModal: false,
             filter: {
                 keyword: this.filter_data.keyword ?? "",
                 status: this.filter_data.status ?? null,
                 role: this.filter_data.role ?? null,
                 leave_type: this.filter_data.leave_type ?? null,
+                class: this.filter_data.class ?? null,
             },
             searchQuery: this.filter_data.keyword ?? "", // Sinkronisasi keyword pencarian
             leave: "",
@@ -467,6 +485,16 @@ export default {
         });
         for (const [key, value] of Object.entries(this.leave_types)) {
             this.options.push({
+                value: value.slug,
+                label: value.name,
+            });
+        }
+        this.options2.push({
+            value: "",
+            label: "All",
+        });
+        for (const [key, value] of Object.entries(this.classes)) {
+            this.options2.push({
                 value: value.slug,
                 label: value.name,
             });

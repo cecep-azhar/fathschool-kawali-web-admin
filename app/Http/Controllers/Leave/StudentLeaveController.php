@@ -32,8 +32,6 @@ class StudentLeaveController extends Controller
             // For Admin & Others role
             $data = (new StudentLeaveService)->index($request);
 
-            // dd($data);
-
             return inertia('Admin/StudentLeave/Index', $data);
         }
     }
@@ -53,7 +51,7 @@ class StudentLeaveController extends Controller
             'rejected_cause' => $request->cause,
         ]);
 
-        $this->flashSuccess('Leave '.$request->status.' !');
+        $this->flashSuccess('Leave ' . $request->status . ' !');
 
         return back();
     }

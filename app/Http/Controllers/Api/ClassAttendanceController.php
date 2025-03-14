@@ -13,240 +13,306 @@ use Illuminate\Support\Carbon;
 
 class ClassAttendanceController extends Controller
 {
-    public function schedule(Request $request)
-    {
-        $teacher_id = $request->teacher_id;
-
-        if (!$teacher_id) {
-            return response()->json(['message' => 'Teacher ID is required'], 400);
-        }
-
-        // Query jadwal berdasarkan teacher_id
-        $schedules = ClassRoutine::where('teacher_id', $teacher_id)
-            ->where(function ($q) {
-                $now = Carbon::now()->format('Y-m-d');
-                $q->where('start_date', '<=', $now)
-                    ->orWhereNull('start_date');
-            })
-            ->whereIn('activation', Setting::pluck('status')->toArray())
-            ->with(['course:id,name,qr_code_id', 'teacher:id,name', 'subject:id,name,color']) // Tambahkan qr_code_id dari course
-            ->get()
-            ->transform(function ($data) {
-                return [
-                    'course_id' => $data->course_id,
-                    'qr_code_id' => $data->course->qr_code_id, // Tambahkan qr_code_id
-                    'course_name' => $data->course->name,
-                    'teacher_name' => $data->teacher->name,
-                    'subject_name' => $data->subject->name,
-                    'color' => $data->subject->color,
-                    'daysOfWeek' => (string) $data->weekday,
-                    'startTime' => $data->start_time,
-                    'endTime' => $data->end_time,
-                    'title' => "Course: {$data->course->name}<br>Teacher: {$data->teacher->name}<br>Subject: {$data->subject->name}<br>Time: " . Carbon::parse($data->start_time)->format('h:i') . ' - ' . Carbon::parse($data->end_time)->format('h:i A'),
-                    'hiddenDays' => [1, 2, 3],
-                ];
-            });
-
-        return response()->json($schedules);
-    }
 
     // Qrin
     public function qrin(Request $request)
     {
-        // Validate qr_code_id
-        $request->validate([
-            'qr_code_id' => 'required',
-        ]);
+        try {
+            // Validasi input termasuk latitude & longitude
+            $request->validate([
+                'qr_code_id' => 'required',
+                'latitude' => 'required',
+                'longitude' => 'required',
+            ]);
 
-        // Get the course by qr_code_id
-        $course = Course::where('qr_code_id', $request->qr_code_id)->first();
+            // Ambil data lokasi dari request
+            $userLatitude = $request->latitude;
+            $userLongitude = $request->longitude;
 
-        // Check if course not found
-        if (!$course) {
-            return response(['message' => 'Course not found'], 404);
+            // Ambil pengaturan lokasi target
+            $settings = Setting::first();
+            $targetLatitude = $settings->latitude;
+            $targetLongitude = $settings->longtitude;
+            $radius = $settings->radius / 1000; // Konversi meter ke kilometer
+
+            // Hitung jarak pengguna dari lokasi yang diizinkan
+            $distance = round($this->calculateDistance($targetLatitude, $targetLongitude, $userLatitude, $userLongitude), 3);
+
+            // Jika di luar radius, tolak check-in
+            if ($distance > $radius) {
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'You are outside the allowed radius',
+                    'data' => [
+                        'distance_in_km' => $distance,
+                        'location' => [
+                            'latitude' => $userLatitude,
+                            'longitude' => $userLongitude,
+                        ],
+                        'target_location' => [
+                            'latitude' => $targetLatitude,
+                            'longitude' => $targetLongitude,
+                            'radius' => $radius,
+                        ]
+                    ]
+                ], 403);
+            }
+
+            // Ambil data user yang sedang login
+            $user = $request->user();
+
+            // Ambil course berdasarkan QR Code
+            $course = Course::where('qr_code_id', $request->qr_code_id)->first();
+            if (!$course) {
+                return response(['message' => 'Course not found'], 404);
+            }
+
+            // Periksa status aktif dari Setting
+            $activeStatus = Setting::pluck('status')->toArray();
+
+            // Periksa jadwal kelas pengguna
+            $classRoutine = ClassRoutine::where('teacher_id', $user->id)
+                ->where('course_id', $course->id)
+                ->where('activation', $activeStatus)
+                ->first();
+
+            if (!$classRoutine) {
+                return response(['message' => 'Anda tidak memiliki jadwal'], 400);
+            }
+
+            // Pastikan waktu saat ini dalam rentang jam pelajaran
+            $currentTime = date('H:i:s');
+            if ($currentTime < $classRoutine->start_time) {
+                return response(['message' => 'Ini belum jam pelajaran anda'], 400);
+            }
+            if ($currentTime > $classRoutine->end_time) {
+                return response(['message' => 'Sudah bukan jam pembelajaran anda'], 400);
+            }
+
+            // Simpan data kehadiran
+            $attendance = new ClassAttendance;
+            $attendance->user_id = $user->id;
+            $attendance->course_id = $course->id;
+            $attendance->date = date('Y-m-d');
+            $attendance->time_in = $currentTime;
+            $attendance->latlon_in = "$userLatitude,$userLongitude"; // Simpan lokasi saat check-in
+            $attendance->save();
+
+            // Catat aktivitas
+            activity()
+                ->useLog('default')
+                ->causedBy(auth()->user())
+                ->event('Qrin')
+                ->withProperties([
+                    'ip' => $request->ip(),
+                    'user' => $user->username,
+                    'time' => date('H:i'),
+                    'latitude' => $userLatitude,
+                    'longitude' => $userLongitude,
+                ])
+                ->log('User Qrin');
+
+            return response([
+                'message' => 'Qrin success',
+                'attendance' => $attendance,
+                'attendance_id' => $attendance->id,
+                'distance_in_km' => $distance
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Internal Server Error',
+                'error' => $th->getMessage()
+            ], 500);
         }
-
-        // Get the current user
-        $user = $request->user();
-
-        $activeStatus = Setting::pluck('status')->toArray();
-
-        // Get the class routine for the user
-        $classRoutine = ClassRoutine::where('teacher_id', $user->id)
-            ->where('course_id', $course->id)
-            ->where('activation', $activeStatus)
-            ->first();
-
-        // Check if class routine not found
-        if (!$classRoutine) {
-            return response(['message' => 'Anda tidak memiliki jadwal'], 400);
-        }
-
-        // Check if course_id does not match
-        if ($classRoutine->course_id !== $course->id) {
-            return response(['message' => 'Anda tidak memiliki jadwal pada kelas ini'], 400);
-        }
-
-        // Check if time_in is before start_time
-        if (date('H:i:s') < $classRoutine->start_time) {
-            return response(['message' => 'Ini belum jam pelajaran anda'], 400);
-        }
-
-        // Check if time_in is after end_time
-        if (date('H:i:s') > $classRoutine->end_time) {
-            return response(['message' => 'Sudah bukan jam pembelajaran anda'], 400);
-        }
-
-        // Save new attendance
-        $attendance = new ClassAttendance;
-        $attendance->user_id = $user->id;
-        $attendance->course_id = $course->id;
-        $attendance->date = date('Y-m-d');
-        $attendance->time_in = date('H:i:s');
-        $attendance->save();
-
-        activity()
-            ->useLog('default')
-            ->causedBy(auth()->user())
-            ->event('Qrin')
-            ->withProperties([
-                'ip' => $request->ip(),
-                'user' => $user->username,
-                'time' => date('H:i')
-            ])
-            ->log('User Qrin');
-
-        return response([
-            'message' => 'Qrin success',
-            'attendance' => $attendance,
-            'attendance_id' => $attendance->id
-        ], 200);
     }
 
-    // QrinManual
-    public function qrinManual(Request $request)
+    /**
+     * * Hitung jarak antara dua koordinat dengan Haversine Formula.
+     *
+     * @param float $lat1
+     * @param float $lon1
+     * @param float $lat2
+     * @param float $lon2
+     * @return float Distance in kilometers
+     */
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
-        // Validate course_id
-        $request->validate([
-            'qr_code_id' => 'required',
-        ]);
+        $earthRadius = 6371; // Radius bumi dalam kilometer
 
-        // Get the course by course_id
-        $course = Course::where('qr_code_id', $request->qr_code_id)->first();
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
 
-        // Check if course not found
-        if (!$course) {
-            return response(['message' => 'Course not found'], 404);
-        }
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLon / 2) * sin($dLon / 2);
 
-        // Get the current user
-        $user = $request->user();
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
-        $activeStatus = Setting::pluck('status')->toArray();
+        $distance = $earthRadius * $c; // Hasil dalam kilometer
 
-        // Get the class routine for the user
-        $classRoutine = ClassRoutine::where('teacher_id', $user->id)
-            ->where('course_id', $course->id)
-            ->where('activation', $activeStatus)
-            ->first();
-
-        // Check if class routine not found
-        if (!$classRoutine) {
-            return response(['message' => 'Anda tidak memiliki jadwal'], 400);
-        }
-
-        // Check if course_id does not match
-        if ($classRoutine->course_id !== $course->id) {
-            return response(['message' => 'Anda tidak memiliki jadwal pada kelas ini'], 400);
-        }
-
-        // Check if time_in is before start_time
-        if (date('H:i:s') < $classRoutine->start_time) {
-            return response(['message' => 'Ini belum jam pelajaran anda'], 400);
-        }
-
-        // Check if time_in is after end_time
-        if (date('H:i:s') > $classRoutine->end_time) {
-            return response(['message' => 'Sudah bukan jam pembelajaran anda'], 400);
-        }
-
-        // Save new attendance
-        $attendance = new ClassAttendance;
-        $attendance->user_id = $user->id;
-        $attendance->course_id = $course->id;
-        $attendance->date = date('Y-m-d');
-        $attendance->time_in = date('H:i:s');
-        $attendance->save();
-
-        activity()
-            ->useLog('default')
-            ->causedBy(auth()->user())
-            ->event('QrinManual')
-            ->withProperties([
-                'ip' => $request->ip(),
-                'user' => $user->username,
-                'time' => date('H:i')
-            ])
-            ->log('User QrinManual');
-
-        return response([
-            'message' => 'QrinManual success',
-            'attendance' => $attendance,
-            'attendance_id' => $attendance->id
-        ], 200);
+        return $distance;
     }
+
 
     // Qrout
     public function qrout(Request $request)
     {
-        // Validate qr_code_id
-        $request->validate([
-            'qr_code_id' => 'required',
-        ]);
+        try {
+            // Ambil pengaturan umum
+            $settings = Setting::first();
+            $targetLatitude = $settings->latitude;
+            $targetLongitude = $settings->longtitude;
+            $radius = $settings->radius / 1000; // Konversi ke km
+            $timeOutSetting = $settings->time_out; // Waktu minimal checkout
 
-        // Get the course by qr_code_id
-        $course = Course::where('qr_code_id', $request->qr_code_id)->first();
+            // Validasi input
+            $data_att = $request->validate([
+                'qr_code_id' => 'required',
+                'latitude' => 'required',
+                'longitude' => 'required',
+            ]);
 
-        // Check if course not found
-        if (!$course) {
-            return response(['message' => 'Course not found'], 404);
+            // Ambil course berdasarkan qr_code_id
+            $course = Course::where('qr_code_id', $data_att['qr_code_id'])->first();
+            if (!$course) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'Course not found'
+                ], 404);
+            }
+
+            // Ambil user yang sedang login
+            $user = $request->user();
+
+            // Cek apakah user memiliki attendance aktif untuk course ini
+            $attendance = ClassAttendance::where('user_id', $user->id)
+                ->where('course_id', $course->id)
+                ->whereNotNull('time_in') // Sudah check-in
+                ->whereNull('time_out')   // Belum check-out
+                ->latest()
+                ->first();
+
+            if (!$attendance) {
+                return response()->json([
+                    'status' => 401,
+                    'message' => 'Check-in first'
+                ], 401);
+            }
+
+            // Hitung jarak antara lokasi user dengan lokasi target
+            $distance = round($this->calculateDistance($targetLatitude, $targetLongitude, $data_att['latitude'], $data_att['longitude']), 3);
+
+            if ($distance > $radius) {
+                return response()->json([
+                    'status' => 403,
+                    'message' => 'You are outside the allowed radius',
+                    'data' => [
+                        'user' => [
+                            'user_id' => $user->id,
+                            'distance_in_km' => $distance,
+                            'location' => [
+                                'latitude' => $data_att['latitude'],
+                                'longitude' => $data_att['longitude'],
+                            ]
+                        ],
+                        'target_location' => [
+                            'latitude' => $targetLatitude,
+                            'longitude' => $targetLongitude,
+                            'radius' => $radius,
+                        ]
+                    ]
+                ], 403);
+            }
+
+            // Waktu saat ini
+            $currentTime = date('H:i:s');
+
+            // Cek apakah user memiliki izin (leave) untuk checkout lebih awal
+            $hasLeave = Leave::where('user_id', $user->id)
+                ->where('status', 'accepted')
+                ->where('start', '<=', date('Y-m-d H:i:s'))
+                ->where('end', '>=', date('Y-m-d H:i:s'))
+                ->exists();
+
+            // Cek batas waktu checkout
+            if (strtotime($currentTime) < strtotime($timeOutSetting) && !$hasLeave) {
+                return response()->json([
+                    'status' => 402,
+                    'message' => 'You cannot checkout before the allowed time unless you have an accepted leave.',
+                    'data' => [
+                        'user' => [
+                            'user_id' => $user->id,
+                            'time' => $currentTime,
+                            'time_out' => $timeOutSetting,
+                            'distance_in_km' => $distance,
+                            'location' => [
+                                'latitude' => $data_att['latitude'],
+                                'longitude' => $data_att['longitude'],
+                            ]
+                        ],
+                        'target_location' => [
+                            'latitude' => $targetLatitude,
+                            'longitude' => $targetLongitude,
+                            'radius' => $radius,
+                        ]
+                    ]
+                ], 402);
+            }
+
+            // Cek apakah sudah pernah checkout
+            if ($attendance->time_out !== null) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Already checked out'
+                ], 400);
+            }
+
+            // Simpan waktu checkout dan lokasi
+            $attendance->time_out = $currentTime;
+            $attendance->latlon_out = $data_att['latitude'] . ',' . $data_att['longitude'];
+            $attendance->save();
+
+            // Logging aktivitas checkout
+            activity()
+                ->useLog('default')
+                ->causedBy(auth()->user())
+                ->event('Qrout')
+                ->withProperties([
+                    'ip' => $request->ip(),
+                    'user' => $user->username,
+                    'time' => $currentTime,
+                    'latlon_out' => $attendance->latlon_out
+                ])
+                ->log('User Qrout');
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Check-out successfully',
+                'data' => [
+                    'user' => [
+                        'user_id' => $user->id,
+                        'time' => $currentTime,
+                        'distance_in_km' => $distance,
+                        'location' => [
+                            'latitude' => $data_att['latitude'],
+                            'longitude' => $data_att['longitude'],
+                        ]
+                    ],
+                    'target_location' => [
+                        'latitude' => $targetLatitude,
+                        'longitude' => $targetLongitude,
+                        'radius' => $radius,
+                    ]
+                ]
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Internal Server Error',
+                'error' => $th->getMessage()
+            ], 500);
         }
-
-        // Get the current user
-        $user = $request->user();
-
-        // Get last attendance for the class and user
-        $attendance = ClassAttendance::where('user_id', $user->id)
-            ->where('course_id', $course->id)
-            ->whereNotNull('time_in')
-            ->whereNull('time_out')
-            ->latest()
-            ->first();
-
-        // Check if attendance not found
-        if (!$attendance) {
-            return response(['message' => 'No active attendance found for this class'], 400);
-        }
-
-        // Save checkout
-        $attendance->time_out = date('H:i:s');
-        $attendance->save();
-
-        activity()
-            ->useLog('default')
-            ->causedBy(auth()->user())
-            ->event('Qrout')
-            ->withProperties([
-                'ip' => $request->ip(),
-                'user' => $user->username,
-                'time' => date('H:i')
-            ])
-            ->log('User Qrout');
-
-        return response([
-            'message' => 'Qrout success',
-            'attendance' => $attendance
-        ], 200);
     }
 
     // Check is isQrin

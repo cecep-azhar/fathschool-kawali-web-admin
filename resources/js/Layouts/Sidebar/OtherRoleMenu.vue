@@ -449,46 +449,29 @@ export default {
         completeStep() {
             let total_steps = this.tour.steps.length;
             let current_step = this.tour.steps.indexOf(this.tour.currentStep);
-            if (total_steps == current_step + 1) {
-                const sidebar = document.querySelector(".sidebar");
-                const sidebarOverlay =
-                    document.querySelector(".sidebar-overlay");
+            if (total_steps === current_step + 1) {
+                this.complete();
+            }
+        },
+        complete() {
+            localStorage.setItem("tourCompleted", "true"); // Simpan status selesai
+            this.closeTour();
+        },
+        closeTour() {
+            this.tour.cancel(); // Menutup tour
+            this.tour = null; // Hapus instance tour
+            this.steps = []; // Kosongkan langkah-langkah
+
+            // Tutup sidebar jika masih terbuka
+            const sidebar = document.querySelector(".sidebar");
+            const sidebarOverlay = document.querySelector(".sidebar-overlay");
+            if (sidebar && sidebarOverlay) {
                 sidebar.classList.remove("active");
                 sidebarOverlay.classList.remove("active");
-                this.$inertia.post(
-                    this.route("tour.completed"),
-                    {},
-                    {
-                        preserveScroll: true,
-                    }
-                );
             }
         },
         tourGoback() {
             this.tour.back();
-        },
-        toggleList(arg) {
-            if (arg == "list") {
-                if (this.list) {
-                    this.list = false;
-                } else {
-                    this.list = true;
-                }
-            }
-            if (arg == "list2") {
-                if (this.list2) {
-                    this.list2 = false;
-                } else {
-                    this.list2 = true;
-                }
-            }
-            if (arg == "list3") {
-                if (this.list3) {
-                    this.list3 = false;
-                } else {
-                    this.list3 = true;
-                }
-            }
         },
     },
 };

@@ -111,7 +111,7 @@ class AttendanceController extends Controller
             $isLate = strtotime($currentTime) > strtotime($timeInSetting);
 
             $distance = round($this->calculateDistance($targetLatitude, $targetLongitude, $userLatitude, $userLongitude), 3); // Presisi hingga 3 desimal
-            $radius = $settings->radius / 1000; // Radius disimpan dalam meter
+            $radius = $settings->radius;
             if ($distance > $radius) {
                 return response()->json([
                     'status' => 403,
@@ -292,8 +292,8 @@ class AttendanceController extends Controller
     {
         try {
             $check_user = User::where('id', $user_id)->first();
-            $class = 
-            $role_user = $check_user->role;
+            $class =
+                $role_user = $check_user->role;
 
             if ($role_user == "Student") {
                 $attendanceStudent = AttendanceStudent::where('user_id', $user_id)
@@ -447,7 +447,7 @@ class AttendanceController extends Controller
 
             // $distance = $this->calculateDistance($targetLatitude, $targetLongitude, $data_att['lattitude'], $data_att['longitude']);
             $distance = round($this->calculateDistance($targetLatitude, $targetLongitude, $data_att['lattitude'], $data_att['longitude']), 3); // Presisi hingga 3 desimal
-            $radius = $settings->radius / 1000; // Jika radius disimpan dalam meter
+            $radius = $settings->radius;
             if ($distance > $radius) {
                 return response()->json([
                     'status' => 403,
@@ -550,8 +550,6 @@ class AttendanceController extends Controller
             ], 500);
         }
     }
-
-
 
     public function checkUpcomingClass(Request $request)
     {

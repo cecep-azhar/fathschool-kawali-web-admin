@@ -78,12 +78,14 @@ Route::post('/leaveManual', [App\Http\Controllers\Api\PermissionController::clas
 
 //Qrin
 Route::post('/qrin', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrin'])->middleware('auth:sanctum');
+Route::post('/qrinManual', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrinManual']);
 
 //is qrin
 Route::get('/is-qrin', [App\Http\Controllers\Api\ClassAttendanceController::class, 'isQrin'])->middleware('auth:sanctum');
 
 //Qrout
 Route::post('/qrout', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qrout'])->middleware('auth:sanctum');
+Route::post('/qroutManual', [App\Http\Controllers\Api\ClassAttendanceController::class, 'qroutManual']);
 
 // * API Check In
 Route::post('/checkin', [App\Http\Controllers\Api\AttendanceController::class, 'checkin'])->middleware('auth:sanctum');

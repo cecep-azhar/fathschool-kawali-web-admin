@@ -237,7 +237,20 @@ class ClassAttendanceController extends Controller
                 return response(['message' => 'Sudah bukan jam pembelajaran anda'], 400);
             }
 
-            // Simpan data kehadiran
+            // **Cek apakah user sudah Qrin hari ini**
+            $alreadyCheckedIn = ClassAttendance::where('user_id', $user->id)
+                ->where('course_id', $course->id)
+                ->whereDate('date', date('Y-m-d'))
+                ->exists();
+
+            if ($alreadyCheckedIn) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Anda sudah melakukan Qrin hari ini',
+                ], 400);
+            }
+
+            // **Simpan data kehadiran**
             $attendance = new ClassAttendance;
             $attendance->user_id = $user->id; // Gunakan user_id dari request
             $attendance->course_id = $course->id;
@@ -246,7 +259,7 @@ class ClassAttendanceController extends Controller
             $attendance->latlon_in = "$userLatitude,$userLongitude"; // Simpan lokasi saat check-in
             $attendance->save();
 
-            // Catat aktivitas
+            // **Catat aktivitas**
             activity()
                 ->useLog('default')
                 ->causedBy(auth()->user())
@@ -276,8 +289,6 @@ class ClassAttendanceController extends Controller
             ], 500);
         }
     }
-
-
 
     // Qrout
     public function qrout(Request $request)
@@ -409,12 +420,20 @@ class ClassAttendanceController extends Controller
         $attendance = ClassAttendance::where('user_id', $user->id)
             ->where('course_id', $course->id)
             ->whereNotNull('time_in')
-            ->whereNull('time_out')
+            ->whereDate('date', date('Y-m-d'))
             ->latest()
             ->first();
 
         if (!$attendance) {
             return response(['message' => 'No active attendance found for this class'], 400);
+        }
+
+        // **Cek apakah sudah melakukan QRout (time_out sudah ada)**
+        if (!is_null($attendance->time_out)) {
+            return response()->json([
+                'status' => 400,
+                'message' => 'Anda sudah melakukan Qrout hari ini',
+            ], 400);
         }
 
         // Ambil koordinat tujuan dari pengaturan
@@ -450,12 +469,12 @@ class ClassAttendanceController extends Controller
             ], 403);
         }
 
-        // Simpan checkout
+        // **Simpan checkout**
         $attendance->time_out = date('H:i:s');
         $attendance->latlon_out = "$userLatitude,$userLongitude";
         $attendance->save();
 
-        // Log aktivitas
+        // **Log aktivitas**
         activity()
             ->useLog('default')
             ->causedBy(auth()->user())
@@ -470,7 +489,7 @@ class ClassAttendanceController extends Controller
             ])
             ->log('User Qrout');
 
-        // Response sukses
+        // **Response sukses**
         return response([
             'message'    => 'Qrout success',
             'attendance' => $attendance,
@@ -482,6 +501,7 @@ class ClassAttendanceController extends Controller
             ]
         ], 200);
     }
+
 
 
 

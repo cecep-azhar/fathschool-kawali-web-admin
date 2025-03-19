@@ -412,6 +412,10 @@ class DataDisplayFathboard extends Controller
                 ];
             }
 
+            $totalClasses = $totalActiveClasses + $totalAbsentClasses;
+            $percentageActiveClasses = $totalClasses > 0 ? round(($totalActiveClasses / $totalClasses) * 100, 2) . '%' : '0%';
+            $percentageEmptyClasses = $totalClasses > 0 ? round(($totalAbsentClasses / $totalClasses) * 100, 2) . '%' : '0%';
+
             // Menambahkan data tingkat kelas dengan total present, absent, dan leave
             $classes[] = [
                 'id' => $grade['id'],
@@ -419,6 +423,8 @@ class DataDisplayFathboard extends Controller
                 'active_class' => $totalActiveClasses, // Kelas aktif
                 'empty_class' => $totalAbsentClasses, // Kelas kosong
                 'total_class' => $totalActiveClasses + $totalAbsentClasses,
+                'percentage_active_class' => $percentageActiveClasses,
+                'percentage_empty_class' => $percentageEmptyClasses,
                 'total_students' => $totalStudentsInGrade, // Total siswa
                 'total_present' => $totalPresent, // Total siswa yang hadir
                 'percentage_present' => $totalStudentsInGrade > 0 ? round(($totalPresent / $totalStudentsInGrade) * 100, 2) . '%' : '0%',
@@ -606,7 +612,7 @@ class DataDisplayFathboard extends Controller
     private function getAttendanceData($today)
     {
         $settingTimeIn = Setting::select(['time_in'])->first();
-        
+
         $teacherAttendance = Attendance::where('date', $today)
             ->whereHas('user', function ($query) {
                 $query->where('role', 'teacher');

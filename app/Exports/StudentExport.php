@@ -56,7 +56,6 @@ class StudentExport implements FromCollection, WithHeadings, WithMapping, WithCo
             $student->email,
             $student->date_of_birth ? Carbon::parse($student->date_of_birth)->format('d-m-Y') : '', // Format Tanggal
             $student->phone,
-            $student->gender,
         ];
     }
 
@@ -75,7 +74,6 @@ class StudentExport implements FromCollection, WithHeadings, WithMapping, WithCo
             'Email',
             'Tanggal Lahir',
             'Nomor Telepon',
-            'Jenis Kelamin',
         ];
     }
 
@@ -92,7 +90,6 @@ class StudentExport implements FromCollection, WithHeadings, WithMapping, WithCo
             'E' => 25, // Email
             'F' => 15, // Tanggal Lahir
             'G' => 15, // Nomor Telepon
-            'H' => 10, // Jenis Kelamin
         ];
     }
 

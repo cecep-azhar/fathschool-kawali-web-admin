@@ -14,6 +14,7 @@ use App\Services\Accountant\Invoice\DeleteInvoiceService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class UserService
 {
@@ -30,9 +31,9 @@ class UserService
             })
             ->when($request->has('keyword') && $request->keyword != null, function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
-                    $q->where('name', 'Like', '%'.$request->keyword.'%')
-                        ->orWhere('email', 'Like', '%'.$request->keyword.'%')
-                        ->orWhere('role', 'Like', '%'.$request->keyword.'%');
+                    $q->where('name', 'Like', '%' . $request->keyword . '%')
+                        ->orWhere('email', 'Like', '%' . $request->keyword . '%')
+                        ->orWhere('role', 'Like', '%' . $request->keyword . '%');
                 });
             })
             ->paginate(15)
@@ -60,6 +61,39 @@ class UserService
 
     public function store(object $request): object
     {
+        // Cek apakah ada pengguna lain dengan data yang sama
+        $errors = [];
+
+        if (!empty($request->nik)) { // Validasi hanya jika NIK tidak kosong
+            if (User::where('nik', $request->nik)->exists()) {
+                $errors['nik'] = 'NIK sudah digunakan oleh pengguna lain.';
+            }
+        }
+
+        if (!empty($request->nisn)) { // Validasi hanya jika NISN tidak kosong
+            if (User::where('nisn', $request->nisn)->exists()) {
+                $errors['nisn'] = 'NISN sudah digunakan oleh pengguna lain.';
+            }
+        }
+
+        if (User::where('name', $request->name)->exists()) {
+            $errors['name'] = 'Nama sudah digunakan oleh pengguna lain.';
+        }
+
+        if (User::where('email', $request->email)->exists()) {
+            $errors['email'] = 'Email sudah digunakan oleh pengguna lain.';
+        }
+
+        if (!empty($request->phone)) { // Validasi hanya jika Phone tidak kosong
+            if (User::where('phone', $request->phone)->exists()) {
+                $errors['phone'] = 'Nomor telepon sudah digunakan oleh pengguna lain.';
+            }
+        }
+
+        // Jika ada error, lemparkan validation exception
+        if (!empty($errors)) {
+            throw ValidationException::withMessages($errors);
+        }
         // department manage
         if ($request->department) {
             $department_id = $this->departmentStore($request);
@@ -72,6 +106,8 @@ class UserService
 
         $password = $request->password ? bcrypt($request->password) : bcrypt(Str::random(8));
         $user = User::create([ // main user create
+            'nik' => $request->nik ?: null,
+            'nisn' => $request->nisn ?: null,
             'name' => $request->name,
             'email' => $request->email,
             'role' => $request->user_type,
@@ -142,7 +178,7 @@ class UserService
     public function studentProfile(object $user, object $request)
     {
         $user->profile()->create([
-            'roll_no' => Str::slug(Str::random(6).$user->id),
+            'roll_no' => Str::slug(Str::random(6) . $user->id),
             'session' => Carbon::now()->format('Y') - Carbon::now()->format('Y'),
             'note' => $request->note ?? '',
             'plan_id' => $request->plan,
@@ -195,18 +231,54 @@ class UserService
 
     public function update(object $request, object $user): void
     {
+        // Cek apakah ada pengguna lain dengan data yang sama
+        $errors = [];
+
+        if (!empty($request->nik)) { // Cek hanya jika NISN tidak kosong
+            if (User::where('nik', $request->nik)->where('id', '!=', $user->id)->exists()) {
+                $errors['nik'] = 'NIK sudah digunakan oleh pengguna lain.';
+            }
+        }
+
+        if (!empty($request->nisn)) { // Cek hanya jika NISN tidak kosong
+            if (User::where('nisn', $request->nisn)->where('id', '!=', $user->id)->exists()) {
+                $errors['nisn'] = 'NISN sudah digunakan oleh pengguna lain.';
+            }
+        }
+
+        if (User::where('name', $request->name)->where('id', '!=', $user->id)->exists()) {
+            $errors['name'] = 'Nama sudah digunakan oleh pengguna lain.';
+        }
+
+        if (User::where('email', $request->email)->where('id', '!=', $user->id)->exists()) {
+            $errors['email'] = 'Email sudah digunakan oleh pengguna lain.';
+        }
+
+        if (!empty($request->phone)) { // Cek hanya jika Phone tidak kosong
+            if (User::where('phone', $request->phone)->where('id', '!=', $user->id)->exists()) {
+                $errors['phone'] = 'Nomor telepon sudah digunakan oleh pengguna lain.';
+            }
+        }
+
+        // Jika ada error, lemparkan validation exception
+        if (!empty($errors)) {
+            throw ValidationException::withMessages($errors);
+        }
+
         // department manage
         if ($request->department) {
             $department_id = $this->departmentStore($request);
         }
 
         $user->update([ // main user update
+            'nik' => $request->nik ?: null,
+            'nisn' => $request->nisn ?: null, // Simpan null jika kosong
             'name' => $request->name,
             'email' => $request->email,
             'role' => $request->user_type,
             'department_id' => $department_id ?? $user->department_id,
             'password' => $request->password ? bcrypt($request->password) : $user->password,
-            'phone' => $request->phone ?? '',
+            'phone' => $request->phone ?: null, // Simpan null jika kosong
             'address' => $request->address ?? '',
             'date_of_birth' => Carbon::parse($request->date_of_birth) ?? null,
             'gender' => $request->gender ?? 'male',
@@ -258,10 +330,12 @@ class UserService
         }
     }
 
+
+
     public function studentProfileUpdate(object $user, object $request)
     {
         $user->profile()->update([
-            'roll_no' => Str::slug(Str::random(6).$user->id),
+            'roll_no' => Str::slug(Str::random(6) . $user->id),
             'session' => Carbon::now()->format('Y') - Carbon::now()->format('Y'),
             'note' => $request->note ?? '',
             'plan_id' => $request->plan,

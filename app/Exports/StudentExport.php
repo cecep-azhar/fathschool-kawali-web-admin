@@ -7,10 +7,15 @@ use App\Models\User;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Carbon\Carbon;
 
-class StudentExport implements FromCollection, WithHeadings, WithMapping
+class StudentExport implements FromCollection, WithHeadings, WithMapping, WithColumnWidths, WithStyles
 {
     public $type;
+    private $index = 0; // Menyimpan nomor urut
 
     public function __construct($type)
     {
@@ -26,45 +31,78 @@ class StudentExport implements FromCollection, WithHeadings, WithMapping
             return User::student()->get();
         } else {
             $course = Course::where('id', $this->type)->first();
-            $students = $course->students()->get()->map(function ($q) {
-                return $q->user_id;
-            });
+            $students = $course->students()->pluck('user_id');
 
-            return User::whereIn('id', $students)->get();
+            return User::with('courses')->whereIn('id', $students)->get();
         }
     }
 
     /**
      * Xls Mapping for relationship data get
      *
-     * @return \Illuminate\Support\Collection
+     * @return array
      */
     public function map($student): array
     {
+        $this->index++; // Menambah nomor urut
+
+        $courseNames = $student->courses->first()->course->name ?? '-';
+
         return [
-            $student->id,
+            $this->index,
+            $student->nisn,
             $student->name,
+            $courseNames,
             $student->email,
+            $student->date_of_birth ? Carbon::parse($student->date_of_birth)->format('d-m-Y') : '', // Format Tanggal
+            $student->phone,
             $student->gender,
-            $student->date_of_birth,
-            $student->crated_at,
         ];
     }
 
     /**
      * Xls Heading return
      *
-     * @return \Illuminate\Support\Collection
+     * @return array
      */
     public function headings(): array
     {
         return [
-            'Id',
-            'Name',
+            'No',
+            'NISN',
+            'Nama',
+            'Kelas',
             'Email',
-            'Gender',
-            'Date Of Birth',
-            'Created At',
+            'Tanggal Lahir',
+            'Nomor Telepon',
+            'Jenis Kelamin',
+        ];
+    }
+
+    /**
+     * Mengatur lebar kolom agar tidak terlalu rapat
+     */
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 5,  // No
+            'B' => 15, // NISN
+            'C' => 25, // Name
+            'D' => 15, // Kelas
+            'E' => 25, // Email
+            'F' => 15, // Tanggal Lahir
+            'G' => 15, // Nomor Telepon
+            'H' => 10, // Jenis Kelamin
+        ];
+    }
+
+    /**
+     * Mengatur gaya tampilan header
+     */
+    public function styles(Worksheet $sheet)
+    {
+        return [
+            1 => ['font' => ['bold' => true]], // Membuat header menjadi tebal
         ];
     }
 }

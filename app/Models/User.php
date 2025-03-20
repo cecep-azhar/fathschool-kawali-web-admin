@@ -32,6 +32,8 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        'nik',
+        'nisn',
         'name',
         'email',
         'password',
@@ -44,7 +46,8 @@ class User extends Authenticatable
         'image_url',
         'fcm_token',
         'id_reference',
-        'account_hold', 'manual'
+        'account_hold',
+        'manual'
     ];
 
     /**

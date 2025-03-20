@@ -63,6 +63,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::post('teacher/absent/export', 'teacherAbsentExport')->name('teacherabsent.export');
             Route::post('all/user/export', 'AllUserExport')->name('all.user.export');
             Route::post('all/teacher/export', 'AllTeacherExport')->name('all.teacher.export');
+            Route::post('all/administration/export', 'AllAdministartionExport')->name('all.administration.export');
             Route::post('teacher-class/export', 'teacherClassExport')->name('teacherclass.export');
             Route::post('teacher-rate/export', 'teacherRateExport')->name('rateteacher.export');
             Route::post('teacher-rate/export', 'teacherLateExport')->name('teacher.lateness.export');

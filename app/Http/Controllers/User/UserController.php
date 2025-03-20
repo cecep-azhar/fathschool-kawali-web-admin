@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Actions\File\FileDelete;
+use App\Exports\AllAdministartionExport;
 use App\Exports\StudentExport;
 use App\Exports\TeacherClassExport;
 use App\Exports\TeacherExport;
@@ -369,6 +370,17 @@ class UserController extends Controller
 
         // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
         $export = new AllTeacherExport($departement);
+
+        // Download file Excel sesuai dengan filter
+        return Excel::download($export, 'students.xlsx');
+    }
+
+    public function AllAdministartionExport(Request $request)
+    {
+        $departement = $request->departement;
+
+        // Lakukan filter dan sesuaikan sesuai dengan nilai yang diberikan
+        $export = new AllAdministartionExport($departement);
 
         // Download file Excel sesuai dengan filter
         return Excel::download($export, 'students.xlsx');

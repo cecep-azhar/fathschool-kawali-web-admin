@@ -70,7 +70,9 @@ class TeachersImport implements ToCollection, WithHeadingRow
             //     'student_id' => idGenerate(),
             // ]);
 
-
+            // $course = $added_user->courses()->create([
+            //     'course_id' => $class,
+            // ]);
         }
     }
 }

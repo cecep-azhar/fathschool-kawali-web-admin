@@ -45,7 +45,7 @@
                             :required="true"
                         />
                         <a
-                            href="/files/student.xlsx"
+                            href="/files/administration.xlsx"
                             download
                             class="inline-flex group relative"
                         >
@@ -95,7 +95,7 @@
         <template #content>
             <img
                 class="h-full w-full rounded-sm"
-                src="/images/students_sheet.png"
+                src="/images/administration_sheet.png"
                 alt=""
             />
         </template>

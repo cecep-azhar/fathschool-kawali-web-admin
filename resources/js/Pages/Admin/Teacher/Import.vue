@@ -1,21 +1,15 @@
 <template>
-    <AppLayout :title="__('Import Student')">
+    <AppLayout :title="__('Import Teacher')">
         <Breadcrumb>
-            <BreadcrumbLink
-                :href="route('student.admission.index')"
-                title="Student"
-            />
-            <BreadcrumbLink :title="__('Import Student')" />
+            <BreadcrumbLink :href="route('teachers.index')" title="Teacher" />
+            <BreadcrumbLink :title="__('Import Teacher')" />
         </Breadcrumb>
 
         <div>
             <page-header>
-                {{ __("Import Student") }}
+                {{ __("Import Teacher") }}
                 <template #content>
-                    <Link
-                        preserve-scroll
-                        :href="route('student.admission.all')"
-                    >
+                    <Link preserve-scroll :href="route('teachers.index')">
                         <global-button
                             :loading="false"
                             type="button"

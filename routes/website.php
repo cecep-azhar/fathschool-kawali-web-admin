@@ -97,6 +97,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::get('teacher/classes/{teacher}', 'classes')->name('teacher.classes');
             Route::get('teacher/details/{teacher}', 'show')->name('teacher.show');
             Route::post('teacher/class/assign', 'classAssign')->name('teacher.class.assign');
+            Route::get('teacher/import', 'TeacherImport')->name('teacher.import');
+            Route::post('teacher/file/bulk', 'fromFileBulk')->name('teacher.file.bulk');
         });
 
         Route::controller(AdministrationController::class)->group(function () {

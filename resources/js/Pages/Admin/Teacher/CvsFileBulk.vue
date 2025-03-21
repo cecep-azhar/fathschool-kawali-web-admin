@@ -45,7 +45,7 @@
                             :required="true"
                         />
                         <a
-                            href="/files/student.xlsx"
+                            href="/files/teacher.xlsx"
                             download
                             class="inline-flex group relative"
                         >
@@ -95,7 +95,7 @@
         <template #content>
             <img
                 class="h-full w-full rounded-sm"
-                src="/images/students_sheet.png"
+                src="/images/teacher_sheet.png"
                 alt=""
             />
         </template>
@@ -155,7 +155,7 @@ export default {
             this.form.file = e.target.files[0];
         },
         submit() {
-            this.form.post(this.route("student.file.bulk"), {
+            this.form.post(this.route("teacher.file.bulk"), {
                 preserveScroll: true,
             });
         },

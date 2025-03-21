@@ -14,7 +14,7 @@ use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class UsersImport implements ToCollection, WithHeadingRow
+class TeachersImport implements ToCollection, WithHeadingRow
 {
     use Importable;
 
@@ -34,31 +34,8 @@ class UsersImport implements ToCollection, WithHeadingRow
                     $new_email = $email;
                 }
             }
-            // for roll_no validation
-            $roll_no = $row['rollnumber'];
-            $new_roll_no = '';
-            if ($roll_no) {
 
-                $check_roll_no_is_exist = UserProfile::where('roll_no', $roll_no)->first();
-                if ($check_roll_no_is_exist) {
-                    $new_roll_no = Str::random(4) . $roll_no;
-                } else {
-                    $new_roll_no = $roll_no;
-                }
-            }
-            // for parent validation
-            $parent = '';
-            if ($row['email_wali']) {
 
-                $user = $query->where('email', $row['email_wali'])->first();
-                if ($user) {
-                    $parent = $user->id;
-                } else {
-                    $parent = $query->parent()->inRandomOrder()->value('id');
-                }
-            } else {
-                $parent = $query->parent()->inRandomOrder()->value('id');
-            }
             // for department validation
             // $department = '';
             // if ($row['departmentname']) {
@@ -72,43 +49,28 @@ class UsersImport implements ToCollection, WithHeadingRow
             // } else {
             //     $department = Department::inRandomOrder()->value('id');
             // }
-            // for class validation
-            $class = '';
-            if ($row['kelas']) {
-
-                $exit_class = Course::where('slug', $row['kelas'])->first();
-                if ($exit_class) {
-                    $class = $exit_class->id;
-                } else {
-                    $class = Course::inRandomOrder()->value('id');
-                }
-            } else {
-                $class = Course::inRandomOrder()->value('id');
-            }
 
             $added_user = User::create([
-                'nisn' => isset($row['nisn']) ? $row['nisn'] : null,
+                'nik' => isset($row['nik']) ? $row['nik'] : null,
                 'name' => isset($row['name']) ? $row['name'] : Str::random(6),
                 // 'gender' => isset($row['gender']) ? $row['gender'] : Arr::random(['male', 'female', 'other']),
                 'date_of_birth' => isset($row['tanggal_lahir']) ? Carbon::parse($row['tanggal_lahir']) : Carbon::now(),
                 'email' => isset($new_email) ? $new_email : null,
-                'role' => 'Student',
+                'role' => 'Teacher',
                 'password' => isset($row['password']) ? bcrypt($row['password']) : bcrypt('password'),
                 'phone' => isset($row['nomor_telepon']) ? $row['nomor_telepon'] : Str::random(6),
                 // 'address' => isset($row['address']) ? $row['address'] : Str::random(6),
                 // 'department_id' => $department,
             ]);
 
-            $added_user->parents()->attach($parent);
+            $added_user;
 
-            $profile = $added_user->profile()->create([
-                'roll_no' => isset($new_roll_no) ? $new_roll_no : Str::random(6),
-                'student_id' => idGenerate(),
-            ]);
+            // $profile = $added_user->profile()->create([
+            //     'roll_no' => isset($new_roll_no) ? $new_roll_no : Str::random(6),
+            //     'student_id' => idGenerate(),
+            // ]);
 
-            $course = $added_user->courses()->create([
-                'course_id' => $class,
-            ]);
+
         }
     }
 }

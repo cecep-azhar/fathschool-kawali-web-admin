@@ -21,6 +21,15 @@
                             {{ __("Export") }}
                         </global-button>
                         <global-button
+                            preserve-scroll
+                            :loading="false"
+                            :url="route('teacher.import')"
+                            type="link"
+                            theme="secondary"
+                        >
+                            {{ __("Import") }}
+                        </global-button>
+                        <global-button
                             :url="route('teachers.create')"
                             type="link"
                             theme="primary"

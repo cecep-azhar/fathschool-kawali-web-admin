@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Imports\TeachersImport;
 use App\Models\Course;
 use App\Models\Department;
+use App\Models\Plan;
 use App\Models\TeacherSubject;
 use App\Models\User;
 use App\Notifications\TeacherInfoNotification;
@@ -12,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TeacherController extends Controller
 {
@@ -22,8 +25,8 @@ class TeacherController extends Controller
 
         // filter => keyword
         if ($request->has('keyword') && $request->keyword !== null) {
-            $query->where('name', $request->keyword);
-            // ->orWhere('email', $request->keyword);
+            $query->where('name', $request->keyword)
+                ->orWhere('email', $request->keyword);
         }
         // filter => department
         if ($request->has('department') && $request->department !== null) {
@@ -201,5 +204,36 @@ class TeacherController extends Controller
         $this->flashSuccess('Mail successfully sent');
 
         return back();
+    }
+
+    public function TeacherImport()
+    {
+        return inertia('Admin/Teacher/Import', [
+            'departments' => Department::latest()->get(['id', 'name']),
+            'parents' => User::latest()->parent()->active()->get(['id', 'name']),
+            'classes' => Course::latest()->get(['id', 'name']),
+            'plans' => Plan::latest()->get(['id', 'title']),
+        ]);
+    }
+
+    public function fromFileBulk(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,xlsx,xls',
+        ]);
+
+        try {
+            Excel::import(new TeachersImport, $request->file);
+
+            $this->flashSuccess('Import teacher successful');
+
+            return redirect()->route('teachers.index');
+        } catch (\Throwable $th) {
+            //throw $th;
+
+            session()->flash('warning', 'Your file structure is not correct.');
+
+            return back();
+        }
     }
 }

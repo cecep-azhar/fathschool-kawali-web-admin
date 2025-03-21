@@ -53,8 +53,8 @@ class AllTeacherExport implements FromCollection, WithHeadings, WithMapping, Wit
             $this->index,
             ' ' . ($allteacher->nik ?? '-'), // Tambahkan spasi di awal agar Excel membaca sebagai teks
             $allteacher->name ?? '-',
-            $allteacher->date_of_birth ? Carbon::parse($allteacher->date_of_birth)->format('d-m-Y') : '-', // ✅ Format Tanggal dengan default "-"
             $allteacher->email ?? '-',
+            $allteacher->date_of_birth ? Carbon::parse($allteacher->date_of_birth)->format('d-m-Y') : '-', // ✅ Format Tanggal dengan default "-"
             $allteacher->phone ?? '-',
         ];
     }
@@ -70,8 +70,8 @@ class AllTeacherExport implements FromCollection, WithHeadings, WithMapping, Wit
             'NO',
             'NIK',
             'Nama',
-            'Tanggal Lahir',
             'Email',
+            'Tanggal Lahir',
             'Nomor Telepon',
         ];
     }
@@ -85,8 +85,8 @@ class AllTeacherExport implements FromCollection, WithHeadings, WithMapping, Wit
             'A' => 5,  // No
             'B' => 18, // NIK
             'C' => 25, // Name
-            'D' => 15, // Tanggal Lahir
-            'E' => 30, // Email
+            'D' => 25, // Email
+            'E' => 15, // Tanggal Lahir
             'F' => 15, // Nomor Telepon
         ];
     }

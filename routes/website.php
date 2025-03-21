@@ -109,6 +109,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::get('administration/classes/{teacher}', 'classes')->name('administration.classes');
             Route::get('administration/details/{teacher}', 'show')->name('administration.show');
             Route::post('administration/class/assign', 'classAssign')->name('administration.class.assign');
+            Route::get('administration/import', 'AdministrationImport')->name('administration.import');
+            Route::post('administration/file/bulk', 'fromFileBulk')->name('administration.file.bulk');
         });
 
 

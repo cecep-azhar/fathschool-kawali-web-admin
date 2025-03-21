@@ -3,16 +3,18 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Imports\AdministrationsImport;
 use App\Models\Course;
 use App\Models\Department;
 use App\Models\Notification;
+use App\Models\Plan;
 use App\Models\TeacherSubject;
 use App\Models\User;
 use App\Notifications\TeacherInfoNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdministrationController extends Controller
 {
@@ -193,5 +195,36 @@ class AdministrationController extends Controller
         $this->flashSuccess('Mail successfully sent');
 
         return back();
+    }
+
+    public function AdministrationImport()
+    {
+        return inertia('Admin/Administration/Import', [
+            'departments' => Department::latest()->get(['id', 'name']),
+            'parents' => User::latest()->parent()->active()->get(['id', 'name']),
+            'classes' => Course::latest()->get(['id', 'name']),
+            'plans' => Plan::latest()->get(['id', 'title']),
+        ]);
+    }
+
+    public function fromFileBulk(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,xlsx,xls',
+        ]);
+
+        try {
+            Excel::import(new AdministrationsImport, $request->file);
+
+            $this->flashSuccess('Import administration successful');
+
+            return redirect()->route('administrations.index');
+        } catch (\Throwable $th) {
+            //throw $th;
+
+            session()->flash('warning', 'Your file structure is not correct.');
+
+            return back();
+        }
     }
 }

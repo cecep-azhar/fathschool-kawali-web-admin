@@ -146,6 +146,29 @@
                                         <h4
                                             class="text-gray-900 dark:text-gray-500 mb-1"
                                         >
+                                            {{ __("RFID") }}:
+                                        </h4>
+                                        <h3
+                                            class="text-gray-600 dark:text-gray-400 mb-0 flex"
+                                        >
+                                            {{ student?.rfid ?? "" }}
+                                            <template
+                                                v-if="student?.rfid ?? false"
+                                            >
+                                            </template>
+                                        </h3>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <div>
+                                        <HashtagIcon
+                                            class="w-6 h-6 text-blue-600"
+                                        />
+                                    </div>
+                                    <div>
+                                        <h4
+                                            class="text-gray-900 dark:text-gray-500 mb-1"
+                                        >
                                             {{ __("Student ID") }}:
                                         </h4>
                                         <h3

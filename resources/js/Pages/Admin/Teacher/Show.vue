@@ -154,6 +154,9 @@
                                         {{ __("NIK") }}: {{ teacher.nik }}
                                     </div>
                                     <div class="capitalize text-base">
+                                        {{ __("RFID") }}: {{ teacher.rfid }}
+                                    </div>
+                                    <div class="capitalize text-base">
                                         {{ __("Email") }}: {{ teacher.email }}
                                     </div>
                                     <div class="capitalize text-base">

@@ -52,6 +52,7 @@ class TeachersImport implements ToCollection, WithHeadingRow
 
             $added_user = User::create([
                 'nik' => isset($row['nik']) ? $row['nik'] : null,
+                'rfid' => isset($row['rfid']) ? $row['rfid'] : null,
                 'name' => isset($row['name']) ? $row['name'] : Str::random(6),
                 // 'gender' => isset($row['gender']) ? $row['gender'] : Arr::random(['male', 'female', 'other']),
                 'date_of_birth' => isset($row['tanggal_lahir']) ? Carbon::parse($row['tanggal_lahir']) : Carbon::now(),

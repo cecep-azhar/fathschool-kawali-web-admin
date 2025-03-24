@@ -34,6 +34,7 @@ class User extends Authenticatable
     protected $fillable = [
         'nik',
         'nisn',
+        'rfid',
         'name',
         'email',
         'password',

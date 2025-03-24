@@ -23,7 +23,7 @@ class Controller extends BaseController
         curl_setopt_array(
             $curl,
             array(
-                CURLOPT_URL => config('config.whatsapp.url'),
+                CURLOPT_URL => 'https://wa.fath.my.id/send-message',
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING => '',
                 CURLOPT_MAXREDIRS => 10,
@@ -40,6 +40,7 @@ class Controller extends BaseController
 
         $response = curl_exec($curl);
         curl_close($curl);
+        return $response;
     }
 
     public function sendNotificationToUser($token, $title, $message, $content)

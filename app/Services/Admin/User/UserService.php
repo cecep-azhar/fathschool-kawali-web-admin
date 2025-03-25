@@ -76,6 +76,12 @@ class UserService
             }
         }
 
+        if (!empty($request->rfid)) { // Validasi hanya jika NISN tidak kosong
+            if (User::where('rfid', $request->rfid)->exists()) {
+                $errors['rfid'] = 'RFID sudah digunakan oleh pengguna lain.';
+            }
+        }
+
         if (User::where('name', $request->name)->exists()) {
             $errors['name'] = 'Nama sudah digunakan oleh pengguna lain.';
         }
@@ -108,6 +114,7 @@ class UserService
         $user = User::create([ // main user create
             'nik' => $request->nik ?: null,
             'nisn' => $request->nisn ?: null,
+            'rfid' => $request->rfid ?: null,
             'name' => $request->name,
             'email' => $request->email,
             'role' => $request->user_type,
@@ -246,6 +253,12 @@ class UserService
             }
         }
 
+        if (!empty($request->rfid)) { // Cek hanya jika RFID tidak kosong
+            if (User::where('rfid', $request->rfid)->where('id', '!=', $user->id)->exists()) {
+                $errors['rfid'] = 'RFID sudah digunakan oleh pengguna lain.';
+            }
+        }
+
         if (User::where('name', $request->name)->where('id', '!=', $user->id)->exists()) {
             $errors['name'] = 'Nama sudah digunakan oleh pengguna lain.';
         }
@@ -273,6 +286,7 @@ class UserService
         $user->update([ // main user update
             'nik' => $request->nik ?: null,
             'nisn' => $request->nisn ?: null, // Simpan null jika kosong
+            'rfid' => $request->rfid ?: null,
             'name' => $request->name,
             'email' => $request->email,
             'role' => $request->user_type,

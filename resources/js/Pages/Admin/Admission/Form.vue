@@ -230,6 +230,26 @@
                                         />
                                     </div>
                                 </div>
+
+                                <!-- Input NISN -->
+
+                                <div class="mb-3">
+                                    <global-label
+                                        for="rfid"
+                                        value="RFID"
+                                        :required="true"
+                                    />
+                                    <global-input
+                                        type="text"
+                                        v-model="form.rfid"
+                                        id="rfid"
+                                        name="rfid"
+                                        class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                        :placeholder="__('Enter RFID')"
+                                        :error="errors_get.rfid"
+                                    />
+                                    <input-error :error="errors_get.rfid" />
+                                </div>
                             </div>
                             <div
                                 class="bg-white rounded-lg border border-white p-4 dark:bg-gray-800 dark:border-gray-700"
@@ -1046,6 +1066,7 @@ export default {
             form: useForm({
                 admission: true,
                 nisn: this.admission ? this.admission.nisn : "",
+                rfid: this.admission ? this.admission.rfid : "",
                 name: this.admission ? this.admission.name : "",
                 email: this.admission ? this.admission.email : "",
                 user_type: "Student",
@@ -1078,7 +1099,6 @@ export default {
                 _method: this.admission ? "PUT" : "POST",
             }),
             createParent: {
-                nisn: "",
                 name: "",
                 email: "",
                 phone: "",

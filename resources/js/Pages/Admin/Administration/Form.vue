@@ -228,6 +228,25 @@
                                         />
                                     </div>
                                 </div>
+                                <div class="mb-3">
+                                    <global-label
+                                        for="rfid"
+                                        value="RFID"
+                                        :required="true"
+                                    />
+                                    <global-input
+                                        type="text"
+                                        v-model="form.rfid"
+                                        id="rfid"
+                                        name="rfid"
+                                        class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                        :placeholder="__('Enter RFID')"
+                                        :error="validate_errors.rfid"
+                                    />
+                                    <input-error
+                                        :error="validate_errors.rfid"
+                                    />
+                                </div>
                             </div>
                             <div
                                 class="w-full bg-white rounded-lg border border-white p-4 dark:bg-gray-800 dark:border-gray-700"
@@ -669,6 +688,7 @@ export default {
             document_size: [1],
             form: useForm({
                 nik: this.administration ? this.administration.nik : "",
+                rfid: this.administration ? this.administration.rfid : "",
                 name: this.administration ? this.administration.name : "",
                 email: this.administration ? this.administration.email : "",
                 user_type: "Administration",

@@ -160,6 +160,7 @@ class AttendanceController extends Controller
                     ->first();
             }
 
+
             if ($attendance_user) {
                 return response(['status' => 400, 'message' => 'Already Check-in'], 400);
             }
@@ -264,6 +265,86 @@ class AttendanceController extends Controller
         $distance = $earthRadius * $c; // Hasil dalam kilometer
 
         return $distance;
+    }
+
+    public function checkinRFID(Request $request)
+    {
+        try {
+            $request->validate([
+                'rfid' => 'required',
+            ]);
+
+            $rfid = $request->rfid;
+
+            $check_user = User::where('rfid', $rfid)->first();
+            if (!$check_user) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'User not found or RFID mismatch',
+                ], 404);
+            }
+
+            $user_id = $check_user->id;
+            $role_user = $check_user->role;
+
+            $setting = Setting::first();
+            $timeInSetting = $setting->time_in;
+
+            $currentTime = date('H:i:s');
+            $isLate = strtotime($currentTime) > strtotime($timeInSetting);
+
+            if ($role_user == "Student") {
+                $attendance = AttendanceStudent::where('user_id', $user_id)
+                    ->where('date', date('Y-m-d'))
+                    ->first();
+            } else {
+                $attendance = Attendance::where('user_id', $user_id)
+                    ->where('date', date('Y-m-d'))
+                    ->first();
+            }
+
+            if ($attendance) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Already Check-in',
+                ], 400);
+            }
+
+            if ($role_user == "Student") {
+                $attendance = new AttendanceStudent();
+            } else {
+                $attendance = new Attendance();
+            }
+
+
+
+            $attendance->user_id = $user_id;
+            $attendance->date = date('Y-m-d');
+            $attendance->time_in = $currentTime;
+            $attendance->save();
+
+            $message = 'Check-in success';
+            if ($isLate) {
+                $message .= ' - Anda telat hari ini';
+            }
+
+            return response()->json([
+                'status' => 200,
+                'message' => $message,
+                'attendance' => [
+                    'id' => $attendance->id,
+                    'user_id' => $attendance->user_id,
+                    'date' => $attendance->date,
+                    'time_in' => $attendance->time_in,
+                ]
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Internal Server Error',
+                'error' => $th->getMessage()
+            ], 500);
+        }
     }
 
     //check is checkedin
@@ -546,6 +627,90 @@ class AttendanceController extends Controller
             return response()->json([
                 'status' => 500,
                 'messages' => 'Internal Server Error',
+                'error' => $th->getMessage()
+            ], 500);
+        }
+    }
+
+    public function checkoutRFID(Request $request)
+    {
+        try {
+            $request->validate([
+                'rfid' => 'required',
+            ]);
+
+            $rfid = $request->rfid;
+
+            $check_user = User::where('rfid', $rfid)->first();
+            if (!$check_user) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'User not found or RFID mismatch',
+                ], 404);
+            }
+
+            $user_id = $check_user->id;
+            $role_user = $check_user->role;
+
+            if ($role_user == "Student") {
+                $attendance = AttendanceStudent::where('user_id', $user_id)
+                    ->where('date', date('Y-m-d'))
+                    ->first();
+            } else {
+                $attendance = Attendance::where('user_id', $user_id)
+                    ->where('date', date('Y-m-d'))
+                    ->first();
+            }
+
+            if (!$attendance) {
+                return response()->json([
+                    'status' => 401,
+                    'message' => 'Check-in first',
+                ], 401);
+            }
+
+            if ($attendance->time_out !== null) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Already Checked out',
+                ], 400);
+            }
+
+            $setting = Setting::first();
+            $timeOutSetting = $setting->time_out;
+            $currentTime = date('H:i:s');
+
+            $hasLeave = Leave::where('user_id', $user_id)
+                ->where('status', 'accepted')
+                ->where('start', '<=', date('Y-m-d H:i:s'))
+                ->where('end', '>=', date('Y-m-d H:i:s'))
+                ->exists();
+
+            if (strtotime($currentTime) < strtotime($timeOutSetting) && !$hasLeave) {
+                return response()->json([
+                    'status' => 402,
+                    'message' => 'You cannot checkout before the allowed time unless you have an accepted leave.',
+                ], 402);
+            }
+
+            $attendance->time_out = $currentTime;
+            $attendance->save();
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Check-out successfully',
+                'attendance' => [
+                    'id' => $attendance->id,
+                    'user_id' => $attendance->user_id,
+                    'date' => $attendance->date,
+                    'time_in' => $attendance->time_in,
+                    'time_out' => $attendance->time_out
+                ]
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Internal Server Error',
                 'error' => $th->getMessage()
             ], 500);
         }

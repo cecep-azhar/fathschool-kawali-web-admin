@@ -90,6 +90,7 @@ Route::post('/qroutManual', [App\Http\Controllers\Api\ClassAttendanceController:
 // * API Check In
 Route::post('/checkin', [App\Http\Controllers\Api\AttendanceController::class, 'checkin'])->middleware('auth:sanctum');
 Route::post('/checkinManual', [App\Http\Controllers\Api\AttendanceController::class, 'checkinManual']);
+Route::post('/checkinRFID', [App\Http\Controllers\Api\AttendanceController::class, 'checkinRFID']);
 
 // * API id Checked User
 Route::get('/is-checkin', [App\Http\Controllers\Api\AttendanceController::class, 'isCheckedin'])->middleware('auth:sanctum');
@@ -98,6 +99,7 @@ Route::get('/isCheckinManual/{user_id}', [App\Http\Controllers\Api\AttendanceCon
 // * API Check Out
 Route::post('/checkout', [App\Http\Controllers\Api\AttendanceController::class, 'checkout'])->middleware('auth:sanctum');
 Route::post('/checkoutManual', [App\Http\Controllers\Api\AttendanceController::class, 'checkoutManual']);
+Route::post('/checkoutRFID', [App\Http\Controllers\Api\AttendanceController::class, 'checkoutRFID']);
 
 //post journal
 Route::post('/journal', [App\Http\Controllers\Api\JournalController::class, 'postJournal'])->middleware('auth:sanctum');

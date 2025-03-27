@@ -64,20 +64,26 @@ class UserService
         // Cek apakah ada pengguna lain dengan data yang sama
         $errors = [];
 
-        if (!empty($request->nik)) { // Validasi hanya jika NIK tidak kosong
-            if (User::where('nik', $request->nik)->exists()) {
+        if (!empty($request->nik)) {
+            if (strlen($request->nik) !== 16) {
+                $errors['nik'] = 'NIK harus 16 digit.';
+            } elseif (User::where('nik', $request->nik)->exists()) {
                 $errors['nik'] = 'NIK sudah digunakan oleh pengguna lain.';
             }
         }
 
-        if (!empty($request->nisn)) { // Validasi hanya jika NISN tidak kosong
-            if (User::where('nisn', $request->nisn)->exists()) {
+        if (!empty($request->nisn)) {
+            if (strlen($request->nisn) !== 10) {
+                $errors['nisn'] = 'NISN harus 10 digit.';
+            } elseif (User::where('nisn', $request->nisn)->exists()) {
                 $errors['nisn'] = 'NISN sudah digunakan oleh pengguna lain.';
             }
         }
 
-        if (!empty($request->rfid)) { // Validasi hanya jika NISN tidak kosong
-            if (User::where('rfid', $request->rfid)->exists()) {
+        if (!empty($request->rfid)) {
+            if (strlen($request->rfid) !== 10) {
+                $errors['rfid'] = 'RFID harus 10 digit.';
+            } elseif (User::where('rfid', $request->rfid)->exists()) {
                 $errors['rfid'] = 'RFID sudah digunakan oleh pengguna lain.';
             }
         }
@@ -242,19 +248,25 @@ class UserService
         $errors = [];
 
         if (!empty($request->nik)) { // Cek hanya jika NISN tidak kosong
-            if (User::where('nik', $request->nik)->where('id', '!=', $user->id)->exists()) {
+            if (strlen($request->nik) !== 16) {
+                $errors['nik'] = 'NIK harus 16 digit.';
+            } elseif (User::where('nik', $request->nik)->where('id', '!=', $user->id)->exists()) {
                 $errors['nik'] = 'NIK sudah digunakan oleh pengguna lain.';
             }
         }
 
         if (!empty($request->nisn)) { // Cek hanya jika NISN tidak kosong
-            if (User::where('nisn', $request->nisn)->where('id', '!=', $user->id)->exists()) {
+            if (strlen($request->nisn) !== 10) {
+                $errors['nisn'] = 'NISN harus 10 digit.';
+            } elseif (User::where('nisn', $request->nisn)->where('id', '!=', $user->id)->exists()) {
                 $errors['nisn'] = 'NISN sudah digunakan oleh pengguna lain.';
             }
         }
 
         if (!empty($request->rfid)) { // Cek hanya jika RFID tidak kosong
-            if (User::where('rfid', $request->rfid)->where('id', '!=', $user->id)->exists()) {
+            if (strlen($request->rfid) !== 10) {
+                $errors['rfid'] = 'RFID harus 10 digit.';
+            } elseif (User::where('rfid', $request->rfid)->where('id', '!=', $user->id)->exists()) {
                 $errors['rfid'] = 'RFID sudah digunakan oleh pengguna lain.';
             }
         }

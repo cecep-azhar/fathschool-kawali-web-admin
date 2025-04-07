@@ -25,13 +25,25 @@
                         />
 
                         <div class="ml-4 flex items-center">
-                            <label for="month" class="mr-2"
+                            <label for="start_date" class="mr-2"
                                 >{{ __("From") }}:</label
                             >
                             <input
-                                type="month"
-                                v-model="filter.month"
-                                id="month"
+                                type="date"
+                                v-model="filter.start_date"
+                                id="start_date"
+                                class="p-2 border rounded"
+                            />
+                        </div>
+
+                        <div class="ml-4 flex items-center">
+                            <label for="end_date" class="mr-2"
+                                >{{ __("To") }}:</label
+                            >
+                            <input
+                                type="date"
+                                v-model="filter.end_date"
+                                id="end_date"
                                 class="p-2 border rounded mr-4"
                             />
                         </div>
@@ -100,7 +112,7 @@
                         <thead
                             class="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
                         >
-                            <!-- Baris Pertama: Label "Tanggal" -->
+                            <!-- Baris Pertama: Label -->
                             <tr>
                                 <th rowspan="2" class="py-4 px-6">No</th>
                                 <th rowspan="2" class="py-4 px-6">
@@ -110,7 +122,7 @@
                                     {{ __("Kelas") }}
                                 </th>
                                 <th
-                                    :colspan="datesInMonth.length"
+                                    :colspan="datesInRange.length"
                                     class="py-4 px-6"
                                 >
                                     {{ __("Tanggal") }}
@@ -123,7 +135,7 @@
                             <!-- Baris Kedua: Daftar Tanggal -->
                             <tr class="border-b border-gray-300">
                                 <th
-                                    v-for="(date, index) in datesInMonth"
+                                    v-for="(date, index) in datesInRange"
                                     :key="index"
                                     class="py-3 px-5"
                                 >
@@ -151,15 +163,20 @@
                                         <td class="py-4 px-6">
                                             {{ attendance.class || "-" }}
                                         </td>
+
+                                        <!-- Kolom Kehadiran Per Hari -->
                                         <td
-                                            v-for="(
-                                                status, i
-                                            ) in attendance.attendance"
+                                            v-for="(date, i) in datesInRange"
                                             :key="i"
                                             class="py-4 px-6"
                                         >
-                                            {{ status || "-" }}
+                                            {{
+                                                attendance.attendance[date] ||
+                                                "-"
+                                            }}
                                         </td>
+
+                                        <!-- Ringkasan -->
                                         <td
                                             class="py-4 px-6 font-semibold dark:text-white"
                                         >
@@ -221,7 +238,17 @@ export default {
         classes: Object,
     },
     data() {
-        const currentYearMonth = new Date().toISOString().slice(0, 7); // Format: YYYY-MM
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+            .toISOString()
+            .slice(0, 10); // Format: YYYY-MM-DD
+        const endOfMonth = new Date(
+            today.getFullYear(),
+            today.getMonth() + 1,
+            0
+        )
+            .toISOString()
+            .slice(0, 10); // Format: YYYY-MM-DD
 
         return {
             loading: false,
@@ -238,7 +265,8 @@ export default {
             }),
             filter: {
                 name: this.filter_data.keyword || "",
-                month: this.filter_data.month || currentYearMonth, // 🔹 Gunakan format YYYY-MM
+                start_date: this.filter_data.start_date || startOfMonth,
+                end_date: this.filter_data.end_date || endOfMonth,
                 course: this.filter_data.course ?? null,
                 study_program: this.filter_data.study_program ?? null,
             },
@@ -248,14 +276,34 @@ export default {
         filter_data: {
             handler(newVal) {
                 this.filter.name = newVal.keyword || "";
-                this.filter.month =
-                    newVal.month || new Date().toISOString().slice(0, 7);
+
+                // Update ke format baru (start_date dan end_date)
+                const today = new Date();
+                const startOfMonth = new Date(
+                    today.getFullYear(),
+                    today.getMonth(),
+                    1
+                )
+                    .toISOString()
+                    .slice(0, 10);
+                const endOfMonth = new Date(
+                    today.getFullYear(),
+                    today.getMonth() + 1,
+                    0
+                )
+                    .toISOString()
+                    .slice(0, 10);
+
+                this.filter.start_date = newVal.start_date || startOfMonth;
+                this.filter.end_date = newVal.end_date || endOfMonth;
+
                 this.filter.course = newVal.course || null;
                 this.filter.study_program = newVal.study_program || null;
             },
             immediate: true,
         },
     },
+
     created() {
         this.options.push({ value: "", label: "All" });
         for (const [key, value] of Object.entries(this.classes)) {
@@ -278,28 +326,29 @@ export default {
         return { attendancestudent };
     },
     computed: {
-        // 🔹 Menghitung daftar tanggal dalam bulan yang dipilih
-        datesInMonth() {
-            let dates = [];
-            let [year, month] = this.filter.month.split("-").map(Number); // Ambil dari filter
-            let daysInMonth = new Date(year, month, 0).getDate(); // Hitung jumlah hari dalam bulan
+        // 🔹 Menghitung daftar tanggal antara start_date dan end_date
+        datesInRange() {
+            const start = new Date(this.filter.start_date);
+            const end = new Date(this.filter.end_date);
+            const dates = [];
 
-            for (let day = 1; day <= daysInMonth; day++) {
-                let formattedDate = `${day.toString().padStart(2, "0")}/${month
-                    .toString()
-                    .padStart(2, "0")}/${year}`;
+            for (
+                let d = new Date(start);
+                d <= end;
+                d.setDate(d.getDate() + 1)
+            ) {
+                let formattedDate = d.toLocaleDateString("id-ID"); // format DD/MM/YYYY
                 dates.push(formattedDate);
             }
+
             return dates;
         },
 
-        // 🔹 Filter data berdasarkan nama & bulan yang dipilih
+        // 🔹 Filter data berdasarkan nama & rentang tanggal
         filteredAttendance() {
             return this.attendancestudent.filter((attendance) => {
                 let nameMatch = true;
-                let monthMatch = true;
 
-                // 🔹 Filter berdasarkan nama (jika ada)
                 if (this.filter.name && this.filter.name.trim() !== "") {
                     const searchName = this.filter.name.trim().toLowerCase();
                     nameMatch =
@@ -307,38 +356,19 @@ export default {
                         attendance.user_name.toLowerCase().includes(searchName);
                 }
 
-                // 🔹 Filter berdasarkan bulan (format YYYY-MM)
-                if (this.filter.month) {
-                    if (attendance.date) {
-                        try {
-                            let attendanceMonth = new Date(attendance.date)
-                                .toISOString()
-                                .slice(0, 7); // Ambil format YYYY-MM
-                            monthMatch = attendanceMonth === this.filter.month;
-                        } catch (error) {
-                            console.warn(
-                                "Invalid date format for:",
-                                attendance.date
-                            );
-                            monthMatch = false;
-                        }
-                    } else {
-                        monthMatch = false;
-                    }
-                }
-
-                return nameMatch && monthMatch;
+                return nameMatch;
             });
         },
     },
     methods: {
-        // 🔹 Metode untuk mengubah filter data
+        // 🔹 Metode untuk memfilter data dengan rentang tanggal
         filterData() {
             this.loading = true;
 
             const params = {
                 keyword: this.filter.name || null,
-                month: this.filter.month, // 🔹 Pastikan ini dikirim dengan format YYYY-MM
+                start_date: this.filter.start_date,
+                end_date: this.filter.end_date,
                 course: this.filter.course,
                 study_program: this.filter.study_program,
             };
@@ -352,27 +382,24 @@ export default {
             });
         },
 
-        // 🔹 Metode untuk mengekspor data
+        // 🔹 Metode untuk mengekspor data dengan rentang tanggal
         exportAttendance() {
             this.loading = true;
 
-            let exportData = {};
+            let exportData = {
+                start_date: this.filter.start_date,
+                end_date: this.filter.end_date,
+            };
 
-            // 🔹 Pastikan hanya data yang diisi dikirim
             if (this.filter.name?.trim()) {
                 exportData.name = this.filter.name.trim();
             }
             if (this.filter.course) {
                 exportData.course = this.filter.course;
             }
-            if (this.filter.month) {
-                exportData.month = this.filter.month;
-            }
             if (this.filter.study_program?.trim()) {
                 exportData.study_program = this.filter.study_program.trim();
             }
-
-            console.log("Export Data:", exportData); // 🔹 Debugging untuk memastikan filter benar
 
             axios({
                 url: this.route("studentattendance.export"),
@@ -384,30 +411,21 @@ export default {
                         .getAttribute("content"),
                     "Content-Type": "application/json",
                 },
-                responseType: "blob", // 🔹 Agar menerima file sebagai respons
+                responseType: "blob",
             })
                 .then((response) => {
-                    try {
-                        let blob = new Blob([response.data]);
-                        let fileURL = window.URL.createObjectURL(blob);
-                        let fileLink = document.createElement("a");
-                        fileLink.href = fileURL;
+                    let blob = new Blob([response.data]);
+                    let fileURL = window.URL.createObjectURL(blob);
+                    let fileLink = document.createElement("a");
+                    fileLink.href = fileURL;
 
-                        // 🔹 Nama file sesuai filter
-                        let fileName = `studentattendance-report-${encodeURIComponent(
-                            this.filter.course || "all"
-                        )}-${encodeURIComponent(
-                            this.filter.month || "unknown"
-                        )}.xlsx`;
+                    let fileName = `studentattendance-${this.filter.start_date}_to_${this.filter.end_date}.xlsx`;
 
-                        fileLink.setAttribute("download", fileName);
-                        document.body.appendChild(fileLink);
-                        fileLink.click();
-                        document.body.removeChild(fileLink);
-                        window.URL.revokeObjectURL(fileURL);
-                    } catch (error) {
-                        console.error("Error saat mengunduh file:", error);
-                    }
+                    fileLink.setAttribute("download", fileName);
+                    document.body.appendChild(fileLink);
+                    fileLink.click();
+                    document.body.removeChild(fileLink);
+                    window.URL.revokeObjectURL(fileURL);
                 })
                 .catch((error) => {
                     console.error("Export gagal:", error);

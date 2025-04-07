@@ -54,101 +54,82 @@ class ReportController extends Controller
     {
         abort_if(! userCan('academic.management'), 403);
 
-        // Jika tidak ada parameter month, gunakan bulan ini sebagai default
-        $month = $request->input('month', Carbon::now()->format('Y-m')); // Format YYYY-MM
+        $start_date = $request->input('start_date') ?? Carbon::now()->startOfMonth()->toDateString();
+        $end_date = $request->input('end_date') ?? Carbon::now()->endOfMonth()->toDateString();
+
         try {
-            $start_date = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->toDateString();
-            $end_date = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->toDateString();
+            $start_date = Carbon::parse($start_date)->toDateString();
+            $end_date = Carbon::parse($end_date)->toDateString();
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Format bulan tidak valid. Gunakan YYYY-MM.'], 400);
+            return response()->json(['error' => 'Format tanggal tidak valid.'], 400);
         }
 
-        // Ambil daftar tanggal dalam bulan yang dipilih
         $dates = collect(Carbon::parse($start_date)->daysUntil($end_date))->map(fn($date) => $date->toDateString());
 
-        // Query awal untuk mendapatkan siswa
         $studentsQuery = User::where('role', 'student')
             ->with(['courses.course:id,name,slug,study_program_id', 'leaves']);
 
-        // 🔹 Filter berdasarkan nama (keyword)
         if ($request->filled('keyword')) {
             $studentsQuery->where('name', 'LIKE', '%' . trim($request->keyword) . '%');
         }
 
-        // 🔹 Filter berdasarkan course
         if ($request->filled('course')) {
             $studentsQuery->whereHas('courses.course', function ($query) use ($request) {
                 $query->where('slug', 'LIKE', '%' . $request->course . '%');
             });
         }
 
-        // 🔹 Filter berdasarkan study_program
         if ($request->filled('study_program')) {
             $studentsQuery->whereHas('courses.course.study_program', function ($query) use ($request) {
                 $query->where('slug', 'LIKE', '%' . $request->study_program . '%');
             });
         }
 
-        // Eksekusi query untuk mendapatkan siswa setelah difilter
         $students = $studentsQuery->get();
 
-        // Ambil semua data kehadiran dalam rentang tanggal bulan ini
         $attendances = AttendanceStudent::whereBetween('date', [$start_date, $end_date])
             ->get()
             ->groupBy('user_id');
 
-        // Struktur data siswa dan kehadiran
         $attendancestudent = $students->map(function ($student) use ($dates, $attendances) {
             $userAttendances = $attendances->get($student->id, collect());
 
-            // Hitung total izin berdasarkan jumlah hari izin dalam rentang bulan
-            $totalIjin = $student->leaves->filter(function ($leave) use ($dates) {
-                return $leave->start <= $dates->last() && $leave->end >= $dates->first();
-            })->sum(function ($leave) {
-                return Carbon::parse($leave->start)->diffInDays(Carbon::parse($leave->end)) + 1;
-            });
-
-            // Ambil daftar tanggal izin
+            // Ambil semua tanggal izin siswa ini
             $leaveDates = collect();
             foreach ($student->leaves as $leave) {
                 $leavePeriod = collect(Carbon::parse($leave->start)->daysUntil($leave->end))->map(fn($date) => $date->toDateString());
                 $leaveDates = $leaveDates->merge($leavePeriod);
             }
 
-            // Inisialisasi data kehadiran per hari dalam bulan
+            // Map status per tanggal: 'H', 'A', 'I'
             $attendanceStatus = $dates->mapWithKeys(function ($date) use ($userAttendances, $leaveDates) {
                 if ($leaveDates->contains($date)) {
-                    return [$date => 'Ijin']; // Jika ada izin, tandai sebagai "I"
+                    return [$date => 'I']; // Izin
                 }
 
                 $attendance = $userAttendances->firstWhere('date', $date);
-                return [$date => $attendance ? 'Hadir' : 'Alfa']; // Hadir (H) atau Alfa (A)
+                return [$date => $attendance ? 'H' : 'A']; // Hadir atau Alfa
             });
-
-            // Hitung total hadir (H), alfa (A)
-            $totalHadir = $attendanceStatus->filter(fn($status) => $status === 'Hadir')->count();
-            $totalAlfa = $attendanceStatus->filter(fn($status) => $status === 'Alfa')->count();
 
             return [
                 'id' => $student->id,
                 'user_name' => $student->name,
                 'class' => $student->courses->first()->course->name ?? '-',
-                'attendance' => $attendanceStatus,
+                'attendance' => $attendanceStatus->toArray(),
                 'summary' => [
-                    'hadir' => $totalHadir,
-                    'sakit' => 0, // Jika ada data sakit, tambahkan di sini
-                    'ijin' => $totalIjin, // Menggunakan total izin dari filter leave
-                    'alfa' => $totalAlfa,
+                    'hadir' => $attendanceStatus->filter(fn($status) => $status === 'H')->count(),
+                    'sakit' => 0, // Tambahkan logika jika ada field sakit
+                    'ijin' => $attendanceStatus->filter(fn($status) => $status === 'I')->count(),
+                    'alfa' => $attendanceStatus->filter(fn($status) => $status === 'A')->count(),
                 ],
             ];
         });
 
-        // Hitung total semua siswa
         $total = [
-            'hadir' => $attendancestudent->sum(fn($student) => $student['summary']['hadir']),
-            'sakit' => 0, // Sesuaikan jika ada data sakit
-            'ijin' => $attendancestudent->sum(fn($student) => $student['summary']['ijin']),
-            'alfa' => $attendancestudent->sum(fn($student) => $student['summary']['alfa']),
+            'hadir' => $attendancestudent->sum(fn($s) => $s['summary']['hadir']),
+            'sakit' => 0,
+            'ijin' => $attendancestudent->sum(fn($s) => $s['summary']['ijin']),
+            'alfa' => $attendancestudent->sum(fn($s) => $s['summary']['alfa']),
         ];
 
         $classes = Course::get(['id', 'name', 'slug']);
@@ -161,13 +142,15 @@ class ReportController extends Controller
             'classes' => $classes,
             'study_programs' => $study_programs,
             'filter_data' => [
-                'month' => $month,
+                'start_date' => $start_date,
+                'end_date' => $end_date,
                 'keyword' => $request->input('keyword'),
                 'course' => $request->input('course'),
                 'study_program' => $request->input('study_program'),
-            ]
+            ],
         ]);
     }
+
 
 
     //ANCHOR - API STUDENT ATTENDANCE

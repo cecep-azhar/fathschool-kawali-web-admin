@@ -211,7 +211,7 @@ Route::get('/get-information-class', [DataDisplayFathboard::class, 'getDataClass
 Route::get('/get-information-others', [DataDisplayFathboard::class, 'getDataOther']);
 
 
-Route::get('/send-wa-class', [DataDisplayFathboard::class, 'sendWhatsAppClass']);
+Route::get('/send-wa-class', [DataDisplayFathboard::class, 'sendWaClass']);
 
 Route::get('/getSettings', [GetSettings::class, 'index']);
 

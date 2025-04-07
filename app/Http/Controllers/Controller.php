@@ -19,8 +19,8 @@ class Controller extends BaseController
 
     public function sendWa($data)
     {
-        $curl = curl_init();
-        curl_setopt_array(
+        $curl = \curl_init();
+        \curl_setopt_array(
             $curl,
             array(
                 CURLOPT_URL => 'https://wa.fath.my.id/send-message',
@@ -38,10 +38,11 @@ class Controller extends BaseController
             )
         );
 
-        $response = curl_exec($curl);
-        curl_close($curl);
+        $response = \curl_exec($curl);
+        \curl_close($curl);
         return $response;
     }
+
 
     public function sendNotificationToUser($token, $title, $message, $content)
     {

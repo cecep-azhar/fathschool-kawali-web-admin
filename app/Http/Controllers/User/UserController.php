@@ -389,15 +389,23 @@ class UserController extends Controller
 
     public function StudentAttendanceExports(Request $request)
     {
-        $month = $request->input('month', Carbon::now()->format('Y-m')); // Ambil month dari request
-        $name = $request->name;
-        $course = $request->course;
-        $study_program = $request->study_program;
+        $start_date = $request->input('start_date') ?? Carbon::now()->startOfMonth()->toDateString();
+        $end_date = $request->input('end_date') ?? Carbon::now()->endOfMonth()->toDateString();
+        $keyword = $request->input('keyword');
+        $course = $request->input('course');
+        $study_program = $request->input('study_program');
 
-        $export = new StudentAttendanceExport($month, $name, $course, $study_program);
+        $export = new StudentAttendanceExport(
+            $start_date,
+            $end_date,
+            $keyword,
+            $course,
+            $study_program
+        );
 
         return Excel::download($export, 'students.xlsx');
     }
+
 
     public function exportStudentLeave(Request $request)
     {

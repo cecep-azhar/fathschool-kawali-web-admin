@@ -14,14 +14,16 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class StudentAttendanceExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
-    protected $month;
+    protected $start_date;
+    protected $end_date;
     protected $name;
     protected $course;
     protected $study_program;
 
-    public function __construct($month = null, $name = null, $course = null, $study_program = null)
+    public function __construct($start_date = null,$end_date = null, $name = null, $course = null, $study_program = null)
     {
-        $this->month = $month ?? Carbon::now()->format('Y-m');
+        $this->start_date = $start_date ?? Carbon::now()->startOfMonth()->toDateString();
+        $this->end_date = $end_date ?? Carbon::now()->endOfMonth()->toDateString();
         $this->name = $name;
         $this->course = $course;
         $this->study_program = $study_program;
@@ -30,74 +32,76 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
     public function collection()
     {
         try {
-            $start_date = Carbon::createFromFormat('Y-m', $this->month)->startOfMonth()->toDateString();
-            $end_date = Carbon::createFromFormat('Y-m', $this->month)->endOfMonth()->toDateString();
+            $start_date = Carbon::parse($this->start_date)->toDateString();
+            $end_date = Carbon::parse($this->end_date)->toDateString();
         } catch (\Exception $e) {
             return collect([]);
         }
 
-        $studentsQuery = User::where('role', 'student')->with([
-            'courses.course:id,name,slug',
-            'leaves' => function ($query) use ($start_date, $end_date) {
-                $query->whereDate('start', '<=', $end_date)
-                    ->whereDate('end', '>=', $start_date);
-            }
-        ]);
-
-        if ($this->name) {
-            $studentsQuery->where('name', 'LIKE', '%' . $this->name . '%');
-        }
-
-        if ($this->course) {
-            $studentsQuery->whereHas('courses.course', function ($query) {
-                $query->where('slug', 'LIKE', '%' . $this->course . '%');
-            });
-        }
-
-        $students = $studentsQuery->get();
-        $attendances = AttendanceStudent::whereBetween('date', [$start_date, $end_date])
-            ->get()
-            ->groupBy('user_id');
-
         $dates = collect(Carbon::parse($start_date)->daysUntil($end_date))->map(fn($date) => $date->toDateString());
-        $dailyPresentCount = array_fill(0, $dates->count(), 0);
 
-        $data = $students->map(function ($student, $index) use ($attendances, $dates, &$dailyPresentCount) {
-            $userAttendances = $attendances->get($student->id, collect());
+        $studentsQuery = User::where('role', 'student')
+        ->with(['courses.course:id,name,slug,study_program_id', 'leaves']);
 
-            $leaveDates = collect();
-            foreach ($student->leaves as $leave) {
-                $leavePeriod = collect(Carbon::parse($leave->start)->daysUntil($leave->end))->map(fn($date) => $date->toDateString());
-                $leaveDates = $leaveDates->merge($leavePeriod);
-            }
+    if ($this->keyword) {
+        $studentsQuery->where('name', 'LIKE', '%' . trim($this->keyword) . '%');
+    }
 
-            $attendanceStatus = $dates->mapWithKeys(function ($date, $index) use ($userAttendances, $leaveDates, &$dailyPresentCount) {
-                if ($leaveDates->contains($date)) {
-                    return [$date => 'Ijin'];
-                }
-                $attendance = $userAttendances->firstWhere('date', $date);
-                if ($attendance) {
-                    $dailyPresentCount[$index]++;
-                    return [$date => 'Hadir'];
-                }
-                return [$date => 'Alfa'];
-            });
+    if ($this->course) {
+        $studentsQuery->whereHas('courses.course', function ($query) {
+            $query->where('slug', 'LIKE', '%' . $this->course . '%');
+        });
+    }
 
-            return [
-                'no' => $index + 1, // Tambahkan Nomor Urut
-                'user_name' => $student->name,
-                'class' => $student->courses->first()->course->name ?? '-',
-                'attendance' => $attendanceStatus->values()->toArray(),
-                'summary' => [
-                    'hadir' => $attendanceStatus->filter(fn($status) => $status === 'Hadir')->count(),
-                    'sakit' => 0,
-                    'ijin' => $attendanceStatus->filter(fn($status) => $status === 'Ijin')->count(),
-                    'alfa' => $attendanceStatus->filter(fn($status) => $status === 'Alfa')->count(),
-                ],
-            ];
+    if ($this->study_program) {
+        $studentsQuery->whereHas('courses.course.study_program', function ($query) {
+            $query->where('slug', 'LIKE', '%' . $this->study_program . '%');
+        });
+    }
+
+    $students = $studentsQuery->get();
+
+    $attendances = AttendanceStudent::whereBetween('date', [$start_date, $end_date])
+        ->get()
+        ->groupBy('user_id');
+
+    return $students->map(function ($student, $index) use ($dates, $attendances) {
+        $userAttendances = $attendances->get($student->id, collect());
+
+        $totalIjin = $student->leaves->filter(function ($leave) use ($dates) {
+            return $leave->start <= $dates->last() && $leave->end >= $dates->first();
+        })->sum(function ($leave) {
+            return Carbon::parse($leave->start)->diffInDays(Carbon::parse($leave->end)) + 1;
         });
 
-        return $data;
+        $leaveDates = collect();
+        foreach ($student->leaves as $leave) {
+            $leavePeriod = collect(Carbon::parse($leave->start)->daysUntil($leave->end))->map(fn($date) => $date->toDateString());
+            $leaveDates = $leaveDates->merge($leavePeriod);
+        }
+
+        $attendanceStatus = $dates->mapWithKeys(function ($date) use ($userAttendances, $leaveDates) {
+            if ($leaveDates->contains($date)) {
+                return [$date => 'I'];
+            }
+
+            $attendance = $userAttendances->firstWhere('date', $date);
+            return [$date => $attendance ? 'H' : 'A'];
+        });
+
+        return [
+            'no' => $index + 1,
+            'user_name' => $student->name,
+            'class' => $student->courses->first()->course->name ?? '-',
+            'attendance' => $attendanceStatus->values()->toArray(),
+            'summary' => [
+                'hadir' => $attendanceStatus->filter(fn($s) => $s === 'H')->count(),
+                'sakit' => 0,
+                'ijin' => $totalIjin,
+                'alfa' => $attendanceStatus->filter(fn($s) => $s === 'A')->count(),
+            ],
+        ];
+    });
     }
 
     public function map($student): array
@@ -116,9 +120,9 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
 
     public function headings(): array
     {
-        $start_date = Carbon::createFromFormat('Y-m', $this->month)->startOfMonth();
-        $end_date = Carbon::createFromFormat('Y-m', $this->month)->endOfMonth();
-        $dates = collect(Carbon::parse($start_date)->daysUntil($end_date))->map(fn($date) => $date->format('d/m/Y'))->toArray();
+        $start = Carbon::parse($this->start_date);
+        $end = Carbon::parse($this->end_date);
+        $dates = collect($start->daysUntil($end))->map(fn($date) => $date->format('d/m/Y'))->toArray();
 
         return [
             array_merge(['No', 'Nama Siswa', 'Kelas'], array_fill(0, count($dates), 'Tanggal'), ['Total']),

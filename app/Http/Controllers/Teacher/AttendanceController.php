@@ -32,7 +32,7 @@ class AttendanceController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-   
+
     public function index(Request $request)
     {
         abort_if(! userCan('academic.management'), 403);
@@ -125,6 +125,7 @@ class AttendanceController extends Controller
 
         $study_programs = StudyProgram::get(['id', 'name', 'slug']);
 
+        dd($attendanceteacher);
         return inertia('Admin/TeacherAttendance/Index', [
             'attendanceteacher' => $attendanceteacher,
             'dates' => $dates,

@@ -166,14 +166,13 @@
 
                                         <!-- Kolom Kehadiran Per Hari -->
                                         <td
-                                            v-for="(date, i) in datesInRange"
+                                            v-for="(
+                                                status, i
+                                            ) in attendance.attendance"
                                             :key="i"
                                             class="py-4 px-6"
                                         >
-                                            {{
-                                                attendance.attendance[date] ||
-                                                "-"
-                                            }}
+                                            {{ status || "-" }}
                                         </td>
 
                                         <!-- Ringkasan -->

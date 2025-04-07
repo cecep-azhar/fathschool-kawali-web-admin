@@ -91,39 +91,47 @@ class ReportController extends Controller
             ->get()
             ->groupBy('user_id');
 
-        $attendancestudent = $students->map(function ($student) use ($dates, $attendances) {
-            $userAttendances = $attendances->get($student->id, collect());
+            $attendancestudent = $students->map(function ($student) use ($dates, $attendances) {
+                $userAttendances = $attendances->get($student->id, collect());
 
-            // Ambil semua tanggal izin siswa ini
-            $leaveDates = collect();
-            foreach ($student->leaves as $leave) {
-                $leavePeriod = collect(Carbon::parse($leave->start)->daysUntil($leave->end))->map(fn($date) => $date->toDateString());
-                $leaveDates = $leaveDates->merge($leavePeriod);
-            }
+                $totalIjin = $student->leaves->filter(function ($leave) use ($dates) {
+                    return $leave->start <= $dates->last() && $leave->end >= $dates->first();
+                })->sum(function ($leave) {
+                    return Carbon::parse($leave->start)->diffInDays(Carbon::parse($leave->end)) + 1;
+                });
 
-            // Map status per tanggal: 'H', 'A', 'I'
-            $attendanceStatus = $dates->mapWithKeys(function ($date) use ($userAttendances, $leaveDates) {
-                if ($leaveDates->contains($date)) {
-                    return [$date => 'I']; // Izin
+                $leaveDates = collect();
+                foreach ($student->leaves as $leave) {
+                    $leavePeriod = collect(Carbon::parse($leave->start)->daysUntil($leave->end))->map(fn($date) => $date->toDateString());
+                    $leaveDates = $leaveDates->merge($leavePeriod);
                 }
 
-                $attendance = $userAttendances->firstWhere('date', $date);
-                return [$date => $attendance ? 'H' : 'A']; // Hadir atau Alfa
+                $attendanceStatus = $dates->mapWithKeys(function ($date) use ($userAttendances, $leaveDates) {
+                    if ($leaveDates->contains($date)) {
+                        return [$date => 'I']; // Izin
+                    }
+
+                    $attendance = $userAttendances->firstWhere('date', $date);
+                    return [$date => $attendance ? 'H' : 'A']; // Hadir atau Alfa
+                });
+
+                $totalHadir = $attendanceStatus->filter(fn($status) => $status === 'H')->count();
+                $totalAlfa = $attendanceStatus->filter(fn($status) => $status === 'A')->count();
+
+                return [
+                    'id' => $student->id,
+                    'user_name' => $student->name,
+                    'class' => $student->courses->first()->course->name ?? '-',
+                    'attendance' => $attendanceStatus, // ✅ fix disini
+                    'summary' => [
+                        'hadir' => $totalHadir,
+                        'sakit' => 0,
+                        'ijin' => $totalIjin,
+                        'alfa' => $totalAlfa,
+                    ],
+                ];
             });
 
-            return [
-                'id' => $student->id,
-                'user_name' => $student->name,
-                'class' => $student->courses->first()->course->name ?? '-',
-                'attendance' => $attendanceStatus->toArray(),
-                'summary' => [
-                    'hadir' => $attendanceStatus->filter(fn($status) => $status === 'H')->count(),
-                    'sakit' => 0, // Tambahkan logika jika ada field sakit
-                    'ijin' => $attendanceStatus->filter(fn($status) => $status === 'I')->count(),
-                    'alfa' => $attendanceStatus->filter(fn($status) => $status === 'A')->count(),
-                ],
-            ];
-        });
 
         $total = [
             'hadir' => $attendancestudent->sum(fn($s) => $s['summary']['hadir']),
@@ -150,8 +158,6 @@ class ReportController extends Controller
             ],
         ]);
     }
-
-
 
     //ANCHOR - API STUDENT ATTENDANCE
     public function getStudentAttendance(Request $request, $user_id)

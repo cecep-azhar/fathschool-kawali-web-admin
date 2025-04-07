@@ -22,20 +22,61 @@
 
             <div>
                 <div class="mb-4">
-                    <form class="items-center grid grid-cols-1 xl:grid-cols-7 gap-6" @submit.prevent="filterData()">
-                        <div class="flex xl:col-span-2">
+                    <form
+                        class="grid grid-cols-1 gap-4 xl:grid-cols-7 xl:gap-4 items-end"
+                        @submit.prevent="filterData()"
+                    >
+                        <!-- Search -->
+                        <div class="xl:col-span-2">
                             <div class="relative w-full">
-                                <global-input v-model="searchQuery" type="text"
-                                    class="mt-1 block w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
-                                    :placeholder="__('Keyword')" />
-                                <button type="submit"
-                                    class="absolute top-1 right-0 p-2.5 text-sm font-medium text-white bg-blue-700 rounded-r-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                                <global-input
+                                    v-model="searchQuery"
+                                    type="text"
+                                    class="block w-full pr-10 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+                                    :placeholder="__('Keyword')"
+                                />
+                                <button
+                                    type="submit"
+                                    class="absolute inset-y-0 right-0 flex items-center px-3 text-white bg-blue-700 rounded-r-lg hover:bg-blue-800 focus:ring-2 focus:ring-blue-500"
+                                >
                                     <MagnifyingGlassIcon class="w-5 h-5" />
-                                    <span class="sr-only">
-                                        {{ __('Search') }}
-                                    </span>
+                                    <span class="sr-only">{{
+                                        __("Search")
+                                    }}</span>
                                 </button>
                             </div>
+                        </div>
+
+                        <!-- From Date -->
+                        <div class="xl:col-span-1">
+                            <label
+                                for="start_date"
+                                class="block mb-1 text-sm font-medium"
+                            >
+                                {{ __("From") }}
+                            </label>
+                            <input
+                                type="date"
+                                id="start_date"
+                                v-model="filter.start_date"
+                                class="w-full p-2 border rounded"
+                            />
+                        </div>
+
+                        <!-- To Date -->
+                        <div class="xl:col-span-1">
+                            <label
+                                for="end_date"
+                                class="block mb-1 text-sm font-medium"
+                            >
+                                {{ __("To") }}
+                            </label>
+                            <input
+                                type="date"
+                                id="end_date"
+                                v-model="filter.end_date"
+                                class="w-full p-2 border rounded"
+                            />
                         </div>
 
                         <div class="xl:col-span-1">
@@ -50,7 +91,6 @@
                                     { title: 'Teacher', id: 'teacher', value: 'Teacher' },
                                     { title: 'Administration', id: 'administration', value: 'Administration' },
                                     { title: 'Accountant', id: 'accountant', value: 'Accountant' },
-                                    { title: 'Admin', id: 'admin', value: 'Admin' }
                                 ]"
                                 :filter-option="filterOption"
                                 @focus="handleFocus"
@@ -59,9 +99,10 @@
                             />
                         </div>
 
+                        <!-- Leave Type -->
                         <div class="xl:col-span-2">
                             <a-select
-                                class="width-100"
+                                class="w-full"
                                 size="large"
                                 v-model:value="filter.leave_type"
                                 show-search
@@ -72,18 +113,32 @@
                                 @change="handleChange"
                             />
                         </div>
+
+                        <!-- Status -->
                         <div class="xl:col-span-1">
                             <a-select
-                                class="width-100"
+                                class="w-full"
                                 size="large"
                                 v-model:value="filter.status"
                                 show-search
                                 :placeholder="__('Select a status')"
                                 :options="[
                                     { title: 'All', id: 'all', value: 'all' },
-                                    { title: 'Pending', id: 'pending', value: 'pending' },
-                                    { title: 'Accepted', id: 'accepted', value: 'accepted' },
-                                    { title: 'Rejected', id: 'rejected', value: 'rejected' }
+                                    {
+                                        title: 'Pending',
+                                        id: 'pending',
+                                        value: 'pending',
+                                    },
+                                    {
+                                        title: 'Accepted',
+                                        id: 'accepted',
+                                        value: 'accepted',
+                                    },
+                                    {
+                                        title: 'Rejected',
+                                        id: 'rejected',
+                                        value: 'rejected',
+                                    },
                                 ]"
                                 @focus="handleFocus"
                                 @blur="handleBlur"
@@ -91,13 +146,20 @@
                             />
                         </div>
 
-                        <div>
-                            <global-button :loading="loading" type="submit" theme="primary" class="whitespace-nowrap">
-                                {{ __('Search') }}
+                        <!-- Button -->
+                        <div class="xl:col-span-1">
+                            <global-button
+                                :loading="loading"
+                                type="submit"
+                                theme="primary"
+                                class="w-full"
+                            >
+                                {{ __("Search") }}
                             </global-button>
                         </div>
                     </form>
                 </div>
+
                 <div class="overflow-hidden">
                     <global-table>
                         <template #head>
@@ -258,9 +320,12 @@ export default {
             causeModal: false,
             filter: {
                 keyword: this.filter_data.keyword ?? "",
+                start_date: this.filter_data.start_date ?? null,
+                end_date: this.filter_data.end_date ?? null,
                 status: this.filter_data.status ?? null,
                 role: this.filter_data.role ?? null,
                 leave_type: this.filter_data.leave_type ?? null,
+
             },
             searchQuery: this.filter_data.keyword ?? "", // Sinkronisasi keyword pencarian
             leave: "",

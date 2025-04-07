@@ -6,6 +6,7 @@ use App\Models\Course;
 use App\Models\Leave;
 use App\Models\LeaveType;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class StudentLeaveService
@@ -22,6 +23,20 @@ class StudentLeaveService
                     ->orWhere('role', 'Like', '%' . $request->keyword . '%');
             });
         }
+
+        // Default date filter: hari ini
+        $today = Carbon::today();
+        $startDate = $request->start_date
+            ? Carbon::createFromFormat('Y-m-d', $request->start_date)->startOfDay()
+            : $today->copy()->startOfDay();
+
+        $endDate = $request->end_date
+            ? Carbon::createFromFormat('Y-m-d', $request->end_date)->endOfDay()
+            : $today->copy()->endOfDay();
+
+        // Ambil data yang berada di antara start-end date
+        $query->whereDate('start', '<=', $endDate)
+            ->whereDate('end', '>=', $startDate);
 
         // status filter
         if ($request->has('status') && $request->status != 'all' && $request->status != null) {
@@ -55,14 +70,19 @@ class StudentLeaveService
 
         $leaves = $query->whereHas('user', function ($user) {
             $user->whereNotIn('role', ['parent', 'teacher', 'administration', 'accountant', 'admin']);
-        })->latest()->with(['user.department', 'user.courses.course', 'type'])->paginate(10);
+        })
+            ->latest()->with(['user.department', 'user.courses.course', 'type'])
+            ->paginate(10)
+            ->withQueryString();
 
+        // dd($leaves);
         $users = User::active()->latest()->get(['id', 'name', 'email']);
 
         $leave_types = LeaveType::whereNotIn('role_type', ['teacher', 'staff'])
             ->select('name', 'slug')
             ->distinct()
             ->get();
+
 
         $classes = Course::get(['id', 'name', 'slug']);
 

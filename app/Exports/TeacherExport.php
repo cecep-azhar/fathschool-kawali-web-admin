@@ -2,140 +2,145 @@
 
 namespace App\Exports;
 
-use App\Models\User;
 use App\Models\Attendance;
+use App\Models\User;
 use Carbon\Carbon;
+use Exception;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
-class TeacherExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
+class TeacherExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
-    protected $month;
+    protected $start_date;
+    protected $end_date;
+    protected $name;
+    protected $study_program;
 
-    public function __construct($month)
+    public function __construct($start_date = null, $end_date = null, $name = null, $study_program = null)
     {
-        $this->month = $month;
+        $this->start_date = $start_date ?? Carbon::now()->startOfMonth()->toDateString();
+        $this->end_date = $end_date ?? Carbon::now()->endOfMonth()->toDateString();
+        $this->name = $name;
+        $this->study_program = $study_program;
     }
 
     public function collection()
     {
-        $start_date = Carbon::createFromFormat('Y-m', $this->month)->startOfMonth()->toDateString();
-        $end_date = Carbon::createFromFormat('Y-m', $this->month)->endOfMonth()->toDateString();
-        $dates = collect(Carbon::parse($start_date)->daysUntil($end_date))->map(fn($date) => $date->toDateString());
+        try {
+            $start = Carbon::parse($this->start_date);
+            $end = Carbon::parse($this->end_date);
+        } catch (Exception $e) {
+            return collect([]);
+        }
 
-        $teachers = User::where('role', 'teacher')->with(['department.study_program', 'leaves'])->get();
-        $attendances = Attendance::whereBetween('date', [$start_date, $end_date])->get()->groupBy('user_id');
+        $dates = collect($start->daysUntil($end))->map(fn($d) => $d->toDateString());
+
+        $teachersQuery = User::where('role', 'teacher')->with(['department.study_program', 'leaves']);
+
+        if ($this->name) {
+            $teachersQuery->where('name', 'LIKE', '%' . trim($this->name) . '%');
+        }
+
+        if ($this->study_program) {
+            $teachersQuery->whereHas('department.study_program', function ($query) {
+                $query->where('slug', 'LIKE', '%' . $this->study_program . '%');
+            });
+        }
+
+        $teachers = $teachersQuery->get();
+
+        $attendances = Attendance::whereBetween('date', [$start->toDateString(), $end->toDateString()])
+            ->get()
+            ->groupBy('user_id');
 
         return $teachers->map(function ($teacher, $index) use ($dates, $attendances) {
             $userAttendances = $attendances->get($teacher->id, collect());
 
             $leaveDates = collect();
             foreach ($teacher->leaves as $leave) {
-                $leavePeriod = collect(Carbon::parse($leave->start)->daysUntil($leave->end))
-                    ->map(fn($date) => $date->toDateString());
-                $leaveDates = $leaveDates->merge($leavePeriod);
+                $period = collect(Carbon::parse($leave->start)->daysUntil($leave->end))
+                    ->map(fn($d) => $d->toDateString());
+                $leaveDates = $leaveDates->merge($period);
             }
 
             $attendanceStatus = $dates->mapWithKeys(function ($date) use ($userAttendances, $leaveDates) {
                 if ($leaveDates->contains($date)) {
-                    return [$date => 'Ijin'];
+                    return [$date => 'I'];
                 }
                 $attendance = $userAttendances->firstWhere('date', $date);
-                return [$date => $attendance ? 'Hadir' : 'Alfa'];
+                return [$date => $attendance ? 'H' : 'A'];
             });
 
-            $totalHadir = $attendanceStatus->filter(fn($status) => $status === 'Hadir')->count();
-            $totalAlfa = $attendanceStatus->filter(fn($status) => $status === 'Alfa')->count();
-            $totalIjin = $attendanceStatus->filter(fn($status) => $status === 'Ijin')->count();
-            $totalSakit = 0;
-
-            return collect([
+            return [
                 'no' => $index + 1,
-                'name' => $teacher->name,
+                'user_name' => $teacher->name,
                 'study_program' => $teacher->department->study_program->name ?? '-',
-            ])->merge($attendanceStatus)->merge([
-                'total_hadir' => $totalHadir,
-                'total_sakit' => $totalSakit,
-                'total_ijin' => $totalIjin,
-                'total_alfa' => $totalAlfa,
-            ]);
+                'attendance' => $attendanceStatus->values()->toArray(),
+                'summary' => [
+                    'hadir' => $attendanceStatus->filter(fn($s) => $s === 'H')->count(),
+                    'sakit' => 0,
+                    'ijin' => $attendanceStatus->filter(fn($s) => $s === 'I')->count(),
+                    'alfa' => $attendanceStatus->filter(fn($s) => $s === 'A')->count(),
+                ],
+            ];
         });
-    }
-
-    public function headings(): array
-    {
-        $month = Carbon::createFromFormat('Y-m', $this->month);
-        $dates = collect(Carbon::parse($month->startOfMonth())->daysUntil($month->endOfMonth()))
-            ->map(fn($date) => $date->format('d/m/Y'));
-
-        $firstRow = array_merge(
-            ['No', 'Nama Guru', 'Program Studi'],
-            ['Tanggal'],
-            array_fill(0, count($dates) - 1, ''),
-            ['Total']
-        );
-
-        $secondRow = array_merge(
-            ['', '', ''],
-            $dates->toArray(),
-            ['Hadir', 'Sakit', 'Ijin', 'Alfa']
-        );
-
-        return [$firstRow, $secondRow];
     }
 
     public function map($row): array
     {
-        return $row->toArray();
+        return array_merge(
+            [$row['no'], $row['user_name'], $row['study_program']],
+            $row['attendance'],
+            [
+                (int) $row['summary']['hadir'],
+                (int) $row['summary']['sakit'],
+                (int) $row['summary']['ijin'],
+                (int) $row['summary']['alfa'],
+            ]
+        );
+    }
+
+    public function headings(): array
+    {
+        $start = Carbon::parse($this->start_date);
+        $end = Carbon::parse($this->end_date);
+        $dates = collect($start->daysUntil($end))->map(fn($date) => $date->format('d/m/Y'))->toArray();
+
+        return array_merge(
+            ['No', 'Nama Guru', 'Program Studi'],
+            $dates,
+            ['Hadir', 'Sakit', 'Ijin', 'Alfa']
+        );
     }
 
     public function styles(Worksheet $sheet)
     {
-        $highestColumnIndex = count($this->headings()[1]);
-        $lastColumn = Coordinate::stringFromColumnIndex($highestColumnIndex);
+        $colCount = count($this->headings());
+        $lastCol = Coordinate::stringFromColumnIndex($colCount);
 
-        // Merge "Tanggal" di tengah
-        $sheet->mergeCells("D1:{$lastColumn}1");
-        $sheet->mergeCells("A1:A2");
-        $sheet->mergeCells("B1:B2");
-        $sheet->mergeCells("C1:C2");
-
-        // Merge "Total" agar rapi
-        $totalStartColumn = Coordinate::stringFromColumnIndex($highestColumnIndex - 3);
-        $sheet->mergeCells("{$totalStartColumn}1:{$lastColumn}1");
-
-        // Styling header
-        $sheet->getStyle("A1:{$lastColumn}2")->applyFromArray([
-            'font' => ['bold' => true, 'size' => 12],
-            'alignment' => [
-                'horizontal' => 'center',
-                'vertical' => 'center',
-            ],
-            'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['argb' => 'FFFFF'],
-            ],
+        $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
+            'font' => ['bold' => true],
+            'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
         ]);
 
-        // Tambahkan border ke seluruh tabel
         $highestRow = $sheet->getHighestRow();
-        $sheet->getStyle("A1:{$lastColumn}{$highestRow}")->applyFromArray([
+        $sheet->getStyle("A1:{$lastCol}{$highestRow}")->applyFromArray([
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                    'color' => ['argb' => '000000'],
                 ],
             ],
         ]);
 
-        // Atur lebar kolom otomatis
-        foreach (range('A', $lastColumn) as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
+        foreach (range(1, $colCount) as $i) {
+            $colLetter = Coordinate::stringFromColumnIndex($i);
+            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
         }
+
+        return [];
     }
 }

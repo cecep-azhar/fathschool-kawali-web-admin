@@ -302,13 +302,20 @@ class UserController extends Controller
      */
     public function teacherExport(Request $request)
     {
-        $month = $request->input('month', Carbon::now()->format('Y-m')); // Ambil month dari request
+        $start_date = $request->input('start_date') ?? Carbon::now()->startOfMonth()->toDateString();
+        $end_date = $request->input('end_date') ?? Carbon::now()->endOfMonth()->toDateString();
 
-        $name = $request->name;
-        $course = $request->course;
-        $study_program = $request->study_program;
+        $name = $request->input('name');
+        $course = $request->input('course');
+        $study_program = $request->input('study_program');
 
-        $export = new TeacherExport($month, $name, $course, $study_program);
+        $export = new TeacherExport(
+            $start_date,
+            $end_date,
+            $name,
+            $course,
+            $study_program
+        );
 
         return Excel::download($export, 'teachers.xlsx');
     }
@@ -391,14 +398,14 @@ class UserController extends Controller
     {
         $start_date = $request->input('start_date') ?? Carbon::now()->startOfMonth()->toDateString();
         $end_date = $request->input('end_date') ?? Carbon::now()->endOfMonth()->toDateString();
-        $keyword = $request->input('keyword');
+        $name = $request->input('name');
         $course = $request->input('course');
         $study_program = $request->input('study_program');
 
         $export = new StudentAttendanceExport(
             $start_date,
             $end_date,
-            $keyword,
+            $name,
             $course,
             $study_program
         );

@@ -37,11 +37,12 @@ class AttendanceController extends Controller
     {
         abort_if(! userCan('academic.management'), 403);
 
-        // jika tidak ada paramater month, gunakan bulan ini sebagai default
-        $month = $request->input('month', Carbon::now()->format('Y-m')); // Format YYYY-MM
+        $start_date = $request->input('start_date') ?? Carbon::now()->startOfMonth()->toDateString();
+        $end_date = $request->input('end_date') ?? Carbon::now()->endOfMonth()->toDateString();
+
         try {
-            $start_date = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->toDateString();
-            $end_date = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->toDateString();
+            $start_date = Carbon::parse($start_date)->toDateString();
+            $end_date = Carbon::parse($end_date)->toDateString();
         } catch (\Exception $e) {
             return response()->json(['error' => 'Format bulan tidak valid. Gunakan YYYY-MM.'], 400);
         }
@@ -90,16 +91,16 @@ class AttendanceController extends Controller
             // Inisialisasi data kehadiran per hari
             $attendanceStatus = $dates->mapWithKeys(function ($date) use ($userAttendances, $leaveDates) {
                 if ($leaveDates->contains($date)) {
-                    return [$date => 'Ijin']; // Jika ada izin
+                    return [$date => 'I']; // Jika ada izin
                 }
 
                 $attendance = $userAttendances->firstWhere('date', $date);
-                return [$date => $attendance ? 'Hadir' : 'Alfa']; // Hadir atau Alfa
+                return [$date => $attendance ? 'H' : 'A']; // Hadir atau Alfa
             });
 
             // Hitung total hadir dan alfa
-            $totalHadir = $attendanceStatus->filter(fn($status) => $status === 'Hadir')->count();
-            $totalAlfa = $attendanceStatus->filter(fn($status) => $status === 'Alfa')->count();
+            $totalHadir = $attendanceStatus->filter(fn($status) => $status === 'H')->count();
+            $totalAlfa = $attendanceStatus->filter(fn($status) => $status === 'A')->count();
 
             return [
                 'id' => $teacher->id,
@@ -125,14 +126,14 @@ class AttendanceController extends Controller
 
         $study_programs = StudyProgram::get(['id', 'name', 'slug']);
 
-        dd($attendanceteacher);
         return inertia('Admin/TeacherAttendance/Index', [
             'attendanceteacher' => $attendanceteacher,
             'dates' => $dates,
             'total' => $total,
             'study_programs' => $study_programs,
             'filter_data' => [
-                'month' => $month,
+                'start_date' => $start_date,
+                'end_date' => $end_date,
                 'keyword' => $request->input('keyword'),
                 'study_program' => $request->input('study_program'),
             ]

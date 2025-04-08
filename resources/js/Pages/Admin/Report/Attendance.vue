@@ -105,6 +105,7 @@
                         {{ __("Export") }}
                     </global-button>
                 </div>
+
                 <div class="overflow-x-auto shadow-md rounded-lg">
                     <table
                         class="w-full text-sm text-center text-gray-700 dark:text-gray-300"

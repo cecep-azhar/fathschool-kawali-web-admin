@@ -10,17 +10,20 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Maatwebsite\Excel\Events\AfterSheet;
 
-class StudentAttendanceExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnFormatting
+class StudentAttendanceExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnFormatting, WithEvents
 {
     protected $start_date;
     protected $end_date;
     protected $name;
     protected $course;
     protected $study_program;
+    protected $data;
 
     public function __construct($start_date = null, $end_date = null, $name = null, $course = null, $study_program = null)
     {
@@ -67,7 +70,7 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
             ->get()
             ->groupBy('user_id');
 
-        return $students->map(function ($student, $index) use ($dates, $attendances) {
+        $this->data = $students->map(function ($student, $index) use ($dates, $attendances) {
             $userAttendances = $attendances->get($student->id, collect());
 
             $totalIjin = $student->leaves->filter(function ($leave) use ($dates) {
@@ -104,11 +107,12 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
                 ],
             ];
         });
+
+        return $this->data;
     }
 
     public function map($student): array
     {
-        // Pastikan attendance adalah array of string (H, A, I)
         $attendance = array_map(fn($val) => $val ?? 'A', $student['attendance']);
 
         return array_merge(
@@ -123,7 +127,6 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
         );
     }
 
-
     public function headings(): array
     {
         $start = Carbon::parse($this->start_date);
@@ -136,7 +139,6 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
             ['Hadir', 'Sakit', 'Ijin', 'Alfa']
         );
     }
-
 
     public function styles(Worksheet $sheet)
     {
@@ -152,7 +154,7 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
             ],
             'fill' => [
                 'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['argb' => 'FFFFFF'], // putih
+                'startColor' => ['argb' => 'FFFFFF'],
             ],
         ]);
 
@@ -180,14 +182,31 @@ class StudentAttendanceExport implements FromCollection, WithHeadings, WithMappi
         $end = Carbon::parse($this->end_date);
         $dateCount = $start->diffInDays($end) + 1;
 
-        $base = 4 + $dateCount; // kolom ke-4 setelah tanggal-tanggal
+        $base = 4 + $dateCount;
         $colLetters = [
-            Coordinate::stringFromColumnIndex($base),     // Hadir
-            Coordinate::stringFromColumnIndex($base + 1), // Sakit
-            Coordinate::stringFromColumnIndex($base + 2), // Ijin
-            Coordinate::stringFromColumnIndex($base + 3), // Alfa
+            Coordinate::stringFromColumnIndex($base),
+            Coordinate::stringFromColumnIndex($base + 1),
+            Coordinate::stringFromColumnIndex($base + 2),
+            Coordinate::stringFromColumnIndex($base + 3),
         ];
 
         return collect($colLetters)->mapWithKeys(fn($col) => [$col => NumberFormat::FORMAT_NUMBER])->toArray();
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $startRow = count($this->data) + 3;
+
+                $totalHadir = $this->data->sum(fn($item) => $item['summary']['hadir']);
+                $totalIjin = $this->data->sum(fn($item) => $item['summary']['ijin']);
+                $totalAlfa = $this->data->sum(fn($item) => $item['summary']['alfa']);
+
+                $event->sheet->setCellValue("B{$startRow}", "Total Kehadiran: {$totalHadir}");
+                $event->sheet->setCellValue("B" . ($startRow + 1), "Total Izin: {$totalIjin}");
+                $event->sheet->setCellValue("B" . ($startRow + 2), "Total Alfa: {$totalAlfa}");
+            },
+        ];
     }
 }

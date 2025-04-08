@@ -10,15 +10,18 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use Maatwebsite\Excel\Events\AfterSheet;
 
-class TeacherExport implements FromCollection, WithHeadings, WithMapping, WithStyles
+class TeacherExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithEvents
 {
     protected $start_date;
     protected $end_date;
     protected $name;
     protected $study_program;
+    protected $data;
 
     public function __construct($start_date = null, $end_date = null, $name = null, $study_program = null)
     {
@@ -57,7 +60,7 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, WithSt
             ->get()
             ->groupBy('user_id');
 
-        return $teachers->map(function ($teacher, $index) use ($dates, $attendances) {
+        $this->data = $teachers->map(function ($teacher, $index) use ($dates, $attendances) {
             $userAttendances = $attendances->get($teacher->id, collect());
 
             $leaveDates = collect();
@@ -88,6 +91,8 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, WithSt
                 ],
             ];
         });
+
+        return $this->data;
     }
 
     public function map($row): array
@@ -142,5 +147,23 @@ class TeacherExport implements FromCollection, WithHeadings, WithMapping, WithSt
         }
 
         return [];
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $sheet = $event->sheet;
+
+                $totalHadir = $this->data->sum(fn($row) => $row['summary']['hadir']);
+                $totalIjin = $this->data->sum(fn($row) => $row['summary']['ijin']);
+                $totalAlfa = $this->data->sum(fn($row) => $row['summary']['alfa']);
+
+                $startRow = $this->data->count() + 3;
+                $sheet->setCellValue("B{$startRow}", "Total Kehadiran: {$totalHadir}");
+                $sheet->setCellValue("B" . ($startRow + 1), "Total Izin: {$totalIjin}");
+                $sheet->setCellValue("B" . ($startRow + 2), "Total Alfa: {$totalAlfa}");
+            },
+        ];
     }
 }

@@ -35,8 +35,16 @@ class StudentLeaveService
             : $today->copy()->endOfDay();
 
         // Ambil data yang berada di antara start-end date
-        $query->whereDate('start', '<=', $endDate)
-            ->whereDate('end', '>=', $startDate);
+        $query->where(function ($q) use ($startDate, $endDate) {
+            $q->where(function ($q2) use ($startDate, $endDate) {
+                $q2->whereDate('start', '<=', $endDate)
+                    ->whereDate('end', '>=', $startDate)
+                    ->whereColumn('end', '>=', 'start'); // valid
+            })->orWhere(function ($q2) use ($endDate) {
+                $q2->whereNull('end') // data yang belum diisi end
+                    ->orWhereColumn('end', '<', 'start'); // data error
+            });
+        });
 
         // status filter
         if ($request->has('status') && $request->status != 'all' && $request->status != null) {
@@ -71,11 +79,11 @@ class StudentLeaveService
         $leaves = $query->whereHas('user', function ($user) {
             $user->whereNotIn('role', ['parent', 'teacher', 'administration', 'accountant', 'admin']);
         })
-            ->latest()->with(['user.department', 'user.courses.course', 'type'])
+            ->latest()
+            ->with(['user.department', 'user.courses.course', 'type'])
             ->paginate(10)
             ->withQueryString();
 
-        // dd($leaves);
         $users = User::active()->latest()->get(['id', 'name', 'email']);
 
         $leave_types = LeaveType::whereNotIn('role_type', ['teacher', 'staff'])

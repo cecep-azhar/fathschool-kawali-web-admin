@@ -30,7 +30,12 @@ class AdminDashboardService
         $data['total_others'] = $users->whereNotIn('role', ['Admin', 'Teacher', 'Parent', 'Student', 'Accountant'])->count();
 
         // total leave request
-        $data['total_leave_requests'] = Leave::pending()->count();
+        $startDate = Carbon::today()->startOfDay();
+        $endDate = Carbon::today()->endOfDay();
+
+        $data['total_leave_requests'] = Leave::pending()
+            ->whereBetween('start', [$startDate, $endDate])
+            ->count();
 
         // today total exams
         $data['this_month_total_exams'] = Exam::whereBetween('start_date', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])->count();
@@ -101,7 +106,7 @@ class AdminDashboardService
             $end = Carbon::now()->endOfWeek();
         }
 
-        $days = CarbonPeriod::create($start, $end)->map(fn ($date) => $date->toDateString());
+        $days = CarbonPeriod::create($start, $end)->map(fn($date) => $date->toDateString());
 
         $data_label = [];
         $data_value = [];
@@ -135,7 +140,7 @@ class AdminDashboardService
             $end = Carbon::now()->endOfWeek();
         }
 
-        $days = CarbonPeriod::create($start, $end)->map(fn ($date) => $date->toDateString());
+        $days = CarbonPeriod::create($start, $end)->map(fn($date) => $date->toDateString());
 
         $data_label = [];
         $data_value = [];

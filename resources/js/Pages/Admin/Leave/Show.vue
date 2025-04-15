@@ -65,19 +65,21 @@
 </template>
 
 <script>
+
 export default {
     props: {
         leave: Object,
     },
     methods: {
         getImageUrl(image) {
+            const baseUrl = import.meta.env.VITE_APP_URL
             if (!image) {
-                return "http://fathschool-kawali-web-admin.test/images/default.png"; // Gambar default jika tidak ada
+                return `${baseUrl}/images/default.png`; // Gambar default jika tidak ada
             }
             if (image.startsWith("http")) {
                 return image; // Jika sudah URL lengkap, langsung digunakan
             }
-            return `http://fathschool-kawali-web-admin.test/storage/leaves/${image}`; // Tambahkan path storage jika hanya nama file
+            return `${baseUrl}/storage/leaves/${image}`; // Tambahkan path storage jika hanya nama file
         },
     },
 };

@@ -55,7 +55,7 @@
                                 size="large"
                                 v-model:value="filter.course"
                                 show-search
-                                :placeholder="__('Select a course')"
+                                :placeholder="__('Select a class')"
                                 :options="options"
                                 :filter-option="filterOption"
                                 @focus="handleFocus"
